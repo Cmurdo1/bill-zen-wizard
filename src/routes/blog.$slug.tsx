@@ -58,7 +58,7 @@ function PostNotFound() {
 }
 
 function BlogPostPage() {
-  const { post } = Route.useLoaderData();
+  const { post } = Route.useLoaderData() as { post: import("@/lib/blog-posts").BlogPost };
   const related = BLOG_POSTS.filter((p) => p.slug !== post.slug).slice(0, 3);
   return (
     <MarketingShell>

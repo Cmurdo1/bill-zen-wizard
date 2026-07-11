@@ -130,6 +130,26 @@ function InvoiceDetailPage() {
     navigate({ to: "/invoices" });
   }
 
+  async function downloadPdf() {
+    if (!invoice) return;
+    const [clientRes, profRes] = await Promise.all([
+      invoice.client_id
+        ? supabase.from("clients").select("name,email,address_line1,address_line2,city,state,postal_code,country").eq("id", invoice.client_id).maybeSingle()
+        : Promise.resolve({ data: null }),
+      supabase.from("profiles").select("company_name,full_name,address_line1,address_line2,city,state,postal_code,country").eq("id", (await supabase.auth.getUser()).data.user?.id ?? "").maybeSingle(),
+    ]);
+    const p = profRes.data as { company_name?: string | null; full_name?: string | null; address_line1?: string | null; address_line2?: string | null; city?: string | null; state?: string | null; postal_code?: string | null; country?: string | null } | null;
+    const business_address = p
+      ? [p.address_line1, p.address_line2, [p.city, p.state, p.postal_code].filter(Boolean).join(", "), p.country].filter(Boolean).join("\n")
+      : "";
+    printInvoice({
+      ...invoice,
+      items: items.filter((i) => i.description.trim()),
+      client: clientRes.data as PrintInvoiceClient,
+      business: { company_name: p?.company_name, full_name: p?.full_name, business_address },
+    });
+  }
+
   if (loading) {
     return (
       <AppShell title="Invoice">

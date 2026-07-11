@@ -118,6 +118,20 @@ function EstimateDetailPage() {
     await save({ status: next });
   }
 
+  const [convertOpen, setConvertOpen] = useState(false);
+  const [convertIssue, setConvertIssue] = useState(() => new Date().toISOString().slice(0, 10));
+  const [convertDue, setConvertDue] = useState(() => { const d = new Date(); d.setDate(d.getDate() + 30); return d.toISOString().slice(0, 10); });
+  const [convertCurrency, setConvertCurrency] = useState("USD");
+
+  function openConvert() {
+    if (!estimate) return;
+    setConvertIssue(new Date().toISOString().slice(0, 10));
+    const d = new Date(); d.setDate(d.getDate() + 30);
+    setConvertDue(d.toISOString().slice(0, 10));
+    setConvertCurrency(estimate.currency || "USD");
+    setConvertOpen(true);
+  }
+
   async function convertToInvoice() {
     if (!estimate) return;
     setConverting(true);
@@ -128,19 +142,19 @@ function EstimateDetailPage() {
       const { data: profile } = await supabase.from("profiles").select("invoice_prefix,next_invoice_number").eq("id", user.id).maybeSingle();
       const prefix = profile?.invoice_prefix ?? "INV";
       const num = profile?.next_invoice_number ?? 1001;
-      const due = new Date(); due.setDate(due.getDate() + 30);
 
       const { data: inv, error: iErr } = await supabase.from("invoices").insert({
         user_id: user.id,
         client_id: estimate.client_id,
         invoice_number: `${prefix}-${num}`,
         status: "draft",
-        due_date: due.toISOString().slice(0, 10),
+        issue_date: convertIssue,
+        due_date: convertDue,
         subtotal_cents: estimate.subtotal_cents,
         tax_rate: estimate.tax_rate,
         tax_cents: estimate.tax_cents,
         total_cents: estimate.total_cents,
-        currency: estimate.currency,
+        currency: convertCurrency,
         notes: estimate.notes,
       }).select("id").single();
       if (iErr) throw iErr;
@@ -158,6 +172,7 @@ function EstimateDetailPage() {
       }
       await supabase.from("profiles").upsert({ id: user.id, next_invoice_number: num + 1 });
       await supabase.from("estimates").update({ status: "converted" }).eq("id", estimate.id);
+      setConvertOpen(false);
       if (inv) navigate({ to: "/invoices/$id", params: { id: inv.id } });
     } catch (e) {
       setError(e instanceof Error ? e.message : "Could not convert");
@@ -212,7 +227,7 @@ function EstimateDetailPage() {
             </button>
           )}
           {estimate.status !== "converted" && (
-            <button onClick={convertToInvoice} disabled={converting} className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-accent px-3 text-xs font-semibold text-accent-foreground hover:opacity-90 disabled:opacity-60">
+            <button onClick={openConvert} disabled={converting} className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-accent px-3 text-xs font-semibold text-accent-foreground hover:opacity-90 disabled:opacity-60">
               {converting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ArrowRightCircle className="h-3.5 w-3.5" />} Convert to invoice
             </button>
           )}
@@ -327,7 +342,34 @@ function EstimateDetailPage() {
           {error && <p className="rounded-lg bg-destructive/10 px-3 py-2 text-xs font-semibold text-destructive">{error}</p>}
         </aside>
       </div>
+
+      {convertOpen && (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4" onClick={() => !converting && setConvertOpen(false)}>
+          <div className="w-full max-w-md rounded-2xl border border-border bg-surface p-6 shadow-lg" onClick={(e) => e.stopPropagation()}>
+            <h3 className="font-display text-xl">Convert to invoice</h3>
+            <p className="mt-1 text-sm text-muted-foreground">Choose the details for the new draft invoice.</p>
+            <div className="mt-4 grid gap-3">
+              <Field label="Issue date">
+                <input type="date" value={convertIssue} onChange={(e) => setConvertIssue(e.target.value)} className="h-10 w-full rounded-lg border border-border bg-background px-3 text-sm" />
+              </Field>
+              <Field label="Due date">
+                <input type="date" value={convertDue} onChange={(e) => setConvertDue(e.target.value)} className="h-10 w-full rounded-lg border border-border bg-background px-3 text-sm" />
+              </Field>
+              <Field label="Currency">
+                <input value={convertCurrency} onChange={(e) => setConvertCurrency(e.target.value.toUpperCase())} className="h-10 w-full rounded-lg border border-border bg-background px-3 text-sm" />
+              </Field>
+            </div>
+            <div className="mt-6 flex justify-end gap-2">
+              <button onClick={() => setConvertOpen(false)} disabled={converting} className="h-9 rounded-lg border border-border px-3 text-xs font-semibold hover:bg-surface-muted">Cancel</button>
+              <button onClick={convertToInvoice} disabled={converting} className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-primary px-3 text-xs font-semibold text-primary-foreground shadow-soft disabled:opacity-60">
+                {converting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ArrowRightCircle className="h-3.5 w-3.5" />} Create invoice
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </AppShell>
+
   );
 }
 

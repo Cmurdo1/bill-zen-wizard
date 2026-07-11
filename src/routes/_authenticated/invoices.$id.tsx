@@ -11,7 +11,8 @@ import {
   type LineItem,
   type InvoiceStatus,
 } from "@/lib/documents";
-import { ArrowLeft, Loader2, Save, Send, CheckCircle2, Trash2 } from "lucide-react";
+import { ArrowLeft, Loader2, Save, Send, CheckCircle2, Trash2, Download } from "lucide-react";
+import { printInvoice } from "@/lib/print-invoice";
 
 type Invoice = {
   id: string;
@@ -129,6 +130,26 @@ function InvoiceDetailPage() {
     navigate({ to: "/invoices" });
   }
 
+  async function downloadPdf() {
+    if (!invoice) return;
+    const [clientRes, profRes] = await Promise.all([
+      invoice.client_id
+        ? supabase.from("clients").select("name,email,address_line1,address_line2,city,state,postal_code,country").eq("id", invoice.client_id).maybeSingle()
+        : Promise.resolve({ data: null }),
+      supabase.from("profiles").select("company_name,full_name,address_line1,address_line2,city,state,postal_code,country").eq("id", (await supabase.auth.getUser()).data.user?.id ?? "").maybeSingle(),
+    ]);
+    const p = profRes.data as { company_name?: string | null; full_name?: string | null; address_line1?: string | null; address_line2?: string | null; city?: string | null; state?: string | null; postal_code?: string | null; country?: string | null } | null;
+    const business_address = p
+      ? [p.address_line1, p.address_line2, [p.city, p.state, p.postal_code].filter(Boolean).join(", "), p.country].filter(Boolean).join("\n")
+      : "";
+    printInvoice({
+      ...invoice,
+      items: items.filter((i) => i.description.trim()),
+      client: clientRes.data,
+      business: { company_name: p?.company_name, full_name: p?.full_name, business_address },
+    });
+  }
+
   if (loading) {
     return (
       <AppShell title="Invoice">
@@ -156,6 +177,9 @@ function InvoiceDetailPage() {
         <div className="flex items-center gap-2">
           <button onClick={remove} className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-border px-3 text-xs font-semibold text-destructive hover:bg-destructive/5">
             <Trash2 className="h-3.5 w-3.5" /> Delete
+          </button>
+          <button onClick={downloadPdf} className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-border bg-surface px-3 text-xs font-semibold hover:bg-surface-muted">
+            <Download className="h-3.5 w-3.5" /> Download PDF
           </button>
           {invoice.status === "draft" && (
             <button onClick={() => updateStatus("sent")} disabled={saving} className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-border bg-surface px-3 text-xs font-semibold hover:bg-surface-muted">

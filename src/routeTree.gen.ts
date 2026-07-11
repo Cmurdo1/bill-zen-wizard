@@ -30,6 +30,8 @@ import { Route as AuthenticatedEstimatesRouteImport } from './routes/_authentica
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedClientsRouteImport } from './routes/_authenticated/clients'
 import { Route as AuthenticatedCashVelocityRouteImport } from './routes/_authenticated/cash-velocity'
+import { Route as AuthenticatedInvoicesIdRouteImport } from './routes/_authenticated/invoices.$id'
+import { Route as AuthenticatedEstimatesIdRouteImport } from './routes/_authenticated/estimates.$id'
 
 const TermsRoute = TermsRouteImport.update({
   id: '/terms',
@@ -136,6 +138,17 @@ const AuthenticatedCashVelocityRoute =
     path: '/cash-velocity',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedInvoicesIdRoute = AuthenticatedInvoicesIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => AuthenticatedInvoicesRoute,
+} as any)
+const AuthenticatedEstimatesIdRoute =
+  AuthenticatedEstimatesIdRouteImport.update({
+    id: '/$id',
+    path: '/$id',
+    getParentRoute: () => AuthenticatedEstimatesRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -151,13 +164,15 @@ export interface FileRoutesByFullPath {
   '/cash-velocity': typeof AuthenticatedCashVelocityRoute
   '/clients': typeof AuthenticatedClientsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
-  '/estimates': typeof AuthenticatedEstimatesRoute
+  '/estimates': typeof AuthenticatedEstimatesRouteWithChildren
   '/import-data': typeof AuthenticatedImportDataRoute
-  '/invoices': typeof AuthenticatedInvoicesRoute
+  '/invoices': typeof AuthenticatedInvoicesRouteWithChildren
   '/leads': typeof AuthenticatedLeadsRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/blog/': typeof BlogIndexRoute
+  '/estimates/$id': typeof AuthenticatedEstimatesIdRoute
+  '/invoices/$id': typeof AuthenticatedInvoicesIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -173,13 +188,15 @@ export interface FileRoutesByTo {
   '/cash-velocity': typeof AuthenticatedCashVelocityRoute
   '/clients': typeof AuthenticatedClientsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
-  '/estimates': typeof AuthenticatedEstimatesRoute
+  '/estimates': typeof AuthenticatedEstimatesRouteWithChildren
   '/import-data': typeof AuthenticatedImportDataRoute
-  '/invoices': typeof AuthenticatedInvoicesRoute
+  '/invoices': typeof AuthenticatedInvoicesRouteWithChildren
   '/leads': typeof AuthenticatedLeadsRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/blog': typeof BlogIndexRoute
+  '/estimates/$id': typeof AuthenticatedEstimatesIdRoute
+  '/invoices/$id': typeof AuthenticatedInvoicesIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -197,13 +214,15 @@ export interface FileRoutesById {
   '/_authenticated/cash-velocity': typeof AuthenticatedCashVelocityRoute
   '/_authenticated/clients': typeof AuthenticatedClientsRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
-  '/_authenticated/estimates': typeof AuthenticatedEstimatesRoute
+  '/_authenticated/estimates': typeof AuthenticatedEstimatesRouteWithChildren
   '/_authenticated/import-data': typeof AuthenticatedImportDataRoute
-  '/_authenticated/invoices': typeof AuthenticatedInvoicesRoute
+  '/_authenticated/invoices': typeof AuthenticatedInvoicesRouteWithChildren
   '/_authenticated/leads': typeof AuthenticatedLeadsRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/blog/': typeof BlogIndexRoute
+  '/_authenticated/estimates/$id': typeof AuthenticatedEstimatesIdRoute
+  '/_authenticated/invoices/$id': typeof AuthenticatedInvoicesIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -228,6 +247,8 @@ export interface FileRouteTypes {
     | '/settings'
     | '/blog/$slug'
     | '/blog/'
+    | '/estimates/$id'
+    | '/invoices/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -250,6 +271,8 @@ export interface FileRouteTypes {
     | '/settings'
     | '/blog/$slug'
     | '/blog'
+    | '/estimates/$id'
+    | '/invoices/$id'
   id:
     | '__root__'
     | '/'
@@ -273,6 +296,8 @@ export interface FileRouteTypes {
     | '/_authenticated/settings'
     | '/blog/$slug'
     | '/blog/'
+    | '/_authenticated/estimates/$id'
+    | '/_authenticated/invoices/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -440,16 +465,57 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCashVelocityRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/invoices/$id': {
+      id: '/_authenticated/invoices/$id'
+      path: '/$id'
+      fullPath: '/invoices/$id'
+      preLoaderRoute: typeof AuthenticatedInvoicesIdRouteImport
+      parentRoute: typeof AuthenticatedInvoicesRoute
+    }
+    '/_authenticated/estimates/$id': {
+      id: '/_authenticated/estimates/$id'
+      path: '/$id'
+      fullPath: '/estimates/$id'
+      preLoaderRoute: typeof AuthenticatedEstimatesIdRouteImport
+      parentRoute: typeof AuthenticatedEstimatesRoute
+    }
   }
 }
+
+interface AuthenticatedEstimatesRouteChildren {
+  AuthenticatedEstimatesIdRoute: typeof AuthenticatedEstimatesIdRoute
+}
+
+const AuthenticatedEstimatesRouteChildren: AuthenticatedEstimatesRouteChildren =
+  {
+    AuthenticatedEstimatesIdRoute: AuthenticatedEstimatesIdRoute,
+  }
+
+const AuthenticatedEstimatesRouteWithChildren =
+  AuthenticatedEstimatesRoute._addFileChildren(
+    AuthenticatedEstimatesRouteChildren,
+  )
+
+interface AuthenticatedInvoicesRouteChildren {
+  AuthenticatedInvoicesIdRoute: typeof AuthenticatedInvoicesIdRoute
+}
+
+const AuthenticatedInvoicesRouteChildren: AuthenticatedInvoicesRouteChildren = {
+  AuthenticatedInvoicesIdRoute: AuthenticatedInvoicesIdRoute,
+}
+
+const AuthenticatedInvoicesRouteWithChildren =
+  AuthenticatedInvoicesRoute._addFileChildren(
+    AuthenticatedInvoicesRouteChildren,
+  )
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedCashVelocityRoute: typeof AuthenticatedCashVelocityRoute
   AuthenticatedClientsRoute: typeof AuthenticatedClientsRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
-  AuthenticatedEstimatesRoute: typeof AuthenticatedEstimatesRoute
+  AuthenticatedEstimatesRoute: typeof AuthenticatedEstimatesRouteWithChildren
   AuthenticatedImportDataRoute: typeof AuthenticatedImportDataRoute
-  AuthenticatedInvoicesRoute: typeof AuthenticatedInvoicesRoute
+  AuthenticatedInvoicesRoute: typeof AuthenticatedInvoicesRouteWithChildren
   AuthenticatedLeadsRoute: typeof AuthenticatedLeadsRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
 }
@@ -458,9 +524,9 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedCashVelocityRoute: AuthenticatedCashVelocityRoute,
   AuthenticatedClientsRoute: AuthenticatedClientsRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
-  AuthenticatedEstimatesRoute: AuthenticatedEstimatesRoute,
+  AuthenticatedEstimatesRoute: AuthenticatedEstimatesRouteWithChildren,
   AuthenticatedImportDataRoute: AuthenticatedImportDataRoute,
-  AuthenticatedInvoicesRoute: AuthenticatedInvoicesRoute,
+  AuthenticatedInvoicesRoute: AuthenticatedInvoicesRouteWithChildren,
   AuthenticatedLeadsRoute: AuthenticatedLeadsRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
 }

@@ -145,7 +145,7 @@ function InvoiceDetailPage() {
     printInvoice({
       ...invoice,
       items: items.filter((i) => i.description.trim()),
-      client: clientRes.data as PrintInvoiceClient,
+      client: clientRes.data,
       business: { company_name: p?.company_name, full_name: p?.full_name, business_address },
     });
   }

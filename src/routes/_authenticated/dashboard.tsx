@@ -1,11 +1,11 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { extractLineItems } from "@/lib/invoices.functions";
 import { useServerFn } from "@tanstack/react-start";
 import { formatCurrency, formatDate } from "@/lib/format";
-import { Logo } from "@/components/marketing/shell";
-import { LogOut, Plus, Sparkles, Loader2, Trash2 } from "lucide-react";
+import { AppShell } from "@/components/app/shell";
+import { Plus, Sparkles, Loader2, Trash2 } from "lucide-react";
 
 type Invoice = {
   id: string;
@@ -27,31 +27,22 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 });
 
 function DashboardPage() {
-  const navigate = useNavigate();
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
   const [showNew, setShowNew] = useState(false);
-  const [userEmail, setUserEmail] = useState<string>("");
 
   useEffect(() => { void refresh(); }, []);
 
   async function refresh() {
     setLoading(true);
-    const [{ data: u }, invRes, cliRes] = await Promise.all([
-      supabase.auth.getUser(),
+    const [invRes, cliRes] = await Promise.all([
       supabase.from("invoices").select("*").order("created_at", { ascending: false }),
       supabase.from("clients").select("id,name,email").order("name"),
     ]);
-    setUserEmail(u.user?.email ?? "");
     setInvoices((invRes.data as Invoice[]) ?? []);
     setClients((cliRes.data as Client[]) ?? []);
     setLoading(false);
-  }
-
-  async function signOut() {
-    await supabase.auth.signOut();
-    navigate({ to: "/" });
   }
 
   const outstanding = invoices
@@ -62,87 +53,67 @@ function DashboardPage() {
     .reduce((s, i) => s + i.total_cents, 0);
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b border-border bg-surface">
-        <div className="container-page flex h-16 items-center justify-between">
-          <Logo />
-          <div className="flex items-center gap-3 text-sm">
-            <span className="hidden text-muted-foreground sm:inline">{userEmail}</span>
+    <AppShell title="Dashboard">
+      <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
+        <p className="text-sm text-muted-foreground">Your invoices, cash, and clients in one place.</p>
+        <button
+          onClick={() => setShowNew(true)}
+          className="inline-flex h-11 items-center gap-2 rounded-xl bg-primary px-5 text-sm font-semibold text-primary-foreground shadow-soft hover:opacity-90"
+        >
+          <Plus className="h-4 w-4" /> New invoice
+        </button>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-3">
+        <Stat label="Outstanding" value={formatCurrency(outstanding)} />
+        <Stat label="Paid this month" value={formatCurrency(paidThisMonth)} />
+        <Stat label="Clients" value={clients.length.toString()} />
+      </div>
+
+      <section className="mt-10 rounded-2xl border border-border bg-surface shadow-soft">
+        <div className="flex items-center justify-between border-b border-border px-6 py-4">
+          <h2 className="text-lg font-semibold">Invoices</h2>
+          <Link to="/pay-invoice" className="text-xs text-muted-foreground hover:text-foreground">Public payment page →</Link>
+        </div>
+        {loading ? (
+          <div className="grid place-items-center py-16 text-muted-foreground"><Loader2 className="h-5 w-5 animate-spin" /></div>
+        ) : invoices.length === 0 ? (
+          <div className="py-16 text-center">
+            <p className="text-muted-foreground">No invoices yet.</p>
             <button
-              onClick={signOut}
-              className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-border px-3 text-xs font-semibold hover:bg-surface-muted"
+              onClick={() => setShowNew(true)}
+              className="mt-4 inline-flex h-10 items-center gap-2 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground"
             >
-              <LogOut className="h-3.5 w-3.5" /> Sign out
+              <Plus className="h-4 w-4" /> Create your first invoice
             </button>
           </div>
-        </div>
-      </header>
-
-      <main className="container-page py-10">
-        <div className="flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <h1 className="font-display text-4xl tracking-tight text-foreground">Dashboard</h1>
-            <p className="mt-1 text-sm text-muted-foreground">Your invoices, cash, and clients in one place.</p>
-          </div>
-          <button
-            onClick={() => setShowNew(true)}
-            className="inline-flex h-11 items-center gap-2 rounded-xl bg-primary px-5 text-sm font-semibold text-primary-foreground shadow-soft hover:opacity-90"
-          >
-            <Plus className="h-4 w-4" /> New invoice
-          </button>
-        </div>
-
-        <div className="mt-8 grid gap-4 sm:grid-cols-3">
-          <Stat label="Outstanding" value={formatCurrency(outstanding)} />
-          <Stat label="Paid this month" value={formatCurrency(paidThisMonth)} />
-          <Stat label="Clients" value={clients.length.toString()} />
-        </div>
-
-        <section className="mt-10 rounded-2xl border border-border bg-surface shadow-soft">
-          <div className="flex items-center justify-between border-b border-border px-6 py-4">
-            <h2 className="text-lg font-semibold">Invoices</h2>
-            <Link to="/pay-invoice" className="text-xs text-muted-foreground hover:text-foreground">Public payment page →</Link>
-          </div>
-          {loading ? (
-            <div className="grid place-items-center py-16 text-muted-foreground"><Loader2 className="h-5 w-5 animate-spin" /></div>
-          ) : invoices.length === 0 ? (
-            <div className="py-16 text-center">
-              <p className="text-muted-foreground">No invoices yet.</p>
-              <button
-                onClick={() => setShowNew(true)}
-                className="mt-4 inline-flex h-10 items-center gap-2 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground"
-              >
-                <Plus className="h-4 w-4" /> Create your first invoice
-              </button>
-            </div>
-          ) : (
-            <table className="w-full text-sm">
-              <thead className="border-b border-border text-left text-xs uppercase tracking-widest text-muted-foreground">
-                <tr>
-                  <th className="px-6 py-3">Invoice</th>
-                  <th className="px-6 py-3">Client</th>
-                  <th className="px-6 py-3">Issued</th>
-                  <th className="px-6 py-3">Due</th>
-                  <th className="px-6 py-3">Status</th>
-                  <th className="px-6 py-3 text-right">Total</th>
+        ) : (
+          <table className="w-full text-sm">
+            <thead className="border-b border-border text-left text-xs uppercase tracking-widest text-muted-foreground">
+              <tr>
+                <th className="px-6 py-3">Invoice</th>
+                <th className="px-6 py-3">Client</th>
+                <th className="px-6 py-3">Issued</th>
+                <th className="px-6 py-3">Due</th>
+                <th className="px-6 py-3">Status</th>
+                <th className="px-6 py-3 text-right">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              {invoices.map((inv) => (
+                <tr key={inv.id} className="border-b border-border/60 last:border-0 hover:bg-surface-muted/50">
+                  <td className="px-6 py-4 font-semibold">{inv.invoice_number}</td>
+                  <td className="px-6 py-4 text-muted-foreground">{clients.find((c) => c.id === inv.client_id)?.name ?? "—"}</td>
+                  <td className="px-6 py-4 text-muted-foreground">{formatDate(inv.issue_date)}</td>
+                  <td className="px-6 py-4 text-muted-foreground">{formatDate(inv.due_date)}</td>
+                  <td className="px-6 py-4"><StatusPill status={inv.status} /></td>
+                  <td className="px-6 py-4 text-right font-semibold tabular-nums">{formatCurrency(inv.total_cents, inv.currency)}</td>
                 </tr>
-              </thead>
-              <tbody>
-                {invoices.map((inv) => (
-                  <tr key={inv.id} className="border-b border-border/60 last:border-0 hover:bg-surface-muted/50">
-                    <td className="px-6 py-4 font-semibold">{inv.invoice_number}</td>
-                    <td className="px-6 py-4 text-muted-foreground">{clients.find((c) => c.id === inv.client_id)?.name ?? "—"}</td>
-                    <td className="px-6 py-4 text-muted-foreground">{formatDate(inv.issue_date)}</td>
-                    <td className="px-6 py-4 text-muted-foreground">{formatDate(inv.due_date)}</td>
-                    <td className="px-6 py-4"><StatusPill status={inv.status} /></td>
-                    <td className="px-6 py-4 text-right font-semibold tabular-nums">{formatCurrency(inv.total_cents, inv.currency)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </section>
-      </main>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </section>
 
       {showNew && (
         <NewInvoiceDialog
@@ -155,7 +126,7 @@ function DashboardPage() {
           }}
         />
       )}
-    </div>
+    </AppShell>
   );
 }
 

@@ -4,7 +4,7 @@ import { AppShell } from "@/components/app/shell";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, Plus, Trash2 } from "lucide-react";
 
-type Client = { id: string; name: string; email: string | null; phone: string | null; company: string | null };
+type Client = { id: string; name: string; email: string | null; phone: string | null; city: string | null };
 
 export const Route = createFileRoute("/_authenticated/clients")({
   head: () => ({ meta: [{ title: "Clients — Honest Invoice" }, { name: "robots", content: "noindex" }] }),
@@ -15,16 +15,16 @@ function ClientsPage() {
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAdd, setShowAdd] = useState(false);
-  const [form, setForm] = useState({ name: "", email: "", phone: "", company: "" });
+  const [form, setForm] = useState({ name: "", email: "", phone: "", city: "" });
   const [saving, setSaving] = useState(false);
 
   async function refresh() {
     setLoading(true);
     const { data } = await supabase
       .from("clients")
-      .select("id,name,email,phone,company")
+      .select("id,name,email,phone,city")
       .order("name");
-    setClients((data as Client[]) ?? []);
+    setClients((data as Client[] | null) ?? []);
     setLoading(false);
   }
 
@@ -40,10 +40,10 @@ function ClientsPage() {
         name: form.name.trim(),
         email: form.email.trim() || null,
         phone: form.phone.trim() || null,
-        company: form.company.trim() || null,
+        city: form.city.trim() || null,
       });
     }
-    setForm({ name: "", email: "", phone: "", company: "" });
+    setForm({ name: "", email: "", phone: "", city: "" });
     setShowAdd(false);
     setSaving(false);
     await refresh();
@@ -76,7 +76,7 @@ function ClientsPage() {
             <thead className="border-b border-border text-left text-xs uppercase tracking-widest text-muted-foreground">
               <tr>
                 <th className="px-6 py-3">Name</th>
-                <th className="px-6 py-3">Company</th>
+                <th className="px-6 py-3">City</th>
                 <th className="px-6 py-3">Email</th>
                 <th className="px-6 py-3">Phone</th>
                 <th className="px-6 py-3" />
@@ -86,7 +86,7 @@ function ClientsPage() {
               {clients.map((c) => (
                 <tr key={c.id} className="border-b border-border/60 last:border-0 hover:bg-surface-muted/50">
                   <td className="px-6 py-4 font-semibold">{c.name}</td>
-                  <td className="px-6 py-4 text-muted-foreground">{c.company ?? "—"}</td>
+                  <td className="px-6 py-4 text-muted-foreground">{c.city ?? "—"}</td>
                   <td className="px-6 py-4 text-muted-foreground">{c.email ?? "—"}</td>
                   <td className="px-6 py-4 text-muted-foreground">{c.phone ?? "—"}</td>
                   <td className="px-6 py-4 text-right">
@@ -106,7 +106,7 @@ function ClientsPage() {
           <div className="w-full max-w-md rounded-2xl bg-surface p-6 shadow-lifted">
             <h2 className="font-display text-xl">New client</h2>
             <div className="mt-4 space-y-3">
-              {(["name", "company", "email", "phone"] as const).map((k) => (
+              {(["name", "city", "email", "phone"] as const).map((k) => (
                 <input
                   key={k}
                   value={form[k]}

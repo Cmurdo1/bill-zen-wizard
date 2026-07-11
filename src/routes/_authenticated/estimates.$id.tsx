@@ -342,7 +342,34 @@ function EstimateDetailPage() {
           {error && <p className="rounded-lg bg-destructive/10 px-3 py-2 text-xs font-semibold text-destructive">{error}</p>}
         </aside>
       </div>
+
+      {convertOpen && (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4" onClick={() => !converting && setConvertOpen(false)}>
+          <div className="w-full max-w-md rounded-2xl border border-border bg-surface p-6 shadow-lg" onClick={(e) => e.stopPropagation()}>
+            <h3 className="font-display text-xl">Convert to invoice</h3>
+            <p className="mt-1 text-sm text-muted-foreground">Choose the details for the new draft invoice.</p>
+            <div className="mt-4 grid gap-3">
+              <Field label="Issue date">
+                <input type="date" value={convertIssue} onChange={(e) => setConvertIssue(e.target.value)} className="h-10 w-full rounded-lg border border-border bg-background px-3 text-sm" />
+              </Field>
+              <Field label="Due date">
+                <input type="date" value={convertDue} onChange={(e) => setConvertDue(e.target.value)} className="h-10 w-full rounded-lg border border-border bg-background px-3 text-sm" />
+              </Field>
+              <Field label="Currency">
+                <input value={convertCurrency} onChange={(e) => setConvertCurrency(e.target.value.toUpperCase())} className="h-10 w-full rounded-lg border border-border bg-background px-3 text-sm" />
+              </Field>
+            </div>
+            <div className="mt-6 flex justify-end gap-2">
+              <button onClick={() => setConvertOpen(false)} disabled={converting} className="h-9 rounded-lg border border-border px-3 text-xs font-semibold hover:bg-surface-muted">Cancel</button>
+              <button onClick={convertToInvoice} disabled={converting} className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-primary px-3 text-xs font-semibold text-primary-foreground shadow-soft disabled:opacity-60">
+                {converting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ArrowRightCircle className="h-3.5 w-3.5" />} Create invoice
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </AppShell>
+
   );
 }
 

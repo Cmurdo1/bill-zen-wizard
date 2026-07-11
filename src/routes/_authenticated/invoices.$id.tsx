@@ -11,7 +11,8 @@ import {
   type LineItem,
   type InvoiceStatus,
 } from "@/lib/documents";
-import { ArrowLeft, Loader2, Save, Send, CheckCircle2, Trash2 } from "lucide-react";
+import { ArrowLeft, Loader2, Save, Send, CheckCircle2, Trash2, Download } from "lucide-react";
+import { printInvoice } from "@/lib/print-invoice";
 
 type Invoice = {
   id: string;

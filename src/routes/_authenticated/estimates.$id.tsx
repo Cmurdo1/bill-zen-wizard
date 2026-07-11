@@ -118,6 +118,20 @@ function EstimateDetailPage() {
     await save({ status: next });
   }
 
+  const [convertOpen, setConvertOpen] = useState(false);
+  const [convertIssue, setConvertIssue] = useState(() => new Date().toISOString().slice(0, 10));
+  const [convertDue, setConvertDue] = useState(() => { const d = new Date(); d.setDate(d.getDate() + 30); return d.toISOString().slice(0, 10); });
+  const [convertCurrency, setConvertCurrency] = useState("USD");
+
+  function openConvert() {
+    if (!estimate) return;
+    setConvertIssue(new Date().toISOString().slice(0, 10));
+    const d = new Date(); d.setDate(d.getDate() + 30);
+    setConvertDue(d.toISOString().slice(0, 10));
+    setConvertCurrency(estimate.currency || "USD");
+    setConvertOpen(true);
+  }
+
   async function convertToInvoice() {
     if (!estimate) return;
     setConverting(true);
@@ -128,19 +142,19 @@ function EstimateDetailPage() {
       const { data: profile } = await supabase.from("profiles").select("invoice_prefix,next_invoice_number").eq("id", user.id).maybeSingle();
       const prefix = profile?.invoice_prefix ?? "INV";
       const num = profile?.next_invoice_number ?? 1001;
-      const due = new Date(); due.setDate(due.getDate() + 30);
 
       const { data: inv, error: iErr } = await supabase.from("invoices").insert({
         user_id: user.id,
         client_id: estimate.client_id,
         invoice_number: `${prefix}-${num}`,
         status: "draft",
-        due_date: due.toISOString().slice(0, 10),
+        issue_date: convertIssue,
+        due_date: convertDue,
         subtotal_cents: estimate.subtotal_cents,
         tax_rate: estimate.tax_rate,
         tax_cents: estimate.tax_cents,
         total_cents: estimate.total_cents,
-        currency: estimate.currency,
+        currency: convertCurrency,
         notes: estimate.notes,
       }).select("id").single();
       if (iErr) throw iErr;
@@ -158,6 +172,7 @@ function EstimateDetailPage() {
       }
       await supabase.from("profiles").upsert({ id: user.id, next_invoice_number: num + 1 });
       await supabase.from("estimates").update({ status: "converted" }).eq("id", estimate.id);
+      setConvertOpen(false);
       if (inv) navigate({ to: "/invoices/$id", params: { id: inv.id } });
     } catch (e) {
       setError(e instanceof Error ? e.message : "Could not convert");

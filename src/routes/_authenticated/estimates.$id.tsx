@@ -119,7 +119,12 @@ function EstimateDetailPage() {
 
   async function updateStatus(next: EstimateStatus) {
     if (!estimate) return;
+    const prev = estimate.status;
     await save({ status: next });
+    if (prev !== next) {
+      await logActivity("estimate", estimate.id, `status:${next}`, `Changed from ${prev} to ${next}`);
+      setActivity(await fetchActivity("estimate", estimate.id));
+    }
   }
 
   const [convertOpen, setConvertOpen] = useState(false);

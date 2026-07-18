@@ -46,13 +46,16 @@ function AuthPage() {
     navigate({ to: dest });
   }
 
+  const [info, setInfo] = useState<string | null>(null);
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    setInfo(null);
     setLoading(true);
     try {
       if (mode === "signup") {
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
@@ -61,6 +64,17 @@ function AuthPage() {
           },
         });
         if (error) throw error;
+        if (data.session) {
+          navigate({ to: dest });
+          return;
+        }
+        // No session returned — try to sign in immediately (auto-confirm on)
+        const { error: signInErr } = await supabase.auth.signInWithPassword({ email, password });
+        if (signInErr) {
+          setInfo("Account created. Check your email to confirm, then log in.");
+          setMode("login");
+          return;
+        }
         navigate({ to: dest });
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -68,7 +82,16 @@ function AuthPage() {
         navigate({ to: dest });
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong");
+      const msg = err instanceof Error ? err.message : "Something went wrong";
+      if (/weak.?password|pwned/i.test(msg)) {
+        setError("That password appears in a known breach list. Please pick a stronger one (mix of letters, numbers, symbols; 12+ chars).");
+      } else if (/invalid.?login|invalid.?credentials/i.test(msg)) {
+        setError("Email or password is incorrect.");
+      } else if (/already.?registered|already.?exists|user.?already/i.test(msg)) {
+        setError("An account with that email already exists. Try logging in.");
+      } else {
+        setError(msg);
+      }
     } finally {
       setLoading(false);
     }

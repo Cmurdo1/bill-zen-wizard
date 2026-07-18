@@ -260,10 +260,19 @@ function EstimateDetailPage() {
               <FileCheck className="h-3.5 w-3.5" /> Mark accepted
             </button>
           )}
-          {estimate.status !== "converted" && (
+          {estimate.status !== "converted" && !estimate.converted_invoice_id && (
             <button onClick={openConvert} disabled={converting} className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-accent px-3 text-xs font-semibold text-accent-foreground hover:opacity-90 disabled:opacity-60">
               {converting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ArrowRightCircle className="h-3.5 w-3.5" />} Convert to invoice
             </button>
+          )}
+          {estimate.converted_invoice_id && (
+            <Link
+              to="/invoices/$id"
+              params={{ id: estimate.converted_invoice_id }}
+              className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-border bg-surface px-3 text-xs font-semibold hover:bg-surface-muted"
+            >
+              <ArrowRightCircle className="h-3.5 w-3.5" /> View invoice
+            </Link>
           )}
           <button onClick={() => save()} disabled={saving} className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-primary px-3 text-xs font-semibold text-primary-foreground shadow-soft disabled:opacity-60">
             {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />} Save

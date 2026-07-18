@@ -383,6 +383,23 @@ function EstimateDetailPage() {
 
           {msg && <p className="rounded-lg bg-success/10 px-3 py-2 text-xs font-semibold text-success">{msg}</p>}
           {error && <p className="rounded-lg bg-destructive/10 px-3 py-2 text-xs font-semibold text-destructive">{error}</p>}
+
+          <div className="rounded-2xl border border-border bg-surface p-6 shadow-soft">
+            <h2 className="text-sm font-semibold uppercase tracking-widest text-muted-foreground">Activity</h2>
+            {activity.length === 0 ? (
+              <p className="mt-3 text-xs text-muted-foreground">No activity yet.</p>
+            ) : (
+              <ol className="mt-3 space-y-2 text-xs">
+                {activity.map((a) => (
+                  <li key={a.id} className="border-l-2 border-border pl-3">
+                    <div className="font-semibold text-foreground">{a.action}</div>
+                    {a.detail && <div className="text-muted-foreground">{a.detail}</div>}
+                    <div className="text-muted-foreground">{new Date(a.created_at).toLocaleString()}</div>
+                  </li>
+                ))}
+              </ol>
+            )}
+          </div>
         </aside>
       </div>
 

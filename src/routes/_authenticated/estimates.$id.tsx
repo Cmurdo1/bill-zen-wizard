@@ -27,6 +27,8 @@ type Estimate = {
   tax_cents: number;
   total_cents: number;
   currency: string;
+  converted_at?: string | null;
+  converted_invoice_id?: string | null;
 };
 type Client = { id: string; name: string };
 

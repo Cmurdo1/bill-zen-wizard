@@ -12,6 +12,7 @@ import {
   type EstimateStatus,
 } from "@/lib/documents";
 import { ArrowLeft, Loader2, Save, Send, FileCheck, Trash2, ArrowRightCircle } from "lucide-react";
+import { logActivity, fetchActivity, type ActivityRow } from "@/lib/activity";
 
 type Estimate = {
   id: string;

@@ -122,10 +122,15 @@ function InvoiceDetailPage() {
 
   async function updateStatus(next: InvoiceStatus) {
     if (!invoice) return;
+    const prev = invoice.status;
     const overrides: Partial<Invoice> = { status: next };
     if (next === "paid" && !invoice.paid_at) overrides.paid_at = new Date().toISOString();
     if (next !== "paid") overrides.paid_at = null;
     await save(overrides);
+    if (prev !== next) {
+      await logActivity("invoice", invoice.id, `status:${next}`, `Changed from ${prev} to ${next}`);
+      setActivity(await fetchActivity("invoice", invoice.id));
+    }
   }
 
   async function remove() {
@@ -135,7 +140,7 @@ function InvoiceDetailPage() {
     navigate({ to: "/invoices" });
   }
 
-  async function downloadPdf() {
+  async function openPreview() {
     if (!invoice) return;
     const [clientRes, profRes] = await Promise.all([
       invoice.client_id
@@ -147,12 +152,13 @@ function InvoiceDetailPage() {
     const business_address = p
       ? [p.address_line1, p.address_line2, [p.city, p.state, p.postal_code].filter(Boolean).join(", "), p.country].filter(Boolean).join("\n")
       : "";
-    printInvoice({
+    setPreviewData({
       ...invoice,
       items: items.filter((i) => i.description.trim()),
       client: clientRes.data,
       business: { company_name: p?.company_name, full_name: p?.full_name, business_address },
     });
+    setPreviewOpen(true);
   }
 
   if (loading) {

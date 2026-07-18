@@ -167,6 +167,7 @@ function AuthPage() {
               />
             </Field>
 
+            {info && <p className="rounded-lg bg-success/10 px-3 py-2 text-sm text-success">{info}</p>}
             {error && <p className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</p>}
 
             <button

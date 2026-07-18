@@ -4,6 +4,9 @@ import { AppShell } from "@/components/app/shell";
 import { supabase } from "@/integrations/supabase/client";
 import { formatCurrency } from "@/lib/format";
 import { LineItemsEditor } from "@/components/app/line-items-editor";
+import { InvoicePreviewModal } from "@/components/app/invoice-preview-modal";
+import { logActivity, fetchActivity, type ActivityRow } from "@/lib/activity";
+import type { PrintInvoiceInput } from "@/lib/print-invoice";
 import {
   INVOICE_STATUSES,
   StatusPill,
@@ -11,8 +14,7 @@ import {
   type LineItem,
   type InvoiceStatus,
 } from "@/lib/documents";
-import { ArrowLeft, Loader2, Save, Send, CheckCircle2, Trash2, Download } from "lucide-react";
-import { printInvoice } from "@/lib/print-invoice";
+import { ArrowLeft, Loader2, Save, Send, CheckCircle2, Trash2, Eye } from "lucide-react";
 
 type Invoice = {
   id: string;

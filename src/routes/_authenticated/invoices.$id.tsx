@@ -49,8 +49,11 @@ function InvoiceDetailPage() {
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [activity, setActivity] = useState<ActivityRow[]>([]);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewData, setPreviewData] = useState<PrintInvoiceInput | null>(null);
 
-  useEffect(() => { void load(); }, [id]);
+  useEffect(() => { void load(); void fetchActivity("invoice", id).then(setActivity); }, [id]);
 
   async function load() {
     setLoading(true);

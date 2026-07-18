@@ -143,11 +143,31 @@ function EstimateDetailPage() {
 
   async function convertToInvoice() {
     if (!estimate) return;
-    setConverting(true);
     setError(null);
+    // Validation
+    if (!convertIssue) { setError("Issue date is required."); return; }
+    if (!convertDue) { setError("Due date is required."); return; }
+    if (new Date(convertDue) < new Date(convertIssue)) { setError("Due date must be on or after the issue date."); return; }
+    const cur = convertCurrency.trim().toUpperCase();
+    if (!/^[A-Z]{3}$/.test(cur)) { setError("Currency must be a 3-letter code (e.g. USD)."); return; }
+    const validItems = items.filter((i) => i.description.trim());
+    if (!validItems.length) { setError("Add at least one line item before converting."); return; }
+
+    setConverting(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not signed in");
+
+      // Prevent double-convert: re-check server state
+      const { data: fresh } = await supabase.from("estimates").select("converted_invoice_id,status").eq("id", estimate.id).maybeSingle();
+      const freshRow = fresh as { converted_invoice_id: string | null; status: string } | null;
+      if (freshRow?.converted_invoice_id) {
+        setError("This estimate has already been converted.");
+        setConvertOpen(false);
+        navigate({ to: "/invoices/$id", params: { id: freshRow.converted_invoice_id } });
+        return;
+      }
+
       const { data: profile } = await supabase.from("profiles").select("invoice_prefix,next_invoice_number").eq("id", user.id).maybeSingle();
       const prefix = profile?.invoice_prefix ?? "INV";
       const num = profile?.next_invoice_number ?? 1001;
@@ -163,13 +183,12 @@ function EstimateDetailPage() {
         tax_rate: estimate.tax_rate,
         tax_cents: estimate.tax_cents,
         total_cents: estimate.total_cents,
-        currency: convertCurrency,
+        currency: cur,
         notes: estimate.notes,
       }).select("id").single();
       if (iErr) throw iErr;
 
-      const validItems = items.filter((i) => i.description.trim());
-      if (inv && validItems.length) {
+      if (inv) {
         await supabase.from("invoice_items").insert(validItems.map((it, i) => ({
           invoice_id: inv.id,
           description: it.description,
@@ -178,11 +197,17 @@ function EstimateDetailPage() {
           amount_cents: Math.round(it.quantity * it.rate_cents),
           sort_order: i,
         })));
+        await supabase.from("profiles").upsert({ id: user.id, next_invoice_number: num + 1 });
+        await supabase.from("estimates").update({
+          status: "converted",
+          converted_at: new Date().toISOString(),
+          converted_invoice_id: inv.id,
+        }).eq("id", estimate.id);
+        await logActivity("estimate", estimate.id, "converted", `Created invoice ${prefix}-${num}`);
+        await logActivity("invoice", inv.id, "created", `Converted from estimate ${estimate.estimate_number}`);
+        setConvertOpen(false);
+        navigate({ to: "/invoices/$id", params: { id: inv.id } });
       }
-      await supabase.from("profiles").upsert({ id: user.id, next_invoice_number: num + 1 });
-      await supabase.from("estimates").update({ status: "converted" }).eq("id", estimate.id);
-      setConvertOpen(false);
-      if (inv) navigate({ to: "/invoices/$id", params: { id: inv.id } });
     } catch (e) {
       setError(e instanceof Error ? e.message : "Could not convert");
     } finally {

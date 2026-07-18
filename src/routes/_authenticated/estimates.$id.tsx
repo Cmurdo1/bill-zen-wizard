@@ -48,8 +48,9 @@ function EstimateDetailPage() {
   const [converting, setConverting] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [activity, setActivity] = useState<ActivityRow[]>([]);
 
-  useEffect(() => { void load(); }, [id]);
+  useEffect(() => { void load(); void fetchActivity("estimate", id).then(setActivity); }, [id]);
 
   async function load() {
     setLoading(true);

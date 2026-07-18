@@ -12,6 +12,7 @@ import {
   type EstimateStatus,
 } from "@/lib/documents";
 import { ArrowLeft, Loader2, Save, Send, FileCheck, Trash2, ArrowRightCircle } from "lucide-react";
+import { logActivity, fetchActivity, type ActivityRow } from "@/lib/activity";
 
 type Estimate = {
   id: string;
@@ -26,6 +27,8 @@ type Estimate = {
   tax_cents: number;
   total_cents: number;
   currency: string;
+  converted_at?: string | null;
+  converted_invoice_id?: string | null;
 };
 type Client = { id: string; name: string };
 
@@ -45,8 +48,9 @@ function EstimateDetailPage() {
   const [converting, setConverting] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [activity, setActivity] = useState<ActivityRow[]>([]);
 
-  useEffect(() => { void load(); }, [id]);
+  useEffect(() => { void load(); void fetchActivity("estimate", id).then(setActivity); }, [id]);
 
   async function load() {
     setLoading(true);
@@ -115,7 +119,12 @@ function EstimateDetailPage() {
 
   async function updateStatus(next: EstimateStatus) {
     if (!estimate) return;
+    const prev = estimate.status;
     await save({ status: next });
+    if (prev !== next) {
+      await logActivity("estimate", estimate.id, `status:${next}`, `Changed from ${prev} to ${next}`);
+      setActivity(await fetchActivity("estimate", estimate.id));
+    }
   }
 
   const [convertOpen, setConvertOpen] = useState(false);
@@ -134,11 +143,31 @@ function EstimateDetailPage() {
 
   async function convertToInvoice() {
     if (!estimate) return;
-    setConverting(true);
     setError(null);
+    // Validation
+    if (!convertIssue) { setError("Issue date is required."); return; }
+    if (!convertDue) { setError("Due date is required."); return; }
+    if (new Date(convertDue) < new Date(convertIssue)) { setError("Due date must be on or after the issue date."); return; }
+    const cur = convertCurrency.trim().toUpperCase();
+    if (!/^[A-Z]{3}$/.test(cur)) { setError("Currency must be a 3-letter code (e.g. USD)."); return; }
+    const validItems = items.filter((i) => i.description.trim());
+    if (!validItems.length) { setError("Add at least one line item before converting."); return; }
+
+    setConverting(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not signed in");
+
+      // Prevent double-convert: re-check server state
+      const { data: fresh } = await supabase.from("estimates").select("converted_invoice_id,status").eq("id", estimate.id).maybeSingle();
+      const freshRow = fresh as { converted_invoice_id: string | null; status: string } | null;
+      if (freshRow?.converted_invoice_id) {
+        setError("This estimate has already been converted.");
+        setConvertOpen(false);
+        navigate({ to: "/invoices/$id", params: { id: freshRow.converted_invoice_id } });
+        return;
+      }
+
       const { data: profile } = await supabase.from("profiles").select("invoice_prefix,next_invoice_number").eq("id", user.id).maybeSingle();
       const prefix = profile?.invoice_prefix ?? "INV";
       const num = profile?.next_invoice_number ?? 1001;
@@ -154,13 +183,12 @@ function EstimateDetailPage() {
         tax_rate: estimate.tax_rate,
         tax_cents: estimate.tax_cents,
         total_cents: estimate.total_cents,
-        currency: convertCurrency,
+        currency: cur,
         notes: estimate.notes,
       }).select("id").single();
       if (iErr) throw iErr;
 
-      const validItems = items.filter((i) => i.description.trim());
-      if (inv && validItems.length) {
+      if (inv) {
         await supabase.from("invoice_items").insert(validItems.map((it, i) => ({
           invoice_id: inv.id,
           description: it.description,
@@ -169,11 +197,17 @@ function EstimateDetailPage() {
           amount_cents: Math.round(it.quantity * it.rate_cents),
           sort_order: i,
         })));
+        await supabase.from("profiles").upsert({ id: user.id, next_invoice_number: num + 1 });
+        await supabase.from("estimates").update({
+          status: "converted",
+          converted_at: new Date().toISOString(),
+          converted_invoice_id: inv.id,
+        }).eq("id", estimate.id);
+        await logActivity("estimate", estimate.id, "converted", `Created invoice ${prefix}-${num}`);
+        await logActivity("invoice", inv.id, "created", `Converted from estimate ${estimate.estimate_number}`);
+        setConvertOpen(false);
+        navigate({ to: "/invoices/$id", params: { id: inv.id } });
       }
-      await supabase.from("profiles").upsert({ id: user.id, next_invoice_number: num + 1 });
-      await supabase.from("estimates").update({ status: "converted" }).eq("id", estimate.id);
-      setConvertOpen(false);
-      if (inv) navigate({ to: "/invoices/$id", params: { id: inv.id } });
     } catch (e) {
       setError(e instanceof Error ? e.message : "Could not convert");
     } finally {
@@ -226,10 +260,19 @@ function EstimateDetailPage() {
               <FileCheck className="h-3.5 w-3.5" /> Mark accepted
             </button>
           )}
-          {estimate.status !== "converted" && (
+          {estimate.status !== "converted" && !estimate.converted_invoice_id && (
             <button onClick={openConvert} disabled={converting} className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-accent px-3 text-xs font-semibold text-accent-foreground hover:opacity-90 disabled:opacity-60">
               {converting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ArrowRightCircle className="h-3.5 w-3.5" />} Convert to invoice
             </button>
+          )}
+          {estimate.converted_invoice_id && (
+            <Link
+              to="/invoices/$id"
+              params={{ id: estimate.converted_invoice_id }}
+              className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-border bg-surface px-3 text-xs font-semibold hover:bg-surface-muted"
+            >
+              <ArrowRightCircle className="h-3.5 w-3.5" /> View invoice
+            </Link>
           )}
           <button onClick={() => save()} disabled={saving} className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-primary px-3 text-xs font-semibold text-primary-foreground shadow-soft disabled:opacity-60">
             {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />} Save
@@ -340,6 +383,23 @@ function EstimateDetailPage() {
 
           {msg && <p className="rounded-lg bg-success/10 px-3 py-2 text-xs font-semibold text-success">{msg}</p>}
           {error && <p className="rounded-lg bg-destructive/10 px-3 py-2 text-xs font-semibold text-destructive">{error}</p>}
+
+          <div className="rounded-2xl border border-border bg-surface p-6 shadow-soft">
+            <h2 className="text-sm font-semibold uppercase tracking-widest text-muted-foreground">Activity</h2>
+            {activity.length === 0 ? (
+              <p className="mt-3 text-xs text-muted-foreground">No activity yet.</p>
+            ) : (
+              <ol className="mt-3 space-y-2 text-xs">
+                {activity.map((a) => (
+                  <li key={a.id} className="border-l-2 border-border pl-3">
+                    <div className="font-semibold text-foreground">{a.action}</div>
+                    {a.detail && <div className="text-muted-foreground">{a.detail}</div>}
+                    <div className="text-muted-foreground">{new Date(a.created_at).toLocaleString()}</div>
+                  </li>
+                ))}
+              </ol>
+            )}
+          </div>
         </aside>
       </div>
 

@@ -4,6 +4,9 @@ import { AppShell } from "@/components/app/shell";
 import { supabase } from "@/integrations/supabase/client";
 import { formatCurrency } from "@/lib/format";
 import { LineItemsEditor } from "@/components/app/line-items-editor";
+import { InvoicePreviewModal } from "@/components/app/invoice-preview-modal";
+import { logActivity, fetchActivity, type ActivityRow } from "@/lib/activity";
+import type { PrintInvoiceInput } from "@/lib/print-invoice";
 import {
   INVOICE_STATUSES,
   StatusPill,
@@ -11,8 +14,7 @@ import {
   type LineItem,
   type InvoiceStatus,
 } from "@/lib/documents";
-import { ArrowLeft, Loader2, Save, Send, CheckCircle2, Trash2, Download } from "lucide-react";
-import { printInvoice } from "@/lib/print-invoice";
+import { ArrowLeft, Loader2, Save, Send, CheckCircle2, Trash2, Eye } from "lucide-react";
 
 type Invoice = {
   id: string;
@@ -47,8 +49,11 @@ function InvoiceDetailPage() {
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [activity, setActivity] = useState<ActivityRow[]>([]);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewData, setPreviewData] = useState<PrintInvoiceInput | null>(null);
 
-  useEffect(() => { void load(); }, [id]);
+  useEffect(() => { void load(); void fetchActivity("invoice", id).then(setActivity); }, [id]);
 
   async function load() {
     setLoading(true);
@@ -117,10 +122,15 @@ function InvoiceDetailPage() {
 
   async function updateStatus(next: InvoiceStatus) {
     if (!invoice) return;
+    const prev = invoice.status;
     const overrides: Partial<Invoice> = { status: next };
     if (next === "paid" && !invoice.paid_at) overrides.paid_at = new Date().toISOString();
     if (next !== "paid") overrides.paid_at = null;
     await save(overrides);
+    if (prev !== next) {
+      await logActivity("invoice", invoice.id, `status:${next}`, `Changed from ${prev} to ${next}`);
+      setActivity(await fetchActivity("invoice", invoice.id));
+    }
   }
 
   async function remove() {
@@ -130,7 +140,7 @@ function InvoiceDetailPage() {
     navigate({ to: "/invoices" });
   }
 
-  async function downloadPdf() {
+  async function openPreview() {
     if (!invoice) return;
     const [clientRes, profRes] = await Promise.all([
       invoice.client_id
@@ -142,12 +152,13 @@ function InvoiceDetailPage() {
     const business_address = p
       ? [p.address_line1, p.address_line2, [p.city, p.state, p.postal_code].filter(Boolean).join(", "), p.country].filter(Boolean).join("\n")
       : "";
-    printInvoice({
+    setPreviewData({
       ...invoice,
       items: items.filter((i) => i.description.trim()),
       client: clientRes.data,
       business: { company_name: p?.company_name, full_name: p?.full_name, business_address },
     });
+    setPreviewOpen(true);
   }
 
   if (loading) {
@@ -178,8 +189,8 @@ function InvoiceDetailPage() {
           <button onClick={remove} className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-border px-3 text-xs font-semibold text-destructive hover:bg-destructive/5">
             <Trash2 className="h-3.5 w-3.5" /> Delete
           </button>
-          <button onClick={downloadPdf} className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-border bg-surface px-3 text-xs font-semibold hover:bg-surface-muted">
-            <Download className="h-3.5 w-3.5" /> Download PDF
+          <button onClick={openPreview} className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-border bg-surface px-3 text-xs font-semibold hover:bg-surface-muted">
+            <Eye className="h-3.5 w-3.5" /> Preview / PDF
           </button>
           {invoice.status === "draft" && (
             <button onClick={() => updateStatus("sent")} disabled={saving} className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-border bg-surface px-3 text-xs font-semibold hover:bg-surface-muted">
@@ -308,8 +319,27 @@ function InvoiceDetailPage() {
 
           {msg && <p className="rounded-lg bg-success/10 px-3 py-2 text-xs font-semibold text-success">{msg}</p>}
           {error && <p className="rounded-lg bg-destructive/10 px-3 py-2 text-xs font-semibold text-destructive">{error}</p>}
+
+          <div className="rounded-2xl border border-border bg-surface p-6 shadow-soft">
+            <h2 className="text-sm font-semibold uppercase tracking-widest text-muted-foreground">Activity</h2>
+            {activity.length === 0 ? (
+              <p className="mt-3 text-xs text-muted-foreground">No activity yet.</p>
+            ) : (
+              <ol className="mt-3 space-y-2 text-xs">
+                {activity.map((a) => (
+                  <li key={a.id} className="border-l-2 border-border pl-3">
+                    <div className="font-semibold text-foreground">{a.action}</div>
+                    {a.detail && <div className="text-muted-foreground">{a.detail}</div>}
+                    <div className="text-muted-foreground">{new Date(a.created_at).toLocaleString()}</div>
+                  </li>
+                ))}
+              </ol>
+            )}
+          </div>
         </aside>
       </div>
+
+      <InvoicePreviewModal open={previewOpen} invoice={previewData} onClose={() => setPreviewOpen(false)} />
     </AppShell>
   );
 }

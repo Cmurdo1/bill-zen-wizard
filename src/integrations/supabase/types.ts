@@ -65,6 +65,36 @@ export type Database = {
         }
         Relationships: []
       }
+      document_activity: {
+        Row: {
+          action: string
+          created_at: string
+          detail: string | null
+          document_id: string
+          document_type: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          detail?: string | null
+          document_id: string
+          document_type: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          detail?: string | null
+          document_id?: string
+          document_type?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       estimate_items: {
         Row: {
           amount_cents: number
@@ -107,6 +137,8 @@ export type Database = {
         Row: {
           ai_generated: boolean
           client_id: string | null
+          converted_at: string | null
+          converted_invoice_id: string | null
           created_at: string
           currency: string
           estimate_number: string
@@ -125,6 +157,8 @@ export type Database = {
         Insert: {
           ai_generated?: boolean
           client_id?: string | null
+          converted_at?: string | null
+          converted_invoice_id?: string | null
           created_at?: string
           currency?: string
           estimate_number: string
@@ -143,6 +177,8 @@ export type Database = {
         Update: {
           ai_generated?: boolean
           client_id?: string | null
+          converted_at?: string | null
+          converted_invoice_id?: string | null
           created_at?: string
           currency?: string
           estimate_number?: string
@@ -219,6 +255,8 @@ export type Database = {
           paid_at: string | null
           payment_link_token: string
           status: string
+          stripe_payment_intent_id: string | null
+          stripe_session_id: string | null
           subtotal_cents: number
           tax_cents: number
           tax_rate: number
@@ -238,6 +276,8 @@ export type Database = {
           paid_at?: string | null
           payment_link_token?: string
           status?: string
+          stripe_payment_intent_id?: string | null
+          stripe_session_id?: string | null
           subtotal_cents?: number
           tax_cents?: number
           tax_rate?: number
@@ -257,6 +297,8 @@ export type Database = {
           paid_at?: string | null
           payment_link_token?: string
           status?: string
+          stripe_payment_intent_id?: string | null
+          stripe_session_id?: string | null
           subtotal_cents?: number
           tax_cents?: number
           tax_rate?: number

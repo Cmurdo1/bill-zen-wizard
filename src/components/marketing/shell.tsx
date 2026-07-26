@@ -1,11 +1,18 @@
 import { Link } from "@tanstack/react-router";
-import { FileText } from "lucide-react";
+import hiLogo from "@/assets/hi-logo.png.asset.json";
 
 export function Logo({ className = "" }: { className?: string }) {
   return (
     <Link to="/" className={`inline-flex items-center gap-2 font-semibold text-foreground ${className}`}>
-      <span className="grid h-8 w-8 place-items-center rounded-lg bg-primary text-primary-foreground">
-        <FileText className="h-4 w-4" />
+      <img
+        src={hiLogo.url}
+        alt="Honest Invoice"
+        className="h-9 w-9 rounded-full object-contain dark:hidden"
+        width={36}
+        height={36}
+      />
+      <span className="hidden h-9 w-9 place-items-center rounded-lg bg-primary text-primary-foreground dark:grid">
+        <span className="font-display text-sm font-bold">HI</span>
       </span>
       <span className="text-lg tracking-tight">Honest Invoice</span>
     </Link>

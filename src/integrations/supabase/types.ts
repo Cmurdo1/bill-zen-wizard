@@ -204,6 +204,41 @@ export type Database = {
           },
         ]
       }
+      invoice_feedback: {
+        Row: {
+          client_name: string | null
+          comment: string | null
+          created_at: string
+          id: string
+          invoice_id: string
+          rating: number | null
+        }
+        Insert: {
+          client_name?: string | null
+          comment?: string | null
+          created_at?: string
+          id?: string
+          invoice_id: string
+          rating?: number | null
+        }
+        Update: {
+          client_name?: string | null
+          comment?: string | null
+          created_at?: string
+          id?: string
+          invoice_id?: string
+          rating?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_feedback_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       invoice_items: {
         Row: {
           amount_cents: number
@@ -248,6 +283,7 @@ export type Database = {
           created_at: string
           currency: string
           due_date: string | null
+          feedback_token: string | null
           id: string
           invoice_number: string
           issue_date: string
@@ -269,6 +305,7 @@ export type Database = {
           created_at?: string
           currency?: string
           due_date?: string | null
+          feedback_token?: string | null
           id?: string
           invoice_number: string
           issue_date?: string
@@ -290,6 +327,7 @@ export type Database = {
           created_at?: string
           currency?: string
           due_date?: string | null
+          feedback_token?: string | null
           id?: string
           invoice_number?: string
           issue_date?: string
@@ -315,6 +353,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      job_leads: {
+        Row: {
+          budget_range: string | null
+          contact_email: string | null
+          contact_phone: string | null
+          created_at: string
+          description: string
+          id: string
+          location: string
+          source: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          budget_range?: string | null
+          contact_email?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          description: string
+          id?: string
+          location: string
+          source?: string
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          budget_range?: string | null
+          contact_email?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          description?: string
+          id?: string
+          location?: string
+          source?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       leads: {
         Row: {
@@ -407,12 +487,14 @@ export type Database = {
           address_line1: string | null
           address_line2: string | null
           brand_color: string | null
+          business_name: string | null
           city: string | null
           company_name: string | null
           country: string | null
           created_at: string
           default_currency: string | null
           default_payment_terms: number | null
+          email: string | null
           estimate_prefix: string | null
           full_name: string | null
           id: string
@@ -423,6 +505,9 @@ export type Database = {
           phone: string | null
           postal_code: string | null
           state: string | null
+          stripe_customer_id: string | null
+          subscription_end: string | null
+          subscription_status: string | null
           tax_id: string | null
           updated_at: string
         }
@@ -430,12 +515,14 @@ export type Database = {
           address_line1?: string | null
           address_line2?: string | null
           brand_color?: string | null
+          business_name?: string | null
           city?: string | null
           company_name?: string | null
           country?: string | null
           created_at?: string
           default_currency?: string | null
           default_payment_terms?: number | null
+          email?: string | null
           estimate_prefix?: string | null
           full_name?: string | null
           id: string
@@ -446,6 +533,9 @@ export type Database = {
           phone?: string | null
           postal_code?: string | null
           state?: string | null
+          stripe_customer_id?: string | null
+          subscription_end?: string | null
+          subscription_status?: string | null
           tax_id?: string | null
           updated_at?: string
         }
@@ -453,12 +543,14 @@ export type Database = {
           address_line1?: string | null
           address_line2?: string | null
           brand_color?: string | null
+          business_name?: string | null
           city?: string | null
           company_name?: string | null
           country?: string | null
           created_at?: string
           default_currency?: string | null
           default_payment_terms?: number | null
+          email?: string | null
           estimate_prefix?: string | null
           full_name?: string | null
           id?: string
@@ -469,20 +561,250 @@ export type Database = {
           phone?: string | null
           postal_code?: string | null
           state?: string | null
+          stripe_customer_id?: string | null
+          subscription_end?: string | null
+          subscription_status?: string | null
           tax_id?: string | null
           updated_at?: string
         }
         Relationships: []
       }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      webhook_logs: {
+        Row: {
+          created_at: string
+          id: string
+          payload: Json
+          response: Json | null
+          source: string
+          status: string
+          type: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          payload?: Json
+          response?: Json | null
+          source?: string
+          status?: string
+          type?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          payload?: Json
+          response?: Json | null
+          source?: string
+          status?: string
+          type?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
-      [_ in never]: never
+      profiles_safe: {
+        Row: {
+          address_line1: string | null
+          address_line2: string | null
+          brand_color: string | null
+          business_name: string | null
+          city: string | null
+          company_name: string | null
+          country: string | null
+          created_at: string | null
+          default_currency: string | null
+          default_payment_terms: number | null
+          email: string | null
+          estimate_prefix: string | null
+          full_name: string | null
+          id: string | null
+          invoice_prefix: string | null
+          logo_url: string | null
+          phone: string | null
+          postal_code: string | null
+          state: string | null
+          subscription_end: string | null
+          subscription_status: string | null
+          tax_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          address_line1?: string | null
+          address_line2?: string | null
+          brand_color?: string | null
+          business_name?: string | null
+          city?: string | null
+          company_name?: string | null
+          country?: string | null
+          created_at?: string | null
+          default_currency?: string | null
+          default_payment_terms?: number | null
+          email?: string | null
+          estimate_prefix?: string | null
+          full_name?: string | null
+          id?: string | null
+          invoice_prefix?: string | null
+          logo_url?: string | null
+          phone?: string | null
+          postal_code?: string | null
+          state?: string | null
+          subscription_end?: string | null
+          subscription_status?: string | null
+          tax_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          address_line1?: string | null
+          address_line2?: string | null
+          brand_color?: string | null
+          business_name?: string | null
+          city?: string | null
+          company_name?: string | null
+          country?: string | null
+          created_at?: string | null
+          default_currency?: string | null
+          default_payment_terms?: number | null
+          email?: string | null
+          estimate_prefix?: string | null
+          full_name?: string | null
+          id?: string | null
+          invoice_prefix?: string | null
+          logo_url?: string | null
+          phone?: string | null
+          postal_code?: string | null
+          state?: string | null
+          subscription_end?: string | null
+          subscription_status?: string | null
+          tax_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
-      [_ in never]: never
+      check_admin_access: { Args: never; Returns: boolean }
+      get_all_feedback: {
+        Args: never
+        Returns: {
+          client_name: string
+          comment: string
+          created_at: string
+          id: string
+          invoice_id: string
+          invoice_number: string
+          rating: number
+          user_email: string
+        }[]
+      }
+      get_all_users: {
+        Args: never
+        Returns: {
+          business_name: string
+          created_at: string
+          email: string
+          id: string
+          invoice_count: number
+          subscription_end: string
+          subscription_status: string
+        }[]
+      }
+      get_job_leads: {
+        Args: never
+        Returns: {
+          budget_range: string | null
+          contact_email: string | null
+          contact_phone: string | null
+          created_at: string
+          description: string
+          id: string
+          location: string
+          source: string
+          status: string
+          title: string
+          updated_at: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "job_leads"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      get_subscription_stats: {
+        Args: never
+        Returns: {
+          count: number
+          status: string
+        }[]
+      }
+      get_system_stats: {
+        Args: never
+        Returns: {
+          active_subscriptions: number
+          invoices_this_month: number
+          total_clients: number
+          total_invoices: number
+          total_revenue_cents: number
+          total_users: number
+          users_this_month: number
+        }[]
+      }
+      get_webhook_logs: {
+        Args: never
+        Returns: {
+          created_at: string
+          id: string
+          payload: Json
+          response: Json | null
+          source: string
+          status: string
+          type: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "webhook_logs"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      update_job_lead_status: {
+        Args: { lead_id: string; new_status: string }
+        Returns: undefined
+      }
+      validate_feedback_token: {
+        Args: { p_invoice_id: string; p_token: string }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "moderator" | "user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -609,6 +931,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "moderator", "user"],
+    },
   },
 } as const

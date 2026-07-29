@@ -33,6 +33,7 @@ function DashboardPage() {
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
   const [showNew, setShowNew] = useState(false);
+  const sub = useSubscription();
 
   useEffect(() => { void refresh(); }, []);
 
@@ -57,12 +58,17 @@ function DashboardPage() {
   return (
     <AppShell title="Dashboard">
       <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
-        <p className="text-sm text-muted-foreground">Your invoices, cash, and clients in one place.</p>
+        <div className="flex items-center gap-3">
+          <p className="text-sm text-muted-foreground">Your invoices, cash, and clients in one place.</p>
+          <PlanBadge plan={sub.plan} />
+        </div>
         <button
           onClick={() => setShowNew(true)}
-          className="inline-flex h-11 items-center gap-2 rounded-xl bg-primary px-5 text-sm font-semibold text-primary-foreground shadow-soft hover:opacity-90"
+          disabled={!sub.canCreateInvoice}
+          title={!sub.canCreateInvoice ? "Free plan monthly limit reached — upgrade to continue" : undefined}
+          className="inline-flex h-11 items-center gap-2 rounded-xl bg-primary px-5 text-sm font-semibold text-primary-foreground shadow-soft hover:opacity-90 disabled:opacity-50"
         >
-          <Plus className="h-4 w-4" /> New invoice
+          {sub.canCreateInvoice ? <Plus className="h-4 w-4" /> : <Lock className="h-4 w-4" />} New invoice
         </button>
       </div>
 
@@ -71,6 +77,13 @@ function DashboardPage() {
         <Stat label="Paid this month" value={formatCurrency(paidThisMonth)} />
         <Stat label="Clients" value={clients.length.toString()} />
       </div>
+
+      {sub.plan === "free" && !sub.loading && (
+        <div className="mt-6 grid gap-4 sm:grid-cols-2">
+          <UsageMeter used={sub.invoicesThisMonth} limit={sub.invoiceLimit} label="Invoices this month" />
+          {!sub.canUseAI && <UpgradeCallout feature="AI line-item extraction" />}
+        </div>
+      )}
 
       <section className="mt-10 rounded-2xl border border-border bg-surface shadow-soft">
         <div className="flex items-center justify-between border-b border-border px-6 py-4">

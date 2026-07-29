@@ -5,7 +5,9 @@ import { extractLineItems } from "@/lib/invoices.functions";
 import { useServerFn } from "@tanstack/react-start";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { AppShell } from "@/components/app/shell";
-import { Plus, Sparkles, Loader2, Trash2 } from "lucide-react";
+import { useSubscription } from "@/lib/subscription";
+import { PlanBadge, UsageMeter, UpgradeCallout } from "@/components/app/plan-badge";
+import { Plus, Sparkles, Loader2, Trash2, Lock } from "lucide-react";
 
 type Invoice = {
   id: string;

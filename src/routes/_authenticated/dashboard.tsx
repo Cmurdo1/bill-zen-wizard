@@ -133,8 +133,9 @@ function DashboardPage() {
       {showNew && (
         <NewInvoiceDialog
           clients={clients}
+          canUseAI={sub.canUseAI}
           onClose={() => setShowNew(false)}
-          onCreated={async () => { setShowNew(false); await refresh(); }}
+          onCreated={async () => { setShowNew(false); await refresh(); await sub.refresh(); }}
           onClientCreated={async () => {
             const { data } = await supabase.from("clients").select("id,name,email").order("name");
             setClients((data as Client[]) ?? []);
@@ -167,11 +168,13 @@ function StatusPill({ status }: { status: string }) {
 
 function NewInvoiceDialog({
   clients,
+  canUseAI,
   onClose,
   onCreated,
   onClientCreated,
 }: {
   clients: Client[];
+  canUseAI: boolean;
   onClose: () => void;
   onCreated: () => void;
   onClientCreated: () => Promise<void>;

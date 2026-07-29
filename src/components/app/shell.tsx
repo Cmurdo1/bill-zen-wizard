@@ -52,7 +52,7 @@ export function AppShell({ children, title }: { children: React.ReactNode; title
           <Logo />
         </div>
         <nav className="flex-1 space-y-1 p-3" aria-label="App navigation">
-          {NAV.map(({ to, label, icon: Icon }) => {
+          {nav.map(({ to, label, icon: Icon }) => {
             const active = pathname === to;
             return (
               <Link
@@ -89,7 +89,7 @@ export function AppShell({ children, title }: { children: React.ReactNode; title
           </button>
         </header>
         <nav className="flex gap-1 overflow-x-auto border-b border-border bg-surface px-3 py-2 lg:hidden" aria-label="Mobile app navigation">
-          {NAV.map(({ to, label, icon: Icon }) => {
+          {nav.map(({ to, label, icon: Icon }) => {
             const active = pathname === to;
             return (
               <Link

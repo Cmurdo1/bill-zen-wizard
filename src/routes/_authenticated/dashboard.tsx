@@ -310,22 +310,26 @@ function NewInvoiceDialog({
           <div className="flex items-center gap-2">
             <Sparkles className="h-4 w-4 text-accent" />
             <p className="text-sm font-semibold">AI line-item extraction</p>
+            {!canUseAI && <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold uppercase text-muted-foreground">Pro</span>}
           </div>
-          <p className="mt-1 text-xs text-muted-foreground">Describe the job in plain English. AI will generate itemized labor and materials.</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            {canUseAI ? "Describe the job in plain English. AI will generate itemized labor and materials." : "Upgrade to Pro to describe jobs in plain English and auto-generate itemized line items."}
+          </p>
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             rows={3}
+            disabled={!canUseAI}
             placeholder="e.g. Replaced 3-ton condenser, 4 hrs labor, R-410A refrigerant charge, warranty registration"
-            className="mt-3 block w-full rounded-lg border border-border bg-background p-3 text-sm"
+            className="mt-3 block w-full rounded-lg border border-border bg-background p-3 text-sm disabled:opacity-60"
           />
           <button
             onClick={handleAi}
-            disabled={aiLoading || !description.trim()}
+            disabled={aiLoading || !description.trim() || !canUseAI}
             className="mt-3 inline-flex h-9 items-center gap-2 rounded-lg bg-accent px-4 text-xs font-semibold text-accent-foreground disabled:opacity-60"
           >
             {aiLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
-            {aiLoading ? "Thinking…" : "Generate line items"}
+            {aiLoading ? "Thinking…" : canUseAI ? "Generate line items" : "Upgrade to use AI"}
           </button>
         </div>
 

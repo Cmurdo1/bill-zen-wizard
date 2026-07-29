@@ -2,6 +2,7 @@ import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Logo } from "@/components/marketing/shell";
+import { useIsAdmin } from "@/lib/subscription";
 import {
   LayoutDashboard,
   ClipboardList,
@@ -11,6 +12,7 @@ import {
   Upload,
   Zap,
   Settings as SettingsIcon,
+  ShieldCheck,
   LogOut,
 } from "lucide-react";
 
@@ -25,10 +27,14 @@ const NAV = [
   { to: "/settings", label: "Settings", icon: SettingsIcon },
 ] as const;
 
+const ADMIN_ITEM = { to: "/admin", label: "Admin", icon: ShieldCheck } as const;
+
 export function AppShell({ children, title }: { children: React.ReactNode; title?: string }) {
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [email, setEmail] = useState("");
+  const { isAdmin } = useIsAdmin();
+  const nav = isAdmin ? [...NAV, ADMIN_ITEM] : NAV;
 
   useEffect(() => {
     void supabase.auth.getUser().then(({ data }) => setEmail(data.user?.email ?? ""));
@@ -46,7 +52,7 @@ export function AppShell({ children, title }: { children: React.ReactNode; title
           <Logo />
         </div>
         <nav className="flex-1 space-y-1 p-3" aria-label="App navigation">
-          {NAV.map(({ to, label, icon: Icon }) => {
+          {nav.map(({ to, label, icon: Icon }) => {
             const active = pathname === to;
             return (
               <Link
@@ -83,7 +89,7 @@ export function AppShell({ children, title }: { children: React.ReactNode; title
           </button>
         </header>
         <nav className="flex gap-1 overflow-x-auto border-b border-border bg-surface px-3 py-2 lg:hidden" aria-label="Mobile app navigation">
-          {NAV.map(({ to, label, icon: Icon }) => {
+          {nav.map(({ to, label, icon: Icon }) => {
             const active = pathname === to;
             return (
               <Link

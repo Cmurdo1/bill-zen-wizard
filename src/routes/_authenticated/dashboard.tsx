@@ -5,7 +5,9 @@ import { extractLineItems } from "@/lib/invoices.functions";
 import { useServerFn } from "@tanstack/react-start";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { AppShell } from "@/components/app/shell";
-import { Plus, Sparkles, Loader2, Trash2 } from "lucide-react";
+import { useSubscription } from "@/lib/subscription";
+import { PlanBadge, UsageMeter, UpgradeCallout } from "@/components/app/plan-badge";
+import { Plus, Sparkles, Loader2, Trash2, Lock } from "lucide-react";
 
 type Invoice = {
   id: string;
@@ -31,6 +33,7 @@ function DashboardPage() {
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
   const [showNew, setShowNew] = useState(false);
+  const sub = useSubscription();
 
   useEffect(() => { void refresh(); }, []);
 
@@ -55,12 +58,17 @@ function DashboardPage() {
   return (
     <AppShell title="Dashboard">
       <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
-        <p className="text-sm text-muted-foreground">Your invoices, cash, and clients in one place.</p>
+        <div className="flex items-center gap-3">
+          <p className="text-sm text-muted-foreground">Your invoices, cash, and clients in one place.</p>
+          <PlanBadge plan={sub.plan} />
+        </div>
         <button
           onClick={() => setShowNew(true)}
-          className="inline-flex h-11 items-center gap-2 rounded-xl bg-primary px-5 text-sm font-semibold text-primary-foreground shadow-soft hover:opacity-90"
+          disabled={!sub.canCreateInvoice}
+          title={!sub.canCreateInvoice ? "Free plan monthly limit reached — upgrade to continue" : undefined}
+          className="inline-flex h-11 items-center gap-2 rounded-xl bg-primary px-5 text-sm font-semibold text-primary-foreground shadow-soft hover:opacity-90 disabled:opacity-50"
         >
-          <Plus className="h-4 w-4" /> New invoice
+          {sub.canCreateInvoice ? <Plus className="h-4 w-4" /> : <Lock className="h-4 w-4" />} New invoice
         </button>
       </div>
 
@@ -69,6 +77,13 @@ function DashboardPage() {
         <Stat label="Paid this month" value={formatCurrency(paidThisMonth)} />
         <Stat label="Clients" value={clients.length.toString()} />
       </div>
+
+      {sub.plan === "free" && !sub.loading && (
+        <div className="mt-6 grid gap-4 sm:grid-cols-2">
+          <UsageMeter used={sub.invoicesThisMonth} limit={sub.invoiceLimit} label="Invoices this month" />
+          {!sub.canUseAI && <UpgradeCallout feature="AI line-item extraction" />}
+        </div>
+      )}
 
       <section className="mt-10 rounded-2xl border border-border bg-surface shadow-soft">
         <div className="flex items-center justify-between border-b border-border px-6 py-4">
@@ -118,8 +133,9 @@ function DashboardPage() {
       {showNew && (
         <NewInvoiceDialog
           clients={clients}
+          canUseAI={sub.canUseAI}
           onClose={() => setShowNew(false)}
-          onCreated={async () => { setShowNew(false); await refresh(); }}
+          onCreated={async () => { setShowNew(false); await refresh(); await sub.refresh(); }}
           onClientCreated={async () => {
             const { data } = await supabase.from("clients").select("id,name,email").order("name");
             setClients((data as Client[]) ?? []);
@@ -152,11 +168,13 @@ function StatusPill({ status }: { status: string }) {
 
 function NewInvoiceDialog({
   clients,
+  canUseAI,
   onClose,
   onCreated,
   onClientCreated,
 }: {
   clients: Client[];
+  canUseAI: boolean;
   onClose: () => void;
   onCreated: () => void;
   onClientCreated: () => Promise<void>;
@@ -292,22 +310,26 @@ function NewInvoiceDialog({
           <div className="flex items-center gap-2">
             <Sparkles className="h-4 w-4 text-accent" />
             <p className="text-sm font-semibold">AI line-item extraction</p>
+            {!canUseAI && <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold uppercase text-muted-foreground">Pro</span>}
           </div>
-          <p className="mt-1 text-xs text-muted-foreground">Describe the job in plain English. AI will generate itemized labor and materials.</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            {canUseAI ? "Describe the job in plain English. AI will generate itemized labor and materials." : "Upgrade to Pro to describe jobs in plain English and auto-generate itemized line items."}
+          </p>
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             rows={3}
+            disabled={!canUseAI}
             placeholder="e.g. Replaced 3-ton condenser, 4 hrs labor, R-410A refrigerant charge, warranty registration"
-            className="mt-3 block w-full rounded-lg border border-border bg-background p-3 text-sm"
+            className="mt-3 block w-full rounded-lg border border-border bg-background p-3 text-sm disabled:opacity-60"
           />
           <button
             onClick={handleAi}
-            disabled={aiLoading || !description.trim()}
+            disabled={aiLoading || !description.trim() || !canUseAI}
             className="mt-3 inline-flex h-9 items-center gap-2 rounded-lg bg-accent px-4 text-xs font-semibold text-accent-foreground disabled:opacity-60"
           >
             {aiLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
-            {aiLoading ? "Thinking…" : "Generate line items"}
+            {aiLoading ? "Thinking…" : canUseAI ? "Generate line items" : "Upgrade to use AI"}
           </button>
         </div>
 

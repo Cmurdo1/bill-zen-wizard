@@ -33,6 +33,8 @@ export function AppShell({ children, title }: { children: React.ReactNode; title
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [email, setEmail] = useState("");
+  const { isAdmin } = useIsAdmin();
+  const nav = isAdmin ? [...NAV, ADMIN_ITEM] : NAV;
 
   useEffect(() => {
     void supabase.auth.getUser().then(({ data }) => setEmail(data.user?.email ?? ""));

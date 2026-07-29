@@ -4,7 +4,9 @@ import { AppShell } from "@/components/app/shell";
 import { supabase } from "@/integrations/supabase/client";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { INVOICE_STATUSES, StatusPill, type InvoiceStatus } from "@/lib/documents";
-import { Loader2, Plus, Search } from "lucide-react";
+import { useSubscription } from "@/lib/subscription";
+import { UsageMeter } from "@/components/app/plan-badge";
+import { Loader2, Plus, Search, Lock } from "lucide-react";
 
 type Invoice = {
   id: string;
@@ -30,6 +32,7 @@ function InvoicesPage() {
   const [filter, setFilter] = useState<"all" | InvoiceStatus>("all");
   const [query, setQuery] = useState("");
   const [creating, setCreating] = useState(false);
+  const sub = useSubscription();
 
   async function refresh() {
     setLoading(true);
@@ -56,6 +59,7 @@ function InvoicesPage() {
   }, [invoices, clients, filter, query]);
 
   async function createBlank() {
+    if (!sub.canCreateInvoice) return;
     setCreating(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -71,6 +75,7 @@ function InvoicesPage() {
         due_date: due.toISOString().slice(0, 10),
       }).select("id").single();
       await supabase.from("profiles").upsert({ id: user.id, next_invoice_number: num + 1 });
+      await sub.refresh();
       if (inv) window.location.href = `/invoices/${inv.id}`;
     } finally {
       setCreating(false);

@@ -96,6 +96,12 @@ function InvoicesPage() {
         <Stat label="Drafts" value={totals.draft.toString()} />
       </div>
 
+      {sub.plan === "free" && !sub.loading && (
+        <div className="mb-4">
+          <UsageMeter used={sub.invoicesThisMonth} limit={sub.invoiceLimit} label="Invoices this month" />
+        </div>
+      )}
+
       <div className="mb-4 flex flex-wrap items-center gap-3">
         <div className="relative flex-1 min-w-48">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -119,10 +125,11 @@ function InvoicesPage() {
         </div>
         <button
           onClick={createBlank}
-          disabled={creating}
+          disabled={creating || !sub.canCreateInvoice}
+          title={!sub.canCreateInvoice ? "Free plan monthly limit reached — upgrade to continue" : undefined}
           className="inline-flex h-10 items-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground shadow-soft disabled:opacity-60"
         >
-          {creating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />} New invoice
+          {creating ? <Loader2 className="h-4 w-4 animate-spin" /> : sub.canCreateInvoice ? <Plus className="h-4 w-4" /> : <Lock className="h-4 w-4" />} New invoice
         </button>
       </div>
 

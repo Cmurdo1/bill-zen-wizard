@@ -2,6 +2,7 @@ import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Logo } from "@/components/marketing/shell";
+import { useIsAdmin } from "@/lib/subscription";
 import {
   LayoutDashboard,
   ClipboardList,
@@ -11,6 +12,7 @@ import {
   Upload,
   Zap,
   Settings as SettingsIcon,
+  ShieldCheck,
   LogOut,
 } from "lucide-react";
 
@@ -24,6 +26,8 @@ const NAV = [
   { to: "/cash-velocity", label: "Cash Velocity", icon: Zap },
   { to: "/settings", label: "Settings", icon: SettingsIcon },
 ] as const;
+
+const ADMIN_ITEM = { to: "/admin", label: "Admin", icon: ShieldCheck } as const;
 
 export function AppShell({ children, title }: { children: React.ReactNode; title?: string }) {
   const navigate = useNavigate();

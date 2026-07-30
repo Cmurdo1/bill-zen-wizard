@@ -290,6 +290,7 @@ export type Database = {
           notes: string | null
           paid_at: string | null
           payment_link_token: string
+          sent_count: number | null
           status: string
           stripe_payment_intent_id: string | null
           stripe_session_id: string | null
@@ -297,6 +298,7 @@ export type Database = {
           tax_cents: number
           tax_rate: number
           total_cents: number
+          type: string | null
           updated_at: string
           user_id: string
         }
@@ -312,6 +314,7 @@ export type Database = {
           notes?: string | null
           paid_at?: string | null
           payment_link_token?: string
+          sent_count?: number | null
           status?: string
           stripe_payment_intent_id?: string | null
           stripe_session_id?: string | null
@@ -319,6 +322,7 @@ export type Database = {
           tax_cents?: number
           tax_rate?: number
           total_cents?: number
+          type?: string | null
           updated_at?: string
           user_id: string
         }
@@ -334,6 +338,7 @@ export type Database = {
           notes?: string | null
           paid_at?: string | null
           payment_link_token?: string
+          sent_count?: number | null
           status?: string
           stripe_payment_intent_id?: string | null
           stripe_session_id?: string | null
@@ -341,6 +346,7 @@ export type Database = {
           tax_cents?: number
           tax_rate?: number
           total_cents?: number
+          type?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -489,12 +495,14 @@ export type Database = {
           brand_color: string | null
           business_name: string | null
           city: string | null
+          col_multiplier: number | null
           company_name: string | null
           country: string | null
           created_at: string
           default_currency: string | null
           default_payment_terms: number | null
           email: string | null
+          estimate_color: string | null
           estimate_prefix: string | null
           full_name: string | null
           id: string
@@ -510,6 +518,7 @@ export type Database = {
           subscription_status: string | null
           tax_id: string | null
           updated_at: string
+          zip_code: string | null
         }
         Insert: {
           address_line1?: string | null
@@ -517,12 +526,14 @@ export type Database = {
           brand_color?: string | null
           business_name?: string | null
           city?: string | null
+          col_multiplier?: number | null
           company_name?: string | null
           country?: string | null
           created_at?: string
           default_currency?: string | null
           default_payment_terms?: number | null
           email?: string | null
+          estimate_color?: string | null
           estimate_prefix?: string | null
           full_name?: string | null
           id: string
@@ -538,6 +549,7 @@ export type Database = {
           subscription_status?: string | null
           tax_id?: string | null
           updated_at?: string
+          zip_code?: string | null
         }
         Update: {
           address_line1?: string | null
@@ -545,12 +557,14 @@ export type Database = {
           brand_color?: string | null
           business_name?: string | null
           city?: string | null
+          col_multiplier?: number | null
           company_name?: string | null
           country?: string | null
           created_at?: string
           default_currency?: string | null
           default_payment_terms?: number | null
           email?: string | null
+          estimate_color?: string | null
           estimate_prefix?: string | null
           full_name?: string | null
           id?: string
@@ -566,6 +580,40 @@ export type Database = {
           subscription_status?: string | null
           tax_id?: string | null
           updated_at?: string
+          zip_code?: string | null
+        }
+        Relationships: []
+      }
+      usage_tracking: {
+        Row: {
+          billing_period_end: string | null
+          billing_period_start: string | null
+          created_at: string | null
+          id: string
+          metric_name: string
+          updated_at: string | null
+          usage_count: number | null
+          user_id: string
+        }
+        Insert: {
+          billing_period_end?: string | null
+          billing_period_start?: string | null
+          created_at?: string | null
+          id?: string
+          metric_name: string
+          updated_at?: string | null
+          usage_count?: number | null
+          user_id: string
+        }
+        Update: {
+          billing_period_end?: string | null
+          billing_period_start?: string | null
+          created_at?: string | null
+          id?: string
+          metric_name?: string
+          updated_at?: string | null
+          usage_count?: number | null
+          user_id?: string
         }
         Relationships: []
       }

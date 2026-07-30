@@ -2,3 +2,5 @@ User-agent: *
 Allow: /
 Disallow: /auth
 Disallow: /dashboard
+
+Sitemap: https://bill-zen-wizard.lovable.app/sitemap.xml

@@ -31,7 +31,25 @@ const ExtractSchema = {
 export const extractLineItems = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => ExtractInput.parse(input))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    // Server-side plan gate: AI extraction is a paid-plan feature.
+    const { data: profile } = await context.supabase
+      .from("profiles")
+      .select("subscription_status,subscription_end")
+      .eq("id", context.userId)
+      .maybeSingle();
+
+    const status = profile?.subscription_status ?? "free";
+    const activeUntil = profile?.subscription_end ? new Date(profile.subscription_end) : null;
+    const expired = activeUntil ? activeUntil.getTime() < Date.now() : false;
+    const paidPlan =
+      !expired &&
+      ["pro", "business", "active", "active_pro", "active_business", "trialing"].includes(status);
+
+    if (!paidPlan) {
+      throw new Error("AI line-item extraction requires a Pro or Business plan.");
+    }
+
     const key = process.env.LOVABLE_API_KEY;
     if (!key) throw new Error("Missing LOVABLE_API_KEY");
 

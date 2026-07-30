@@ -15,7 +15,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 const SITE_TITLE = "Honest Invoice — Get paid faster with AI-powered invoicing";
 const SITE_DESCRIPTION =
-  "Honest Invoice is the modern invoicing platform for contractors, freelancers, and service businesses. Create professional invoices and estimates, get paid online, and let AI handle the busywork.";
+  "AI-powered invoicing for contractors and freelancers. Send invoices and estimates, and get paid online faster.";
 
 function NotFoundComponent() {
   return (

@@ -9,7 +9,7 @@ import { EmailChangeEmail } from '@/lib/email-templates/email-change'
 import { ReauthenticationEmail } from '@/lib/email-templates/reauthentication'
 
 // Configuration
-const SITE_NAME = "bill-zen-wizard"
+const SITE_NAME = "Honest Invoice"
 const SENDER_DOMAIN = "attention.honestinvoice.com"
 const ROOT_DOMAIN = "honestinvoice.com"
 const FROM_DOMAIN = "attention.honestinvoice.com"

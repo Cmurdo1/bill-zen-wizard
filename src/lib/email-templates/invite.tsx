@@ -5,6 +5,7 @@ import {
   Button,
   Container,
   Head,
+  Img,
   Heading,
   Html,
   Link,
@@ -28,6 +29,7 @@ export const InviteEmail = ({
     <Preview>You've been invited to join {siteName}</Preview>
     <Body style={main}>
       <Container style={container}>
+        <Img src="/__l5e/assets-v1/76254838-9abc-43a0-a5fd-cc740f7f2311/hi-logo.png" alt="Honest Invoice" width="48" height="48" style={logo} />
         <Heading style={h1}>You've been invited</Heading>
         <Text style={text}>
           You've been invited to join{' '}
@@ -51,12 +53,12 @@ export const InviteEmail = ({
 
 export default InviteEmail
 
-const main = { backgroundColor: '#ffffff', fontFamily: 'Arial, sans-serif' }
+const main = { backgroundColor: '#ffffff', fontFamily: 'Helvetica, Arial, sans-serif' }
 const container = { padding: '20px 25px' }
 const h1 = {
   fontSize: '22px',
   fontWeight: 'bold' as const,
-  color: '#000000',
+  color: '#0f2f4f',
   margin: '0 0 20px',
 }
 const text = {
@@ -67,7 +69,7 @@ const text = {
 }
 const link = { color: 'inherit', textDecoration: 'underline' }
 const button = {
-  backgroundColor: '#000000',
+  backgroundColor: '#0f2f4f',
   color: '#ffffff',
   fontSize: '14px',
   borderRadius: '8px',
@@ -75,3 +77,4 @@ const button = {
   textDecoration: 'none',
 }
 const footer = { fontSize: '12px', color: '#999999', margin: '30px 0 0' }
+const logo = { borderRadius: '9999px', margin: '0 0 20px' }

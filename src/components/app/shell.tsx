@@ -37,8 +37,22 @@ export function AppShell({ children, title }: { children: React.ReactNode; title
   const nav = isAdmin ? [...NAV, ADMIN_ITEM] : NAV;
 
   useEffect(() => {
-    void supabase.auth.getUser().then(({ data }) => setEmail(data.user?.email ?? ""));
-  }, []);
+    void (async () => {
+      const { data } = await supabase.auth.getUser();
+      const user = data.user;
+      if (!user) return;
+      setEmail(user.email ?? "");
+      if (pathname === "/onboarding") return;
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("onboarding_completed")
+        .eq("id", user.id)
+        .maybeSingle();
+      if (profile && profile.onboarding_completed === false) {
+        navigate({ to: "/onboarding" });
+      }
+    })();
+  }, [pathname, navigate]);
 
   async function signOut() {
     await supabase.auth.signOut();

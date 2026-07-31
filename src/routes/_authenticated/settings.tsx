@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { AppShell } from "@/components/app/shell";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
+import { RateBookEditor } from "@/components/app/rate-book";
 
 type Profile = {
   id: string;
@@ -70,6 +71,10 @@ function SettingsPage() {
         <Section title="Invoicing" desc="Defaults applied to every new invoice.">
           <Field label="Invoice prefix" value={profile.invoice_prefix ?? "INV"} onChange={(v) => setProfile({ ...profile, invoice_prefix: v })} />
           <Field label="Default currency" value={profile.default_currency ?? "USD"} onChange={(v) => setProfile({ ...profile, default_currency: v.toUpperCase() })} />
+        </Section>
+
+        <Section title="Rate book" desc="Your standard prices. AI estimates must use these exact rates, which keeps pricing consistent across every job.">
+          <RateBookEditor currency={profile.default_currency ?? "USD"} />
         </Section>
 
         <div className="flex items-center gap-3">

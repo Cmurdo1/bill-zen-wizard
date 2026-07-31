@@ -26,7 +26,7 @@ export const RecoveryEmail = ({
     <Preview>Reset your password for {siteName}</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Img src="/__l5e/assets-v1/76254838-9abc-43a0-a5fd-cc740f7f2311/hi-logo.png" alt="Honest Invoice" width="48" height="48" style={logo} />
+        <Img src="https://honestinvoice.com/__l5e/assets-v1/76254838-9abc-43a0-a5fd-cc740f7f2311/hi-logo.png" alt="Honest Invoice" width="48" height="48" style={logo} />
         <Heading style={h1}>Reset your password</Heading>
         <Text style={text}>
           We received a request to reset your password for {siteName}. Click

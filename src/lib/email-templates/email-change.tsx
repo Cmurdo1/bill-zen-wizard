@@ -36,7 +36,7 @@ export const EmailChangeEmail = ({
     <Preview>Confirm your email change for {siteName}</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Img src="/__l5e/assets-v1/76254838-9abc-43a0-a5fd-cc740f7f2311/hi-logo.png" alt="Honest Invoice" width="48" height="48" style={logo} />
+        <Img src="https://honestinvoice.com/__l5e/assets-v1/76254838-9abc-43a0-a5fd-cc740f7f2311/hi-logo.png" alt="Honest Invoice" width="48" height="48" style={logo} />
         <Heading style={h1}>Confirm your email change</Heading>
         <Text style={text}>
           You requested to change your email address for {siteName} from{' '}

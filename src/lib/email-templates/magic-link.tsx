@@ -26,7 +26,7 @@ export const MagicLinkEmail = ({
     <Preview>Your login link for {siteName}</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Img src="/__l5e/assets-v1/76254838-9abc-43a0-a5fd-cc740f7f2311/hi-logo.png" alt="Honest Invoice" width="48" height="48" style={logo} />
+        <Img src="https://honestinvoice.com/__l5e/assets-v1/76254838-9abc-43a0-a5fd-cc740f7f2311/hi-logo.png" alt="Honest Invoice" width="48" height="48" style={logo} />
         <Heading style={h1}>Your login link</Heading>
         <Text style={text}>
           Click the button below to log in to {siteName}. This link will expire

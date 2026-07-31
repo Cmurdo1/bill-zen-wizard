@@ -13,6 +13,11 @@ import {
 } from "@/lib/documents";
 import { ArrowLeft, Loader2, Save, Send, FileCheck, Trash2, ArrowRightCircle } from "lucide-react";
 import { logActivity, fetchActivity, type ActivityRow } from "@/lib/activity";
+import { EstimateAiPanel } from "@/components/app/estimate-ai-panel";
+import { useServerFn } from "@tanstack/react-start";
+import { sendEstimateEmail } from "@/lib/estimates.functions";
+import { useSubscription } from "@/lib/subscription";
+import { CheckCircle2, Mail } from "lucide-react";
 
 type Estimate = {
   id: string;
@@ -29,8 +34,12 @@ type Estimate = {
   currency: string;
   converted_at?: string | null;
   converted_invoice_id?: string | null;
+  job_description?: string | null;
+  approved_at?: string | null;
+  sent_at?: string | null;
+  sent_to_email?: string | null;
 };
-type Client = { id: string; name: string };
+type Client = { id: string; name: string; email: string | null };
 
 export const Route = createFileRoute("/_authenticated/estimates/$id")({
   head: () => ({ meta: [{ title: "Estimate — Honest Invoice" }, { name: "robots", content: "noindex" }] }),
@@ -49,6 +58,13 @@ function EstimateDetailPage() {
   const [msg, setMsg] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [activity, setActivity] = useState<ActivityRow[]>([]);
+  const { canUseAI } = useSubscription();
+  const sendEmail = useServerFn(sendEstimateEmail);
+  const [sendOpen, setSendOpen] = useState(false);
+  const [sendTo, setSendTo] = useState("");
+  const [sendMessage, setSendMessage] = useState("");
+  const [sending, setSending] = useState(false);
+  const [approving, setApproving] = useState(false);
 
   useEffect(() => { void load(); void fetchActivity("estimate", id).then(setActivity); }, [id]);
 
@@ -57,7 +73,7 @@ function EstimateDetailPage() {
     const [estRes, itemsRes, cliRes] = await Promise.all([
       supabase.from("estimates").select("*").eq("id", id).maybeSingle(),
       supabase.from("estimate_items").select("description,quantity,rate_cents,sort_order").eq("estimate_id", id).order("sort_order"),
-      supabase.from("clients").select("id,name").order("name"),
+      supabase.from("clients").select("id,name,email").order("name"),
     ]);
     if (!estRes.data) {
       setError("Estimate not found");
@@ -83,6 +99,7 @@ function EstimateDetailPage() {
         issue_date: estimate.issue_date,
         expiry_date: estimate.expiry_date,
         notes: estimate.notes,
+        job_description: estimate.job_description ?? null,
         tax_rate: estimate.tax_rate,
         subtotal_cents: subtotal,
         tax_cents: tax,
@@ -215,6 +232,54 @@ function EstimateDetailPage() {
     }
   }
 
+  async function approve() {
+    if (!estimate) return;
+    setApproving(true);
+    setError(null);
+    try {
+      await save();
+      const stamp = new Date().toISOString();
+      const { error: aErr } = await supabase.from("estimates").update({ approved_at: stamp }).eq("id", estimate.id);
+      if (aErr) throw aErr;
+      setEstimate({ ...estimate, approved_at: stamp });
+      await logActivity("estimate", estimate.id, "approved", "Approved by owner, ready to send");
+      setActivity(await fetchActivity("estimate", estimate.id));
+      setMsg("Approved — ready to send to the client.");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not approve");
+    } finally {
+      setApproving(false);
+    }
+  }
+
+  function openSend() {
+    if (!estimate) return;
+    const client = clients.find((c) => c.id === estimate.client_id);
+    setSendTo(estimate.sent_to_email ?? client?.email ?? "");
+    setSendMessage("");
+    setSendOpen(true);
+  }
+
+  async function doSend() {
+    if (!estimate) return;
+    setError(null);
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(sendTo.trim())) { setError("Enter a valid client email."); return; }
+    setSending(true);
+    try {
+      await sendEmail({ data: { estimateId: estimate.id, to: sendTo.trim(), message: sendMessage.trim() || undefined } });
+      const stamp = new Date().toISOString();
+      setEstimate({ ...estimate, status: "sent", sent_at: stamp, sent_to_email: sendTo.trim() });
+      await logActivity("estimate", estimate.id, "emailed", `Sent to ${sendTo.trim()}`);
+      setActivity(await fetchActivity("estimate", estimate.id));
+      setSendOpen(false);
+      setMsg(`Estimate emailed to ${sendTo.trim()}.`);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not send estimate");
+    } finally {
+      setSending(false);
+    }
+  }
+
   async function remove() {
     if (!estimate) return;
     if (!confirm("Delete this estimate? This can't be undone.")) return;
@@ -273,6 +338,16 @@ function EstimateDetailPage() {
             >
               <ArrowRightCircle className="h-3.5 w-3.5" /> View invoice
             </Link>
+          )}
+          {!estimate.approved_at && (
+            <button onClick={approve} disabled={approving || saving} className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-success bg-success/10 px-3 text-xs font-semibold text-success hover:bg-success/20 disabled:opacity-60">
+              {approving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCircle2 className="h-3.5 w-3.5" />} Approve
+            </button>
+          )}
+          {estimate.approved_at && (
+            <button onClick={openSend} disabled={sending} className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-accent px-3 text-xs font-semibold text-accent-foreground hover:opacity-90 disabled:opacity-60">
+              <Mail className="h-3.5 w-3.5" /> {estimate.sent_at ? "Resend to client" : "Send to client"}
+            </button>
           )}
           <button onClick={() => save()} disabled={saving} className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-primary px-3 text-xs font-semibold text-primary-foreground shadow-soft disabled:opacity-60">
             {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />} Save
@@ -335,6 +410,15 @@ function EstimateDetailPage() {
               </Field>
             </div>
           </section>
+
+          <EstimateAiPanel
+            estimateId={estimate.id}
+            currency={estimate.currency || "USD"}
+            description={estimate.job_description ?? ""}
+            onDescriptionChange={(v) => setEstimate({ ...estimate, job_description: v })}
+            onItems={(next) => setItems(next.length ? next : [{ description: "", quantity: 1, rate_cents: 0 }])}
+            canUseAI={canUseAI}
+          />
 
           <section className="rounded-2xl border border-border bg-surface p-6 shadow-soft">
             <h2 className="text-sm font-semibold uppercase tracking-widest text-muted-foreground">Line items</h2>
@@ -402,6 +486,29 @@ function EstimateDetailPage() {
           </div>
         </aside>
       </div>
+
+      {sendOpen && (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4" onClick={() => !sending && setSendOpen(false)}>
+          <div className="w-full max-w-md rounded-2xl border border-border bg-surface p-6 shadow-lg" onClick={(e) => e.stopPropagation()}>
+            <h3 className="font-display text-xl">Send estimate to client</h3>
+            <p className="mt-1 text-sm text-muted-foreground">You approved this estimate — it will be emailed exactly as shown.</p>
+            <div className="mt-4 grid gap-3">
+              <Field label="Client email">
+                <input type="email" value={sendTo} onChange={(e) => setSendTo(e.target.value)} className="h-10 w-full rounded-lg border border-border bg-background px-3 text-sm" />
+              </Field>
+              <Field label="Message (optional)">
+                <textarea value={sendMessage} onChange={(e) => setSendMessage(e.target.value)} rows={3} maxLength={2000} className="w-full rounded-lg border border-border bg-background p-3 text-sm" />
+              </Field>
+            </div>
+            <div className="mt-6 flex justify-end gap-2">
+              <button onClick={() => setSendOpen(false)} disabled={sending} className="h-9 rounded-lg border border-border px-3 text-xs font-semibold hover:bg-surface-muted">Cancel</button>
+              <button onClick={doSend} disabled={sending} className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-primary px-3 text-xs font-semibold text-primary-foreground shadow-soft disabled:opacity-60">
+                {sending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Mail className="h-3.5 w-3.5" />} Send estimate
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {convertOpen && (
         <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4" onClick={() => !converting && setConvertOpen(false)}>

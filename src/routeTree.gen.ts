@@ -23,6 +23,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as BlogIndexRouteImport } from './routes/blog.index'
 import { Route as BlogSlugRouteImport } from './routes/blog.$slug'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
+import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
 import { Route as AuthenticatedLeadsRouteImport } from './routes/_authenticated/leads'
 import { Route as AuthenticatedInvoicesRouteImport } from './routes/_authenticated/invoices'
 import { Route as AuthenticatedImportDataRouteImport } from './routes/_authenticated/import-data'
@@ -105,6 +106,11 @@ const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedOnboardingRoute = AuthenticatedOnboardingRouteImport.update({
+  id: '/onboarding',
+  path: '/onboarding',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedLeadsRoute = AuthenticatedLeadsRouteImport.update({
   id: '/leads',
   path: '/leads',
@@ -185,6 +191,7 @@ export interface FileRoutesByFullPath {
   '/import-data': typeof AuthenticatedImportDataRoute
   '/invoices': typeof AuthenticatedInvoicesRouteWithChildren
   '/leads': typeof AuthenticatedLeadsRoute
+  '/onboarding': typeof AuthenticatedOnboardingRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/blog/': typeof BlogIndexRoute
@@ -211,6 +218,7 @@ export interface FileRoutesByTo {
   '/import-data': typeof AuthenticatedImportDataRoute
   '/invoices': typeof AuthenticatedInvoicesRouteWithChildren
   '/leads': typeof AuthenticatedLeadsRoute
+  '/onboarding': typeof AuthenticatedOnboardingRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/blog': typeof BlogIndexRoute
@@ -240,6 +248,7 @@ export interface FileRoutesById {
   '/_authenticated/import-data': typeof AuthenticatedImportDataRoute
   '/_authenticated/invoices': typeof AuthenticatedInvoicesRouteWithChildren
   '/_authenticated/leads': typeof AuthenticatedLeadsRoute
+  '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/blog/': typeof BlogIndexRoute
@@ -268,6 +277,7 @@ export interface FileRouteTypes {
     | '/import-data'
     | '/invoices'
     | '/leads'
+    | '/onboarding'
     | '/settings'
     | '/blog/$slug'
     | '/blog/'
@@ -294,6 +304,7 @@ export interface FileRouteTypes {
     | '/import-data'
     | '/invoices'
     | '/leads'
+    | '/onboarding'
     | '/settings'
     | '/blog/$slug'
     | '/blog'
@@ -322,6 +333,7 @@ export interface FileRouteTypes {
     | '/_authenticated/import-data'
     | '/_authenticated/invoices'
     | '/_authenticated/leads'
+    | '/_authenticated/onboarding'
     | '/_authenticated/settings'
     | '/blog/$slug'
     | '/blog/'
@@ -446,6 +458,13 @@ declare module '@tanstack/react-router' {
       path: '/settings'
       fullPath: '/settings'
       preLoaderRoute: typeof AuthenticatedSettingsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/onboarding': {
+      id: '/_authenticated/onboarding'
+      path: '/onboarding'
+      fullPath: '/onboarding'
+      preLoaderRoute: typeof AuthenticatedOnboardingRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/leads': {
@@ -582,6 +601,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedImportDataRoute: typeof AuthenticatedImportDataRoute
   AuthenticatedInvoicesRoute: typeof AuthenticatedInvoicesRouteWithChildren
   AuthenticatedLeadsRoute: typeof AuthenticatedLeadsRoute
+  AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
 }
 
@@ -594,6 +614,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedImportDataRoute: AuthenticatedImportDataRoute,
   AuthenticatedInvoicesRoute: AuthenticatedInvoicesRouteWithChildren,
   AuthenticatedLeadsRoute: AuthenticatedLeadsRoute,
+  AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
 }
 
@@ -619,13 +640,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

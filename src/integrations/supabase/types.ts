@@ -133,9 +133,45 @@ export type Database = {
           },
         ]
       }
+      estimate_photos: {
+        Row: {
+          caption: string | null
+          created_at: string
+          estimate_id: string
+          id: string
+          storage_path: string
+          user_id: string
+        }
+        Insert: {
+          caption?: string | null
+          created_at?: string
+          estimate_id: string
+          id?: string
+          storage_path: string
+          user_id: string
+        }
+        Update: {
+          caption?: string | null
+          created_at?: string
+          estimate_id?: string
+          id?: string
+          storage_path?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "estimate_photos_estimate_id_fkey"
+            columns: ["estimate_id"]
+            isOneToOne: false
+            referencedRelation: "estimates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       estimates: {
         Row: {
           ai_generated: boolean
+          approved_at: string | null
           client_id: string | null
           converted_at: string | null
           converted_invoice_id: string | null
@@ -145,7 +181,10 @@ export type Database = {
           expiry_date: string | null
           id: string
           issue_date: string
+          job_description: string | null
           notes: string | null
+          sent_at: string | null
+          sent_to_email: string | null
           status: string
           subtotal_cents: number
           tax_cents: number
@@ -156,6 +195,7 @@ export type Database = {
         }
         Insert: {
           ai_generated?: boolean
+          approved_at?: string | null
           client_id?: string | null
           converted_at?: string | null
           converted_invoice_id?: string | null
@@ -165,7 +205,10 @@ export type Database = {
           expiry_date?: string | null
           id?: string
           issue_date?: string
+          job_description?: string | null
           notes?: string | null
+          sent_at?: string | null
+          sent_to_email?: string | null
           status?: string
           subtotal_cents?: number
           tax_cents?: number
@@ -176,6 +219,7 @@ export type Database = {
         }
         Update: {
           ai_generated?: boolean
+          approved_at?: string | null
           client_id?: string | null
           converted_at?: string | null
           converted_invoice_id?: string | null
@@ -185,7 +229,10 @@ export type Database = {
           expiry_date?: string | null
           id?: string
           issue_date?: string
+          job_description?: string | null
           notes?: string | null
+          sent_at?: string | null
+          sent_to_email?: string | null
           status?: string
           subtotal_cents?: number
           tax_cents?: number
@@ -488,6 +535,39 @@ export type Database = {
           },
         ]
       }
+      pricing_rules: {
+        Row: {
+          created_at: string
+          id: string
+          label: string
+          notes: string | null
+          rate_cents: number
+          unit: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          label: string
+          notes?: string | null
+          rate_cents?: number
+          unit?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          label?: string
+          notes?: string | null
+          rate_cents?: number
+          unit?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           address_line1: string | null
@@ -510,6 +590,7 @@ export type Database = {
           logo_url: string | null
           next_estimate_number: number | null
           next_invoice_number: number | null
+          onboarding_completed: boolean
           phone: string | null
           postal_code: string | null
           state: string | null
@@ -541,6 +622,7 @@ export type Database = {
           logo_url?: string | null
           next_estimate_number?: number | null
           next_invoice_number?: number | null
+          onboarding_completed?: boolean
           phone?: string | null
           postal_code?: string | null
           state?: string | null
@@ -572,6 +654,7 @@ export type Database = {
           logo_url?: string | null
           next_estimate_number?: number | null
           next_invoice_number?: number | null
+          onboarding_completed?: boolean
           phone?: string | null
           postal_code?: string | null
           state?: string | null

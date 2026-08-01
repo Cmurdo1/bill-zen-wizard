@@ -356,6 +356,10 @@ function EstimateDetailPage() {
           <button onClick={remove} className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-border px-3 text-xs font-semibold text-destructive hover:bg-destructive/5">
             <Trash2 className="h-3.5 w-3.5" /> Delete
           </button>
+          <button onClick={openPreview} className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-border bg-surface px-3 text-xs font-semibold hover:bg-surface-muted">
+            <Eye className="h-3.5 w-3.5" /> Preview / PDF
+          </button>
+
           {estimate.status === "draft" && (
             <button onClick={() => updateStatus("sent")} disabled={saving} className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-border bg-surface px-3 text-xs font-semibold hover:bg-surface-muted">
               <Send className="h-3.5 w-3.5" /> Mark sent

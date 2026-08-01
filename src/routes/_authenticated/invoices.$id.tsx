@@ -55,8 +55,10 @@ function InvoiceDetailPage() {
   const [activity, setActivity] = useState<ActivityRow[]>([]);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewData, setPreviewData] = useState<PrintInvoiceInput | null>(null);
+  const subscription = useSubscription();
 
   useEffect(() => { void load(); void fetchActivity("invoice", id).then(setActivity); }, [id]);
+
 
   async function load() {
     setLoading(true);

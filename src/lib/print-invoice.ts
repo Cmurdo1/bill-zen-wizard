@@ -1,5 +1,6 @@
 import { formatCurrency, formatDate } from "./format";
 import type { LineItem } from "./documents";
+import type { DocumentBranding } from "./branding";
 
 export type PrintInvoiceInput = {
   invoice_number: string;
@@ -15,7 +16,12 @@ export type PrintInvoiceInput = {
   client?: { name?: string | null; email?: string | null; address_line1?: string | null; address_line2?: string | null; city?: string | null; state?: string | null; postal_code?: string | null; country?: string | null } | null;
   business?: { company_name?: string | null; full_name?: string | null; email?: string | null; business_address?: string | null } | null;
   items: LineItem[];
+  /** Paid-plan document branding. Undefined/null renders the default layout. */
+  branding?: DocumentBranding | null;
+  /** Set for estimate documents so the PDF says "Estimate". */
+  doc_label?: string;
 };
+
 
 function esc(s: string | null | undefined) {
   return String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));

@@ -145,11 +145,13 @@ function InvoiceDetailPage() {
 
   async function openPreview() {
     if (!invoice) return;
-    const [clientRes, profRes] = await Promise.all([
+    const userId = (await supabase.auth.getUser()).data.user?.id ?? "";
+    const [clientRes, profRes, branding] = await Promise.all([
       invoice.client_id
         ? supabase.from("clients").select("name,email,address_line1,address_line2,city,state,postal_code,country").eq("id", invoice.client_id).maybeSingle()
         : Promise.resolve({ data: null }),
-      supabase.from("profiles").select("company_name,full_name,address_line1,address_line2,city,state,postal_code,country").eq("id", (await supabase.auth.getUser()).data.user?.id ?? "").maybeSingle(),
+      supabase.from("profiles").select("company_name,full_name,address_line1,address_line2,city,state,postal_code,country").eq("id", userId).maybeSingle(),
+      fetchDocumentBranding(userId, subscription.plan),
     ]);
     const p = profRes.data as { company_name?: string | null; full_name?: string | null; address_line1?: string | null; address_line2?: string | null; city?: string | null; state?: string | null; postal_code?: string | null; country?: string | null } | null;
     const business_address = p
@@ -160,9 +162,11 @@ function InvoiceDetailPage() {
       items: items.filter((i) => i.description.trim()),
       client: clientRes.data,
       business: { company_name: p?.company_name, full_name: p?.full_name, business_address },
+      branding,
     });
     setPreviewOpen(true);
   }
+
 
   if (loading) {
     return (

@@ -17,7 +17,11 @@ import { EstimateAiPanel } from "@/components/app/estimate-ai-panel";
 import { useServerFn } from "@tanstack/react-start";
 import { sendEstimateEmail } from "@/lib/estimates.functions";
 import { useSubscription } from "@/lib/subscription";
-import { CheckCircle2, Mail } from "lucide-react";
+import { CheckCircle2, Mail, Eye } from "lucide-react";
+import { InvoicePreviewModal } from "@/components/app/invoice-preview-modal";
+import type { PrintInvoiceInput } from "@/lib/print-invoice";
+import { fetchDocumentBranding } from "@/lib/branding";
+
 
 type Estimate = {
   id: string;
@@ -58,13 +62,50 @@ function EstimateDetailPage() {
   const [msg, setMsg] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [activity, setActivity] = useState<ActivityRow[]>([]);
-  const { canUseAI } = useSubscription();
+  const { canUseAI, plan } = useSubscription();
   const sendEmail = useServerFn(sendEstimateEmail);
   const [sendOpen, setSendOpen] = useState(false);
   const [sendTo, setSendTo] = useState("");
   const [sendMessage, setSendMessage] = useState("");
   const [sending, setSending] = useState(false);
   const [approving, setApproving] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewData, setPreviewData] = useState<PrintInvoiceInput | null>(null);
+
+  async function openPreview() {
+    if (!estimate) return;
+    const userId = (await supabase.auth.getUser()).data.user?.id ?? "";
+    const [clientRes, profRes, branding] = await Promise.all([
+      estimate.client_id
+        ? supabase.from("clients").select("name,email,address_line1,address_line2,city,state,postal_code,country").eq("id", estimate.client_id).maybeSingle()
+        : Promise.resolve({ data: null }),
+      supabase.from("profiles").select("company_name,full_name,address_line1,address_line2,city,state,postal_code,country").eq("id", userId).maybeSingle(),
+      fetchDocumentBranding(userId, plan),
+    ]);
+    const p = profRes.data as { company_name?: string | null; full_name?: string | null; address_line1?: string | null; address_line2?: string | null; city?: string | null; state?: string | null; postal_code?: string | null; country?: string | null } | null;
+    const business_address = p
+      ? [p.address_line1, p.address_line2, [p.city, p.state, p.postal_code].filter(Boolean).join(", "), p.country].filter(Boolean).join("\n")
+      : "";
+    setPreviewData({
+      invoice_number: estimate.estimate_number,
+      status: estimate.status,
+      issue_date: estimate.issue_date,
+      due_date: estimate.expiry_date ?? null,
+      currency: estimate.currency,
+      tax_rate: estimate.tax_rate ?? 0,
+      subtotal_cents: estimate.subtotal_cents ?? 0,
+      tax_cents: estimate.tax_cents ?? 0,
+      total_cents: estimate.total_cents ?? 0,
+      notes: estimate.notes ?? null,
+      items: items.filter((i) => i.description.trim()),
+      client: clientRes.data,
+      business: { company_name: p?.company_name, full_name: p?.full_name, business_address },
+      branding,
+      doc_label: "Estimate",
+    });
+    setPreviewOpen(true);
+  }
+
 
   useEffect(() => { void load(); void fetchActivity("estimate", id).then(setActivity); }, [id]);
 
@@ -315,6 +356,10 @@ function EstimateDetailPage() {
           <button onClick={remove} className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-border px-3 text-xs font-semibold text-destructive hover:bg-destructive/5">
             <Trash2 className="h-3.5 w-3.5" /> Delete
           </button>
+          <button onClick={openPreview} className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-border bg-surface px-3 text-xs font-semibold hover:bg-surface-muted">
+            <Eye className="h-3.5 w-3.5" /> Preview / PDF
+          </button>
+
           {estimate.status === "draft" && (
             <button onClick={() => updateStatus("sent")} disabled={saving} className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-border bg-surface px-3 text-xs font-semibold hover:bg-surface-muted">
               <Send className="h-3.5 w-3.5" /> Mark sent
@@ -535,7 +580,10 @@ function EstimateDetailPage() {
           </div>
         </div>
       )}
+
+      <InvoicePreviewModal invoice={previewData} open={previewOpen} onClose={() => setPreviewOpen(false)} />
     </AppShell>
+
 
   );
 }

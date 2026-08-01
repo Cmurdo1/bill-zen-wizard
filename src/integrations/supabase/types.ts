@@ -572,7 +572,10 @@ export type Database = {
         Row: {
           address_line1: string | null
           address_line2: string | null
+          brand_accent_color: string | null
           brand_color: string | null
+          brand_show_logo: boolean
+          brand_tagline: string | null
           business_name: string | null
           city: string | null
           col_multiplier: number | null
@@ -581,6 +584,7 @@ export type Database = {
           created_at: string
           default_currency: string | null
           default_payment_terms: number | null
+          document_footer_text: string | null
           email: string | null
           estimate_color: string | null
           estimate_prefix: string | null
@@ -604,7 +608,10 @@ export type Database = {
         Insert: {
           address_line1?: string | null
           address_line2?: string | null
+          brand_accent_color?: string | null
           brand_color?: string | null
+          brand_show_logo?: boolean
+          brand_tagline?: string | null
           business_name?: string | null
           city?: string | null
           col_multiplier?: number | null
@@ -613,6 +620,7 @@ export type Database = {
           created_at?: string
           default_currency?: string | null
           default_payment_terms?: number | null
+          document_footer_text?: string | null
           email?: string | null
           estimate_color?: string | null
           estimate_prefix?: string | null
@@ -636,7 +644,10 @@ export type Database = {
         Update: {
           address_line1?: string | null
           address_line2?: string | null
+          brand_accent_color?: string | null
           brand_color?: string | null
+          brand_show_logo?: boolean
+          brand_tagline?: string | null
           business_name?: string | null
           city?: string | null
           col_multiplier?: number | null
@@ -645,6 +656,7 @@ export type Database = {
           created_at?: string
           default_currency?: string | null
           default_payment_terms?: number | null
+          document_footer_text?: string | null
           email?: string | null
           estimate_color?: string | null
           estimate_prefix?: string | null

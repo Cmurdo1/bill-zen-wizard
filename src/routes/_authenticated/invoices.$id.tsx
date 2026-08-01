@@ -7,6 +7,9 @@ import { LineItemsEditor } from "@/components/app/line-items-editor";
 import { InvoicePreviewModal } from "@/components/app/invoice-preview-modal";
 import { logActivity, fetchActivity, type ActivityRow } from "@/lib/activity";
 import type { PrintInvoiceInput } from "@/lib/print-invoice";
+import { fetchDocumentBranding } from "@/lib/branding";
+import { useSubscription } from "@/lib/subscription";
+
 import {
   INVOICE_STATUSES,
   StatusPill,

@@ -17,7 +17,11 @@ import { EstimateAiPanel } from "@/components/app/estimate-ai-panel";
 import { useServerFn } from "@tanstack/react-start";
 import { sendEstimateEmail } from "@/lib/estimates.functions";
 import { useSubscription } from "@/lib/subscription";
-import { CheckCircle2, Mail } from "lucide-react";
+import { CheckCircle2, Mail, Eye } from "lucide-react";
+import { InvoicePreviewModal } from "@/components/app/invoice-preview-modal";
+import type { PrintInvoiceInput } from "@/lib/print-invoice";
+import { fetchDocumentBranding } from "@/lib/branding";
+
 
 type Estimate = {
   id: string;

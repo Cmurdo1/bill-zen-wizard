@@ -62,7 +62,7 @@ function EstimateDetailPage() {
   const [msg, setMsg] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [activity, setActivity] = useState<ActivityRow[]>([]);
-  const { canUseAI } = useSubscription();
+  const { canUseAI, plan } = useSubscription();
   const sendEmail = useServerFn(sendEstimateEmail);
   const [sendOpen, setSendOpen] = useState(false);
   const [sendTo, setSendTo] = useState("");

@@ -580,7 +580,10 @@ function EstimateDetailPage() {
           </div>
         </div>
       )}
+
+      <InvoicePreviewModal invoice={previewData} open={previewOpen} onClose={() => setPreviewOpen(false)} />
     </AppShell>
+
 
   );
 }

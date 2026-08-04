@@ -69,13 +69,21 @@ function AdminPage() {
 
   return (
     <AppShell title="Admin">
-      <div className="mb-6 flex items-center gap-2 rounded-full border border-border bg-surface-muted/40 p-1 w-fit">
-        {tabs.map(({ id, label, icon: Icon }) => (
-          <button key={id} onClick={() => setTab(id)}
-            className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium ${tab === id ? "bg-primary text-primary-foreground shadow-soft" : "text-muted-foreground hover:text-foreground"}`}>
-            <Icon className="h-4 w-4" /> {label}
-          </button>
-        ))}
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-2 rounded-full border border-border bg-surface-muted/40 p-1 w-fit">
+          {tabs.map(({ id, label, icon: Icon }) => (
+            <button key={id} onClick={() => setTab(id)}
+              className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium ${tab === id ? "bg-primary text-primary-foreground shadow-soft" : "text-muted-foreground hover:text-foreground"}`}>
+              <Icon className="h-4 w-4" /> {label}
+            </button>
+          ))}
+        </div>
+        <Link
+          to="/email"
+          className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"
+        >
+          <Mail className="h-4 w-4" /> Send email
+        </Link>
       </div>
 
       {loading ? (

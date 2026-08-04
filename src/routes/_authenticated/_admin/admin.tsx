@@ -1,9 +1,9 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { AppShell } from "@/components/app/shell";
 import { supabase } from "@/integrations/supabase/client";
 import { formatCurrency, formatDate } from "@/lib/format";
-import { Loader2, ShieldCheck, Users, Activity, Webhook, Target } from "lucide-react";
+import { Loader2, ShieldCheck, Users, Activity, Webhook, Target, Mail } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/_admin/admin")({
   head: () => ({ meta: [{ title: "Admin — Honest Invoice" }, { name: "robots", content: "noindex" }] }),

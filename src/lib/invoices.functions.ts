@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
+import { runInference, readToolArguments } from "@/lib/ai-inference";
 
 const ExtractInput = z.object({
   description: z.string().trim().min(4).max(4000),

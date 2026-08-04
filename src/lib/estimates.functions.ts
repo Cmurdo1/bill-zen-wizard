@@ -150,30 +150,13 @@ export const sendEstimateEmail = createServerFn({ method: "POST" })
 
     const html = buildEstimateEmailHtml(estimate, (items ?? []) as never, businessName, data.message);
 
-    const lovableKey = process.env["LOVABLE_API_KEY"];
-    const resendKey = process.env["RESEND_API_KEY"];
-    if (!lovableKey || !resendKey) throw new Error("Email is not configured yet.");
-
-    const emailRes = await fetch("https://connector-gateway.lovable.dev/resend/emails", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${lovableKey}`,
-        "X-Connection-Api-Key": resendKey,
-      },
-      body: JSON.stringify({
-        from: `${businessName} <onboarding@resend.dev>`,
-        to: [data.to],
-        ...(profile?.email ? { reply_to: profile.email } : {}),
-        subject: `Estimate ${estimate.estimate_number} from ${businessName}`,
-        html,
-      }),
+    await sendResendEmail({
+      from: `${businessName} <${DEFAULT_SENDER}>`,
+      to: data.to,
+      subject: `Estimate ${estimate.estimate_number} from ${businessName}`,
+      html,
+      ...(profile?.email ? { replyTo: profile.email } : {}),
     });
-
-    if (!emailRes.ok) {
-      const body = await emailRes.text();
-      throw new Error(`Email send failed [${emailRes.status}]: ${body.slice(0, 300)}`);
-    }
 
     await supabase
       .from("estimates")

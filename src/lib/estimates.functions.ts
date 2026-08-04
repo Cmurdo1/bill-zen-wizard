@@ -28,8 +28,6 @@ export const analyzeEstimatePhotos = createServerFn({ method: "POST" })
       throw new Error("AI photo estimating requires a Pro or Business plan.");
     }
 
-    const key = process.env["LOVABLE_API_KEY"];
-    if (!key) throw new Error("Missing AI credentials");
 
     const { data: estimate } = await supabase
       .from("estimates")

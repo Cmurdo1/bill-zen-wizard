@@ -37,6 +37,7 @@ import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } fr
 import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
 import { Route as AuthenticatedInvoicesIdRouteImport } from './routes/_authenticated/invoices.$id'
 import { Route as AuthenticatedEstimatesIdRouteImport } from './routes/_authenticated/estimates.$id'
+import { Route as AuthenticatedAdminEmailRouteImport } from './routes/_authenticated/_admin/email'
 import { Route as AuthenticatedAdminAdminRouteImport } from './routes/_authenticated/_admin/admin'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
 import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
@@ -186,6 +187,11 @@ const AuthenticatedEstimatesIdRoute =
     path: '/$id',
     getParentRoute: () => AuthenticatedEstimatesRoute,
   } as any)
+const AuthenticatedAdminEmailRoute = AuthenticatedAdminEmailRouteImport.update({
+  id: '/email',
+  path: '/email',
+  getParentRoute: () => AuthenticatedAdminRoute,
+} as any)
 const AuthenticatedAdminAdminRoute = AuthenticatedAdminAdminRouteImport.update({
   id: '/admin',
   path: '/admin',
@@ -246,6 +252,7 @@ export interface FileRoutesByFullPath {
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/admin': typeof AuthenticatedAdminAdminRoute
+  '/email': typeof AuthenticatedAdminEmailRoute
   '/estimates/$id': typeof AuthenticatedEstimatesIdRoute
   '/invoices/$id': typeof AuthenticatedInvoicesIdRoute
   '/api/public/webhooks/stripe': typeof ApiPublicWebhooksStripeRoute
@@ -280,6 +287,7 @@ export interface FileRoutesByTo {
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/admin': typeof AuthenticatedAdminAdminRoute
+  '/email': typeof AuthenticatedAdminEmailRoute
   '/estimates/$id': typeof AuthenticatedEstimatesIdRoute
   '/invoices/$id': typeof AuthenticatedInvoicesIdRoute
   '/api/public/webhooks/stripe': typeof ApiPublicWebhooksStripeRoute
@@ -317,6 +325,7 @@ export interface FileRoutesById {
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/_authenticated/_admin/admin': typeof AuthenticatedAdminAdminRoute
+  '/_authenticated/_admin/email': typeof AuthenticatedAdminEmailRoute
   '/_authenticated/estimates/$id': typeof AuthenticatedEstimatesIdRoute
   '/_authenticated/invoices/$id': typeof AuthenticatedInvoicesIdRoute
   '/api/public/webhooks/stripe': typeof ApiPublicWebhooksStripeRoute
@@ -353,6 +362,7 @@ export interface FileRouteTypes {
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/admin'
+    | '/email'
     | '/estimates/$id'
     | '/invoices/$id'
     | '/api/public/webhooks/stripe'
@@ -387,6 +397,7 @@ export interface FileRouteTypes {
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/admin'
+    | '/email'
     | '/estimates/$id'
     | '/invoices/$id'
     | '/api/public/webhooks/stripe'
@@ -423,6 +434,7 @@ export interface FileRouteTypes {
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/_authenticated/_admin/admin'
+    | '/_authenticated/_admin/email'
     | '/_authenticated/estimates/$id'
     | '/_authenticated/invoices/$id'
     | '/api/public/webhooks/stripe'
@@ -652,6 +664,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedEstimatesIdRouteImport
       parentRoute: typeof AuthenticatedEstimatesRoute
     }
+    '/_authenticated/_admin/email': {
+      id: '/_authenticated/_admin/email'
+      path: '/email'
+      fullPath: '/email'
+      preLoaderRoute: typeof AuthenticatedAdminEmailRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/_admin/admin': {
       id: '/_authenticated/_admin/admin'
       path: '/admin'
@@ -699,10 +718,12 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminAdminRoute: typeof AuthenticatedAdminAdminRoute
+  AuthenticatedAdminEmailRoute: typeof AuthenticatedAdminEmailRoute
 }
 
 const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminAdminRoute: AuthenticatedAdminAdminRoute,
+  AuthenticatedAdminEmailRoute: AuthenticatedAdminEmailRoute,
 }
 
 const AuthenticatedAdminRouteWithChildren =

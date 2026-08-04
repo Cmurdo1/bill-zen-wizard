@@ -99,7 +99,13 @@ export function EstimateAiPanel({
     setRunning(true);
     try {
       const res = await analyze({ data: { estimateId, description: description.trim(), currency } });
-      onItems(res.items.map((i) => ({ description: i.description, quantity: i.quantity, rate_cents: i.rate_cents })));
+      onItems(
+        res.items.map((i: { description: string; quantity: number; rate_cents: number }) => ({
+          description: i.description,
+          quantity: i.quantity,
+          rate_cents: i.rate_cents,
+        })),
+      );
       setResult({ measurements: res.measurements, assumptions: res.assumptions });
     } catch (e) {
       setError(e instanceof Error ? e.message : "AI estimate failed");

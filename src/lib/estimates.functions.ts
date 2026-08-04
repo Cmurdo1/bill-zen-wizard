@@ -73,47 +73,35 @@ export const analyzeEstimatePhotos = createServerFn({ method: "POST" })
         : "No photos attached — estimate from the description only and note the reduced confidence.",
     ].join("\n");
 
-    const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "Lovable-API-Key": key },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-pro",
-        temperature: 0,
-        top_p: 0.1,
-        seed: 7,
-        messages: [
-          { role: "system", content: ESTIMATOR_SYSTEM_PROMPT },
-          { role: "user", content: [{ type: "text", text: userText }, ...imageBlocks] },
-        ],
-        tools: [
-          {
-            type: "function",
-            function: {
-              name: "return_estimate",
-              description: "Return the itemized estimate with measurements and assumptions",
-              parameters: EstimateSchema,
-            },
+    const payload = await runInference({
+      model: "google/gemini-2.5-pro",
+      fallbackModel: "meta/llama-3.2-90b-vision-instruct",
+      requiresVision: imageBlocks.length > 0,
+      temperature: 0,
+      topP: 0.1,
+      seed: 7,
+      messages: [
+        { role: "system", content: ESTIMATOR_SYSTEM_PROMPT },
+        { role: "user", content: [{ type: "text", text: userText }, ...imageBlocks] },
+      ],
+      tools: [
+        {
+          type: "function",
+          function: {
+            name: "return_estimate",
+            description: "Return the itemized estimate with measurements and assumptions",
+            parameters: EstimateSchema,
           },
-        ],
-        tool_choice: { type: "function", function: { name: "return_estimate" } },
-      }),
+        },
+      ],
+      toolChoice: { type: "function", function: { name: "return_estimate" } },
     });
 
-    if (!res.ok) {
-      const body = await res.text();
-      if (res.status === 429) throw new Error("AI is busy right now — try again in a moment.");
-      if (res.status === 402) throw new Error("AI credits exhausted for this workspace.");
-      throw new Error(`AI request failed (${res.status}): ${body.slice(0, 200)}`);
-    }
-
-    const payload = await res.json();
-    const call = payload?.choices?.[0]?.message?.tool_calls?.[0];
-    if (!call?.function?.arguments) throw new Error("AI returned no estimate");
-    const parsed = JSON.parse(call.function.arguments) as {
+    const parsed = readToolArguments<{
       items: Array<{ description: string; quantity: number; unit: string; rate_cents: number; basis: string }>;
       measurements: Array<{ label: string; value: string; confidence: string }>;
       assumptions: string[];
-    };
+    }>(payload);
 
     return {
       items: (parsed.items ?? []).map((it) => ({

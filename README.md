@@ -40,10 +40,14 @@ Set the required variables in `.env` (or your deployment platform):
 | `VITE_STRIPE_PAYMENT_LINK_PRO` | Stripe checkout link for the Pro plan |
 | `VITE_STRIPE_PAYMENT_LINK_BUSINESS` | Stripe checkout link for the Business plan |
 | `RESEND_API_KEY` | Transactional email (Resend) |
-| `NVIDIA_API_KEY` | AI line-item extraction (primary provider) |
-| `OPENROUTER_API_KEY` | AI line-item extraction (fallback provider) |
+| `OPENROUTER_API_KEY` | AI line-item extraction (primary provider — `openrouter/free` by default) |
+| `NVIDIA_API_KEY` | AI line-item extraction (backup provider) |
 | `HONEST_INVOICE_API_KEY` | Dedicated API key for MCP server access |
 | `APP_BASE_URL` | Deployed app URL |
+
+Copy [`.env.example`](./.env.example) to `.env` and fill in the values.
+
+> **Auth emails** (signup confirmation, password reset, magic link) are sent by Supabase itself — configure SMTP in the Supabase dashboard (e.g. Resend: `smtp.resend.com`) so those emails get delivered.
 
 ## MCP / AI agent access
 

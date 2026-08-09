@@ -205,54 +205,29 @@ export const sendEstimateEmail = createServerFn({ method: "POST" })
 
     const subject = `Estimate ${estimate.estimate_number ?? estimate.invoice_number} from ${businessName}`;
 
-    // Prefer Resend when configured; fall back to the Lovable connector.
+    // Email is delivered via Resend.
     const resendKey = process.env.RESEND_API_KEY;
-    let sent = false;
-    if (resendKey) {
-      const from = process.env.RESEND_FROM || "Honest Invoice <invoices@honestinvoice.com>";
-      const emailRes = await fetch("https://api.resend.com/emails", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${resendKey}`,
-        },
-        body: JSON.stringify({
-          from,
-          to: [data.to],
-          ...(profile?.email ? { reply_to: profile.email } : {}),
-          subject,
-          html,
-        }),
-      });
-      if (!emailRes.ok) {
-        const body = await emailRes.text();
-        throw new Error(`Email send failed [${emailRes.status}]: ${body.slice(0, 300)}`);
-      }
-      sent = true;
-    }
+    if (!resendKey)
+      throw new Error("Missing RESEND_API_KEY — configure it to send invoice/estimate emails.");
 
-    if (!sent) {
-      const lovableKey = process.env.LOVABLE_API_KEY;
-      if (!lovableKey) throw new Error("Missing email provider key (RESEND_API_KEY or LOVABLE_API_KEY)");
-      const emailRes = await fetch("https://connector-gateway.lovable.dev/resend/emails", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${lovableKey}`,
-          "X-Connection-Api-Key": resendKey ?? "",
-        },
-        body: JSON.stringify({
-          from: `${businessName} <onboarding@resend.dev>`,
-          to: [data.to],
-          ...(profile?.email ? { reply_to: profile.email } : {}),
-          subject,
-          html,
-        }),
-      });
-      if (!emailRes.ok) {
-        const body = await emailRes.text();
-        throw new Error(`Email send failed [${emailRes.status}]: ${body.slice(0, 300)}`);
-      }
+    const from = process.env.RESEND_FROM || "Honest Invoice <invoices@honestinvoice.com>";
+    const emailRes = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${resendKey}`,
+      },
+      body: JSON.stringify({
+        from,
+        to: [data.to],
+        ...(profile?.email ? { reply_to: profile.email } : {}),
+        subject,
+        html,
+      }),
+    });
+    if (!emailRes.ok) {
+      const body = await emailRes.text();
+      throw new Error(`Email send failed [${emailRes.status}]: ${body.slice(0, 300)}`);
     }
 
     // Mark sent on the right table.

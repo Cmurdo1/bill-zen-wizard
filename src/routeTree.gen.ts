@@ -44,8 +44,6 @@ import { Route as AuthenticatedLeadsIdRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedInvoicesIdRouteImport } from './routes/_authenticated/invoices.$id'
 import { Route as AuthenticatedEstimatesIdRouteImport } from './routes/_authenticated/estimates.$id'
 import { Route as AuthenticatedAdminAdminRouteImport } from './routes/_authenticated/_admin/admin'
-import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
-import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
 import { Route as ApiPublicWebhooksStripeRouteImport } from './routes/api/public/webhooks.stripe'
 import { Route as ApiMcpLeadsWebhookRouteImport } from './routes/api/mcp/leads.webhook'
 import { Route as ApiMcpLeadsTrackRouteImport } from './routes/api/mcp/leads.track'
@@ -229,16 +227,6 @@ const AuthenticatedAdminAdminRoute = AuthenticatedAdminAdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => AuthenticatedAdminRoute,
 } as any)
-const LovableEmailAuthWebhookRoute = LovableEmailAuthWebhookRouteImport.update({
-  id: '/lovable/email/auth/webhook',
-  path: '/lovable/email/auth/webhook',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LovableEmailAuthPreviewRoute = LovableEmailAuthPreviewRouteImport.update({
-  id: '/lovable/email/auth/preview',
-  path: '/lovable/email/auth/preview',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ApiPublicWebhooksStripeRoute = ApiPublicWebhooksStripeRouteImport.update({
   id: '/api/public/webhooks/stripe',
   path: '/api/public/webhooks/stripe',
@@ -316,8 +304,6 @@ export interface FileRoutesByFullPath {
   '/api/mcp/leads/track': typeof ApiMcpLeadsTrackRoute
   '/api/mcp/leads/webhook': typeof ApiMcpLeadsWebhookRoute
   '/api/public/webhooks/stripe': typeof ApiPublicWebhooksStripeRoute
-  '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
-  '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -360,8 +346,6 @@ export interface FileRoutesByTo {
   '/api/mcp/leads/track': typeof ApiMcpLeadsTrackRoute
   '/api/mcp/leads/webhook': typeof ApiMcpLeadsWebhookRoute
   '/api/public/webhooks/stripe': typeof ApiPublicWebhooksStripeRoute
-  '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
-  '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -407,8 +391,6 @@ export interface FileRoutesById {
   '/api/mcp/leads/track': typeof ApiMcpLeadsTrackRoute
   '/api/mcp/leads/webhook': typeof ApiMcpLeadsWebhookRoute
   '/api/public/webhooks/stripe': typeof ApiPublicWebhooksStripeRoute
-  '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
-  '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -453,8 +435,6 @@ export interface FileRouteTypes {
     | '/api/mcp/leads/track'
     | '/api/mcp/leads/webhook'
     | '/api/public/webhooks/stripe'
-    | '/lovable/email/auth/preview'
-    | '/lovable/email/auth/webhook'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -497,8 +477,6 @@ export interface FileRouteTypes {
     | '/api/mcp/leads/track'
     | '/api/mcp/leads/webhook'
     | '/api/public/webhooks/stripe'
-    | '/lovable/email/auth/preview'
-    | '/lovable/email/auth/webhook'
   id:
     | '__root__'
     | '/'
@@ -543,8 +521,6 @@ export interface FileRouteTypes {
     | '/api/mcp/leads/track'
     | '/api/mcp/leads/webhook'
     | '/api/public/webhooks/stripe'
-    | '/lovable/email/auth/preview'
-    | '/lovable/email/auth/webhook'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -569,8 +545,6 @@ export interface RootRouteChildren {
   ApiMcpProfileRoute: typeof ApiMcpProfileRoute
   ApiMcpRateBookRoute: typeof ApiMcpRateBookRoute
   ApiPublicWebhooksStripeRoute: typeof ApiPublicWebhooksStripeRoute
-  LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
-  LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -820,20 +794,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminAdminRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
-    '/lovable/email/auth/webhook': {
-      id: '/lovable/email/auth/webhook'
-      path: '/lovable/email/auth/webhook'
-      fullPath: '/lovable/email/auth/webhook'
-      preLoaderRoute: typeof LovableEmailAuthWebhookRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/lovable/email/auth/preview': {
-      id: '/lovable/email/auth/preview'
-      path: '/lovable/email/auth/preview'
-      fullPath: '/lovable/email/auth/preview'
-      preLoaderRoute: typeof LovableEmailAuthPreviewRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/api/public/webhooks/stripe': {
       id: '/api/public/webhooks/stripe'
       path: '/api/public/webhooks/stripe'
@@ -1028,8 +988,6 @@ const rootRouteChildren: RootRouteChildren = {
   ApiMcpProfileRoute: ApiMcpProfileRoute,
   ApiMcpRateBookRoute: ApiMcpRateBookRoute,
   ApiPublicWebhooksStripeRoute: ApiPublicWebhooksStripeRoute,
-  LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
-  LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -89,70 +89,38 @@ export const sendInvoiceEmail = createServerFn({ method: "POST" })
     const subject = `${data.document_type === "estimate" ? "Estimate" : "Invoice"} ${data.invoice_number} from ${data.business_name || "your business"}`;
     const docLabel = data.document_type === "estimate" ? "estimate" : "invoice";
 
-    // Prefer Resend when a key is configured; fall back to the Lovable gateway.
+    // Email is delivered via Resend.
     const resendKey = process.env.RESEND_API_KEY;
-    if (resendKey) {
-      const from = process.env.RESEND_FROM || "Honest Invoice <invoices@honestinvoice.com>";
-      const res = await fetch("https://api.resend.com/emails", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${resendKey}`,
-        },
-        body: JSON.stringify({
-          from,
-          to: data.client_email,
-          subject,
-          text: [
-            `Hi ${data.client_name},`,
-            ``,
-            `Your ${docLabel} ${data.invoice_number} from ${data.business_name || "us"} is ready to review.`,
-            ``,
-            `Amount: $${Number(data.total_amount).toFixed(2)}`,
-            data.due_date ? `Due: ${data.due_date}` : "",
-            data.job_description ? `` : "",
-            data.job_description ? `${data.job_description}` : "",
-            data.message ? `` : "",
-            data.message ? data.message : "",
-            ``,
-            `Thank you!`,
-          ]
-            .filter(Boolean)
-            .join("\n"),
-        }),
-      });
+    if (!resendKey)
+      throw new Error("Missing RESEND_API_KEY — configure it to send invoice/estimate emails.");
 
-      if (!res.ok) {
-        const body = await res.text();
-        throw new Error(`Email send failed (${res.status}): ${body.slice(0, 200)}`);
-      }
-
-      return { success: true };
-    }
-
-    const key = process.env.LOVABLE_API_KEY;
-    if (!key) throw new Error("Missing email provider key (RESEND_API_KEY or LOVABLE_API_KEY)");
-
-    const res = await fetch("https://api.lovable.dev/v1/messaging/email/send", {
+    const from = process.env.RESEND_FROM || "Honest Invoice <invoices@honestinvoice.com>";
+    const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${key}`,
+        Authorization: `Bearer ${resendKey}`,
       },
       body: JSON.stringify({
+        from,
         to: data.client_email,
         subject,
-        template: "invoice",
-        data: {
-          client_name: data.client_name,
-          invoice_number: data.invoice_number,
-          total_amount: data.total_amount,
-          due_date: data.due_date,
-          business_name: data.business_name,
-          job_description: data.job_description,
-          document_type: data.document_type,
-          message: data.message,
-        },
+        text: [
+          `Hi ${data.client_name},`,
+          ``,
+          `Your ${docLabel} ${data.invoice_number} from ${data.business_name || "us"} is ready to review.`,
+          ``,
+          `Amount: $${Number(data.total_amount).toFixed(2)}`,
+          data.due_date ? `Due: ${data.due_date}` : "",
+          data.job_description ? `` : "",
+          data.job_description ? `${data.job_description}` : "",
+          data.message ? `` : "",
+          data.message ? data.message : "",
+          ``,
+          `Thank you!`,
+        ]
+          .filter(Boolean)
+          .join("\n"),
       }),
     });
 

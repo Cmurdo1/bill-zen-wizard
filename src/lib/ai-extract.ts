@@ -123,13 +123,14 @@ async function callProvider(url: string, apiKey: string, model: string, body: un
 /**
  * Extract line items from a job description (and optional photos) using AI.
  *
- * Primary provider: OpenRouter (google/gemini-2.5-pro)
- * Fallback provider: NVIDIA NIM (meta/llama-3.3-70b-instruct) when the
- * primary call fails or OPENROUTER_API_KEY is missing.
+ * Primary provider: OpenRouter (default model "openrouter/free", which routes
+ * to available free models)
+ * Fallback provider: NVIDIA NIM (meta/llama-3.3-70b-instruct) when the primary
+ * call fails or OPENROUTER_API_KEY is missing.
  */
-// Free-tier OpenRouter model used when the account has no credits (402).
-// NVIDIA Nemotron 3 Ultra 550B: strong itemization, tool calling, $0.
-const OPENROUTER_FREE_MODEL = "nvidia/nemotron-3-ultra-550b-a55b:free";
+// OpenRouter's "free" router — auto-cycles through available free models.
+// Used as the default primary model; NVIDIA NIM is the backup provider.
+const OPENROUTER_FREE_MODEL = "openrouter/free";
 
 export async function extractLineItemsWithAI(input: {
   description: string;
@@ -160,7 +161,7 @@ export async function extractLineItemsWithAI(input: {
   const nimModel = process.env.NVIDIA_MODEL || "meta/llama-3.3-70b-instruct";
 
   // Provider attempts in order: configured OpenRouter model, OpenRouter free
-  // tier (no credits needed), then NVIDIA NIM (backup provider).
+  // router, then NVIDIA NIM (backup provider).
   const attempts: Array<{ url: string; key: string; model: string }> = [];
   if (openRouterKey) {
     const configured = process.env.OPENROUTER_MODEL;

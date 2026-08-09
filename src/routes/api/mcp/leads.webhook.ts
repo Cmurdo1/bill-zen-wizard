@@ -174,88 +174,19 @@ export const Route = createFileRoute("/api/mcp/leads/webhook")({
           let items: Array<{ description: string; quantity: number; rate_cents: number }>;
 
           {
-            // Use AI extraction for Pro/Business users
+            // Use AI extraction (OpenRouter primary, NVIDIA backup) for paid MCP accounts.
             try {
-              const key = process.env["LOVABLE_API_KEY"];
-              if (key) {
-                const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-                  method: "POST",
-                  headers: {
-                    "Content-Type": "application/json",
-                    "Lovable-API-Key": key,
-                  },
-                  body: JSON.stringify({
-                    model: "google/gemini-2.5-flash",
-                    messages: [
-                      {
-                        role: "system",
-                        content:
-                          "You extract invoice line items from a plain-English job description. Return realistic USD unit prices in cents. Split labor and materials. Be concise: 1–8 items max. Never invent client PII.",
-                      },
-                      {
-                        role: "user",
-                        content: `Currency: USD\n\nJob description:\n${parsed.title}\n${parsed.description}`,
-                      },
-                    ],
-                    tools: [
-                      {
-                        type: "function",
-                        function: {
-                          name: "return_line_items",
-                          description: "Return the extracted invoice line items",
-                          parameters: {
-                            type: "object",
-                            properties: {
-                              items: {
-                                type: "array",
-                                items: {
-                                  type: "object",
-                                  properties: {
-                                    description: { type: "string" },
-                                    quantity: { type: "number" },
-                                    rate_cents: {
-                                      type: "integer",
-                                      description: "Unit price in cents",
-                                    },
-                                  },
-                                  required: ["description", "quantity", "rate_cents"],
-                                },
-                              },
-                            },
-                            required: ["items"],
-                          },
-                        },
-                      },
-                    ],
-                    tool_choice: { type: "function", function: { name: "return_line_items" } },
-                  }),
-                });
-
-                if (aiRes.ok) {
-                  const payload = await aiRes.json();
-                  const call = payload?.choices?.[0]?.message?.tool_calls?.[0];
-                  if (call?.function?.arguments) {
-                    const parsed2 = JSON.parse(call.function.arguments) as {
-                      items?: Array<{
-                        description?: unknown;
-                        quantity?: unknown;
-                        rate_cents?: unknown;
-                      }>;
-                    };
-                    items = (parsed2.items ?? []).map((it) => ({
-                      description: String(it.description ?? "").slice(0, 500),
-                      quantity: Number(it.quantity) || 1,
-                      rate_cents: Math.max(0, Math.round(Number(it.rate_cents) || 0)),
-                    }));
-                  } else {
-                    throw new Error("No line items extracted");
-                  }
-                } else {
-                  throw new Error(`AI extraction failed (${aiRes.status})`);
-                }
-              } else {
-                throw new Error("No AI key configured");
-              }
+              const { extractLineItemsWithAI } = await import("@/lib/ai-extract");
+              const result = await extractLineItemsWithAI({
+                description: `${parsed.title}\n${parsed.description}`,
+                currency: "USD",
+              });
+              items = result.items.map((it) => ({
+                description: it.description,
+                quantity: it.quantity,
+                rate_cents: it.rate_cents,
+              }));
+              if (!items.length) throw new Error("No line items extracted");
             } catch {
               items = [
                 {
@@ -366,7 +297,6 @@ export const Route = createFileRoute("/api/mcp/leads/webhook")({
           if (parsed.auto_send) {
             try {
               const resendKey = process.env["RESEND_API_KEY"];
-              const lovableKey = process.env["LOVABLE_API_KEY"];
 
               if (resendKey) {
                 const from =
@@ -402,35 +332,8 @@ export const Route = createFileRoute("/api/mcp/leads/webhook")({
                 } else {
                   sentResult = { sent: true };
                 }
-              } else if (lovableKey) {
-                const res = await fetch("https://api.lovable.dev/v1/messaging/email/send", {
-                  method: "POST",
-                  headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${lovableKey}`,
-                  },
-                  body: JSON.stringify({
-                    to: parsed.contact_email,
-                    subject: `Estimate ${documentNumber} — ${parsed.title}`,
-                    template: "invoice",
-                    data: {
-                      client_name: clientName,
-                      invoice_number: documentNumber,
-                      total_amount: total_cents / 100,
-                      business_name: businessName,
-                      job_description: `${parsed.title}\n\n${parsed.description}`,
-                      document_type: "estimate",
-                      custom_message: `Hi ${clientName}, we saw your post on ${parsed.source} and prepared this estimate for you. Reply to discuss.`,
-                    },
-                  }),
-                });
-                if (!res.ok) {
-                  sentResult = { sent: false, error: `Lovable returned ${res.status}` };
-                } else {
-                  sentResult = { sent: true };
-                }
               } else {
-                sentResult = { sent: false, error: "No email provider configured" };
+                sentResult = { sent: false, error: "No email provider configured (set RESEND_API_KEY)" };
               }
             } catch (e) {
               sentResult = { sent: false, error: e instanceof Error ? e.message : String(e) };

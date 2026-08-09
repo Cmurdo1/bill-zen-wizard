@@ -208,72 +208,37 @@ export const Route = createFileRoute("/api/mcp/documents/send")({
 
           const subject = `${parsed.document_type === "invoice" ? "Invoice" : "Estimate"} ${docNumber} from ${businessName}`;
 
-          const lovableKey = process.env["LOVABLE_API_KEY"];
           const resendKey = process.env["RESEND_API_KEY"];
 
-          if (resendKey) {
-            // Preferred: self-contained HTML straight through Resend's API.
-            const from = process.env["RESEND_FROM"] || `${businessName} <onboarding@resend.dev>`;
-            const emailRes = await fetch("https://api.resend.com/emails", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${resendKey}`,
-              },
-              body: JSON.stringify({
-                from,
-                to: [parsed.to_email],
-                ...(p?.email ? { reply_to: String(p.email) } : {}),
-                subject,
-                html,
-              }),
-            });
-
-            if (!emailRes.ok) {
-              const errBody = await emailRes.text();
-              throw new Error(`Email send failed [${emailRes.status}]: ${errBody.slice(0, 300)}`);
-            }
-            sendSucceeded = true;
-          } else if (lovableKey) {
-            // Fallback: Lovable managed template.
-            const res = await fetch("https://api.lovable.dev/v1/messaging/email/send", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${lovableKey}`,
-              },
-              body: JSON.stringify({
-                to: parsed.to_email,
-                subject,
-                template: "invoice",
-                data: {
-                  client_name: parsed.to_email.split("@")[0],
-                  invoice_number: docNumber,
-                  total_amount: totalCents / 100,
-                  due_date: row.due_date
-                    ? String(row.due_date)
-                    : row.expiry_date
-                      ? String(row.expiry_date)
-                      : null,
-                  business_name: businessName,
-                  job_description: row.job_description ? String(row.job_description) : null,
-                  document_type: parsed.document_type,
-                  custom_message: parsed.custom_message,
-                },
-              }),
-            });
-
-            if (!res.ok) {
-              const errBody = await res.text();
-              throw new Error(`Email send failed (${res.status}): ${errBody.slice(0, 200)}`);
-            }
-            sendSucceeded = true;
-          } else {
+          if (!resendKey) {
             throw new McpHttpError(
               500,
-              "Email is not configured yet. Set LOVABLE_API_KEY (and RESEND_API_KEY for HTML emails).",
+              "Email is not configured yet. Set RESEND_API_KEY to send document emails.",
             );
           }
+
+          // Self-contained HTML straight through Resend's API.
+          const from = process.env["RESEND_FROM"] || `${businessName} <onboarding@resend.dev>`;
+          const emailRes = await fetch("https://api.resend.com/emails", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${resendKey}`,
+            },
+            body: JSON.stringify({
+              from,
+              to: [parsed.to_email],
+              ...(p?.email ? { reply_to: String(p.email) } : {}),
+              subject,
+              html,
+            }),
+          });
+
+          if (!emailRes.ok) {
+            const errBody = await emailRes.text();
+            throw new Error(`Email send failed [${emailRes.status}]: ${errBody.slice(0, 300)}`);
+          }
+          sendSucceeded = true;
 
           // Mark as sent. Legacy deployments track a sent counter; new schema stores sent_at.
           if (legacy) {

@@ -10,7 +10,7 @@ import { createFileRoute } from "@tanstack/react-router";
  *        - checkout.session.completed
  *        - payment_intent.succeeded
  *   3. Copy the signing secret and save it as STRIPE_WEBHOOK_SECRET
- *      via Lovable secrets. Optionally add STRIPE_SECRET_KEY too if you
+ *      as an environment variable. Optionally add STRIPE_SECRET_KEY too if you
  *      later want to fetch the full session server-side.
  *
  * To link a Stripe payment to an invoice, include the invoice id in the

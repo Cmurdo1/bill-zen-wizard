@@ -221,8 +221,8 @@ On the Business plan, scraping services can POST leads in real-time for instant 
 
 ## Rate Limits
 
-- AI extraction: 30 requests/minute (Lovable AI gateway)
-- Email sending: 100/hour (Lovable email API)
+- AI extraction: subject to your AI provider's limits (OpenRouter primary, NVIDIA NIM backup)
+- Email sending: subject to your email provider's limits (Resend)
 - Standard API: No explicit limits (respect Supabase limits)
 
 ## Webhook Events

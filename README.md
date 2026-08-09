@@ -1,8 +1,8 @@
 # Invoice AI
 
-# HONESTINVOICE.COM COMPLETE REBUILD PROMPT
+# HONESTINVOICE.COM
 
-## Production-Ready Invoicing Platform for Lovable.dev
+## Production-Ready Invoicing Platform
 
 ### OVERVIEW
 
@@ -539,12 +539,6 @@ CREATE INDEX idx_estimates_user_id ON estimates(user_id);
    - Image optimization (WebP, AVIF)
    - Minify CSS/JS (Terser, CSSNano)
 
-### What NOT to Do (per Google's Mythbusting)
-
-- ❌ No LLMS.txt or special AI markup needed
-- ❌ No "chunking" content into tiny pieces
-- ❌ No separate content for every query variation
-- ❌ No scaled content abuse for AI manipulation
 
 ### Internationalization (i18n)
 

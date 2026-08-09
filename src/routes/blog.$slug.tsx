@@ -11,7 +11,12 @@ export const Route = createFileRoute("/blog/$slug")({
   },
   head: ({ loaderData, params }) => {
     if (!loaderData) {
-      return { meta: [{ title: "Post not found — Honest Invoice" }, { name: "robots", content: "noindex" }] };
+      return {
+        meta: [
+          { title: "Post not found — Honest Invoice" },
+          { name: "robots", content: "noindex" },
+        ],
+      };
     }
     const { post } = loaderData;
     return {
@@ -51,7 +56,9 @@ function PostNotFound() {
     <MarketingShell>
       <div className="container-page py-20 text-center">
         <h1 className="font-display text-4xl text-foreground">Post not found</h1>
-        <Link to="/blog" className="mt-6 inline-flex text-sm font-semibold text-primary underline">Back to blog</Link>
+        <Link to="/blog" className="mt-6 inline-flex text-sm font-semibold text-primary underline">
+          Back to blog
+        </Link>
       </div>
     </MarketingShell>
   );
@@ -63,30 +70,52 @@ function BlogPostPage() {
   return (
     <MarketingShell>
       <article className="container-page max-w-3xl py-16">
-        <Link to="/blog" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+        <Link
+          to="/blog"
+          className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+        >
           <ArrowLeft className="h-3.5 w-3.5" /> All posts
         </Link>
         <div className="mt-6 flex flex-wrap gap-2 text-xs">
           {post.tags.map((t) => (
-            <span key={t} className="rounded-full bg-surface-muted px-2.5 py-1 text-muted-foreground">{t}</span>
+            <span
+              key={t}
+              className="rounded-full bg-surface-muted px-2.5 py-1 text-muted-foreground"
+            >
+              {t}
+            </span>
           ))}
         </div>
-        <h1 className="mt-4 font-display text-5xl leading-tight tracking-tight text-foreground">{post.title}</h1>
+        <h1 className="mt-4 font-display text-5xl leading-tight tracking-tight text-foreground">
+          {post.title}
+        </h1>
         <p className="mt-3 text-lg text-muted-foreground">{post.description}</p>
         <p className="mt-4 text-xs text-muted-foreground">
-          {post.author} · {new Date(post.date).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })} · {post.readingMinutes} min read
+          {post.author} ·{" "}
+          {new Date(post.date).toLocaleDateString("en-US", {
+            month: "long",
+            day: "numeric",
+            year: "numeric",
+          })}{" "}
+          · {post.readingMinutes} min read
         </p>
         <div className="mt-10 space-y-6 text-[15px] leading-8 text-foreground/90">
           {post.content.map((block, i) => (
             <div key={i}>
-              {block.heading && <h2 className="font-display text-2xl text-foreground">{block.heading}</h2>}
+              {block.heading && (
+                <h2 className="font-display text-2xl text-foreground">{block.heading}</h2>
+              )}
               <p className={block.heading ? "mt-2" : ""}>{block.body}</p>
             </div>
           ))}
         </div>
         <div className="mt-16 rounded-2xl border border-border bg-surface-muted/60 p-8">
-          <p className="font-display text-2xl text-foreground">Send your next invoice with Honest Invoice.</p>
-          <p className="mt-2 text-sm text-muted-foreground">Free plan available. No credit card required.</p>
+          <p className="font-display text-2xl text-foreground">
+            Send your next invoice with Honest Invoice.
+          </p>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Free plan available. No credit card required.
+          </p>
           <Link
             to="/signup"
             className="mt-5 inline-flex h-11 items-center rounded-xl bg-primary px-5 text-sm font-semibold text-primary-foreground"

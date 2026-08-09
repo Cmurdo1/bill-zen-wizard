@@ -9,7 +9,10 @@ export const Route = createFileRoute("/_authenticated/onboarding")({
   head: () => ({
     meta: [
       { title: "Set up your business — Honest Invoice" },
-      { name: "description", content: "Add your business details so estimates and invoices look professional." },
+      {
+        name: "description",
+        content: "Add your business details so estimates and invoices look professional.",
+      },
       { name: "robots", content: "noindex" },
     ],
   }),
@@ -52,7 +55,9 @@ function OnboardingPage() {
 
   useEffect(() => {
     void (async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) return;
       const { data } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle();
       setForm({
@@ -83,7 +88,9 @@ function OnboardingPage() {
     setErrors({});
     setSaving(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) throw new Error("Not signed in");
       const v = parsed.data;
       const { error: upErr } = await supabase.from("profiles").upsert({
@@ -122,36 +129,94 @@ function OnboardingPage() {
     <div className="min-h-screen bg-background">
       <div className="mx-auto max-w-2xl px-6 py-12">
         <Logo />
-        <h1 className="mt-8 font-display text-3xl tracking-tight text-foreground">Set up your business</h1>
+        <h1 className="mt-8 font-display text-3xl tracking-tight text-foreground">
+          Set up your business
+        </h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          These details appear on every estimate and invoice you send, and help the AI price jobs for your area.
+          These details appear on every estimate and invoice you send, and help the AI price jobs
+          for your area.
         </p>
 
         <form onSubmit={submit} className="mt-8 space-y-6">
           <section className="rounded-2xl border border-border bg-surface p-6 shadow-soft">
-            <h2 className="text-sm font-semibold uppercase tracking-widest text-muted-foreground">You</h2>
+            <h2 className="text-sm font-semibold uppercase tracking-widest text-muted-foreground">
+              You
+            </h2>
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
-              <F label="Your name" value={form.full_name} err={errors.full_name} onChange={(v) => setForm({ ...form, full_name: v })} />
-              <F label="Business name" value={form.business_name} err={errors.business_name} onChange={(v) => setForm({ ...form, business_name: v })} />
-              <F label="Email" type="email" value={form.email} err={errors.email} onChange={(v) => setForm({ ...form, email: v })} />
-              <F label="Phone" type="tel" value={form.phone} err={errors.phone} onChange={(v) => setForm({ ...form, phone: v })} />
+              <F
+                label="Your name"
+                value={form.full_name}
+                err={errors.full_name}
+                onChange={(v) => setForm({ ...form, full_name: v })}
+              />
+              <F
+                label="Business name"
+                value={form.business_name}
+                err={errors.business_name}
+                onChange={(v) => setForm({ ...form, business_name: v })}
+              />
+              <F
+                label="Email"
+                type="email"
+                value={form.email}
+                err={errors.email}
+                onChange={(v) => setForm({ ...form, email: v })}
+              />
+              <F
+                label="Phone"
+                type="tel"
+                value={form.phone}
+                err={errors.phone}
+                onChange={(v) => setForm({ ...form, phone: v })}
+              />
             </div>
           </section>
 
           <section className="rounded-2xl border border-border bg-surface p-6 shadow-soft">
-            <h2 className="text-sm font-semibold uppercase tracking-widest text-muted-foreground">Business address</h2>
+            <h2 className="text-sm font-semibold uppercase tracking-widest text-muted-foreground">
+              Business address
+            </h2>
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
               <div className="sm:col-span-2">
-                <F label="Street address" value={form.address_line1} err={errors.address_line1} onChange={(v) => setForm({ ...form, address_line1: v })} />
+                <F
+                  label="Street address"
+                  value={form.address_line1}
+                  err={errors.address_line1}
+                  onChange={(v) => setForm({ ...form, address_line1: v })}
+                />
               </div>
-              <F label="City" value={form.city} err={errors.city} onChange={(v) => setForm({ ...form, city: v })} />
-              <F label="State / region" value={form.state} err={errors.state} onChange={(v) => setForm({ ...form, state: v })} />
-              <F label="ZIP / postal code" value={form.postal_code} err={errors.postal_code} onChange={(v) => setForm({ ...form, postal_code: v })} />
-              <F label="Currency" value={form.default_currency} err={errors.default_currency} onChange={(v) => setForm({ ...form, default_currency: v.toUpperCase() })} />
+              <F
+                label="City"
+                value={form.city}
+                err={errors.city}
+                onChange={(v) => setForm({ ...form, city: v })}
+              />
+              <F
+                label="State / region"
+                value={form.state}
+                err={errors.state}
+                onChange={(v) => setForm({ ...form, state: v })}
+              />
+              <F
+                label="ZIP / postal code"
+                value={form.postal_code}
+                err={errors.postal_code}
+                onChange={(v) => setForm({ ...form, postal_code: v })}
+              />
+              <F
+                label="Currency"
+                value={form.default_currency}
+                err={errors.default_currency}
+                onChange={(v) => setForm({ ...form, default_currency: v.toUpperCase() })}
+              />
             </div>
           </section>
 
-          {error && <p className="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-semibold text-destructive">{error}</p>}
+          {error && (
+            <p className="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-semibold text-destructive">
+              {error}
+            </p>
+          )}
 
           <button
             type="submit"

@@ -6,9 +6,17 @@ export const Route = createFileRoute("/pricing")({
   head: () => ({
     meta: [
       { title: "Pricing — Honest Invoice" },
-      { name: "description", content: "Simple, transparent pricing. Free plan forever. Pro at $19.99/mo. Business at $49.99/mo." },
+      {
+        name: "description",
+        content:
+          "Simple, transparent pricing. Free plan forever. Pro at $19.99/mo. Business at $49.99/mo.",
+      },
       { property: "og:title", content: "Pricing — Honest Invoice" },
-      { property: "og:description", content: "Free plan forever. Pro unlocks unlimited invoices and AI estimating. Business unlocks the Lead Gen Engine." },
+      {
+        property: "og:description",
+        content:
+          "Free plan forever. Pro unlocks unlimited invoices and AI estimating. Business unlocks the Lead Gen Engine.",
+      },
       { property: "og:url", content: "/pricing" },
     ],
     links: [{ rel: "canonical", href: "/pricing" }],
@@ -58,6 +66,7 @@ const PLANS: Plan[] = [
       "Unlimited High-Velocity Invoices",
       "Touchless AR (Automated SMS/Email)",
       "AI-Powered Regional Estimating",
+      "MCP API — let AI agents create & send estimates",
       "Dynamic Payment Policies (Risk-based)",
       "Real-time DSO & Cash Flow Analytics",
       "Smart Milestone Notifications",
@@ -77,6 +86,7 @@ const PLANS: Plan[] = [
     tagline: "Full Pipeline Dominance",
     features: [
       "Everything in Pro",
+      "MCP API — AI agents auto-respond to leads 24/7",
       "Unlimited Lead Generation Engine",
       "Craigslist, FB, Nextdoor lead scraping",
       "AI-powered regional estimating",
@@ -112,7 +122,8 @@ function PricingPage() {
           ))}
         </div>
         <p className="container-page mt-8 text-center text-xs text-muted-foreground">
-          Prices in USD. Subscriptions billed securely by Stripe. Cancel from your Stripe receipt any time.
+          Prices in USD. Subscriptions billed securely by Stripe. Cancel from your Stripe receipt
+          any time.
         </p>
       </section>
     </MarketingShell>
@@ -124,7 +135,9 @@ function PlanCard({ plan }: { plan: Plan }) {
   return (
     <div
       className={`relative flex flex-col rounded-3xl border p-8 shadow-soft ${
-        isHighlight ? "border-primary bg-primary text-primary-foreground shadow-lifted" : "border-border bg-surface"
+        isHighlight
+          ? "border-primary bg-primary text-primary-foreground shadow-lifted"
+          : "border-border bg-surface"
       }`}
     >
       {isHighlight && (
@@ -132,23 +145,41 @@ function PlanCard({ plan }: { plan: Plan }) {
           Most popular
         </span>
       )}
-      <h2 className={`font-display text-3xl ${isHighlight ? "text-primary-foreground" : "text-foreground"}`}>{plan.name}</h2>
-      <p className={`mt-1 text-sm ${isHighlight ? "text-primary-foreground/70" : "text-muted-foreground"}`}>{plan.tagline}</p>
+      <h2
+        className={`font-display text-3xl ${isHighlight ? "text-primary-foreground" : "text-foreground"}`}
+      >
+        {plan.name}
+      </h2>
+      <p
+        className={`mt-1 text-sm ${isHighlight ? "text-primary-foreground/70" : "text-muted-foreground"}`}
+      >
+        {plan.tagline}
+      </p>
       <div className="mt-6 flex items-baseline gap-2">
         <span className="font-display text-5xl">{plan.price}</span>
         {plan.period && (
-          <span className={`text-sm ${isHighlight ? "text-primary-foreground/70" : "text-muted-foreground"}`}>{plan.period}</span>
+          <span
+            className={`text-sm ${isHighlight ? "text-primary-foreground/70" : "text-muted-foreground"}`}
+          >
+            {plan.period}
+          </span>
         )}
       </div>
 
-      <p className={`mt-6 text-xs font-semibold uppercase tracking-widest ${isHighlight ? "text-primary-foreground/70" : "text-muted-foreground"}`}>
+      <p
+        className={`mt-6 text-xs font-semibold uppercase tracking-widest ${isHighlight ? "text-primary-foreground/70" : "text-muted-foreground"}`}
+      >
         Included features
       </p>
       <ul className="mt-3 flex-1 space-y-3 text-sm">
         {plan.features.map((f) => (
           <li key={f} className="flex items-start gap-2">
-            <Check className={`mt-0.5 h-4 w-4 shrink-0 ${isHighlight ? "text-accent" : "text-success"}`} />
-            <span className={isHighlight ? "text-primary-foreground/90" : "text-foreground"}>{f}</span>
+            <Check
+              className={`mt-0.5 h-4 w-4 shrink-0 ${isHighlight ? "text-accent" : "text-success"}`}
+            />
+            <span className={isHighlight ? "text-primary-foreground/90" : "text-foreground"}>
+              {f}
+            </span>
           </li>
         ))}
       </ul>
@@ -163,8 +194,8 @@ function CtaButton({ plan }: { plan: Plan }) {
     plan.variant === "free"
       ? "border border-border bg-surface text-foreground hover:bg-surface-muted"
       : plan.highlight
-      ? "bg-accent text-accent-foreground hover:opacity-90"
-      : "bg-primary text-primary-foreground hover:opacity-90"
+        ? "bg-accent text-accent-foreground hover:opacity-90"
+        : "bg-primary text-primary-foreground hover:opacity-90"
   }`;
 
   if (plan.ctaExternal) {

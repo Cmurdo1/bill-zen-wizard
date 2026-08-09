@@ -3,4 +3,4 @@ Allow: /
 Disallow: /auth
 Disallow: /dashboard
 
-Sitemap: https://honestinvoice.com/sitemap.xml
+Sitemap: https://bill-zen-wizard.lovable.app/sitemap.xml

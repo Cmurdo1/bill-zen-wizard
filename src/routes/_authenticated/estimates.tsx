@@ -4,79 +4,91 @@ import { AppShell } from "@/components/app/shell";
 import { supabase } from "@/integrations/supabase/client";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { ESTIMATE_STATUSES, StatusPill, type EstimateStatus } from "@/lib/documents";
-import { Loader2, Plus, Search } from "lucide-react";
+import { SendDocumentModal } from "@/components/app/send-document-modal";
+import { Loader2, Plus, Search, Mail } from "lucide-react";
+import { toast } from "sonner";
+import { fetchEstimateList, type UnifiedEstimate } from "@/lib/estimate-schema";
+import { useSendDocument, useMyEmail } from "@/hooks/useInvoices";
 
-type Estimate = {
-  id: string;
-  estimate_number: string;
-  status: string;
-  total_cents: number;
-  currency: string;
-  issue_date: string;
-  expiry_date: string | null;
-  client_id: string | null;
-};
-type Client = { id: string; name: string };
+type Client = { id: string; name: string; email: string | null };
 
 export const Route = createFileRoute("/_authenticated/estimates")({
-  head: () => ({ meta: [{ title: "Estimates — Honest Invoice" }, { name: "robots", content: "noindex" }] }),
+  head: () => ({
+    meta: [{ title: "Estimates — Honest Invoice" }, { name: "robots", content: "noindex" }],
+  }),
   component: EstimatesPage,
 });
 
 function EstimatesPage() {
-  const [estimates, setEstimates] = useState<Estimate[]>([]);
+  const [estimates, setEstimates] = useState<UnifiedEstimate[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"all" | EstimateStatus>("all");
   const [query, setQuery] = useState("");
   const [creating, setCreating] = useState(false);
+  const [sending, setSending] = useState<UnifiedEstimate | null>(null);
+  const sendDoc = useSendDocument();
+  const { data: myEmail } = useMyEmail();
 
   async function refresh() {
     setLoading(true);
-    const [estRes, cliRes] = await Promise.all([
-      supabase.from("estimates").select("id,estimate_number,status,total_cents,currency,issue_date,expiry_date,client_id").order("created_at", { ascending: false }),
-      supabase.from("clients").select("id,name").order("name"),
-    ]);
-    setEstimates((estRes.data as Estimate[]) ?? []);
-    setClients((cliRes.data as Client[]) ?? []);
-    setLoading(false);
-  }
-  useEffect(() => { void refresh(); }, []);
-
-  const filtered = useMemo(() => estimates.filter((e) => {
-    if (filter !== "all" && e.status !== filter) return false;
-    if (query) {
-      const c = clients.find((x) => x.id === e.client_id)?.name?.toLowerCase() ?? "";
-      if (!`${e.estimate_number} ${c}`.toLowerCase().includes(query.toLowerCase())) return false;
+    try {
+      const [estimates, cliRes] = await Promise.all([
+        fetchEstimateList(),
+        supabase.from("clients").select("id,name,email").order("name"),
+      ]);
+      setEstimates(estimates);
+      setClients((cliRes.data as Client[]) ?? []);
+    } catch (e) {
+      toast.error(`Couldn't load estimates: ${e instanceof Error ? e.message : "unknown error"}`);
+      setEstimates([]);
+    } finally {
+      setLoading(false);
     }
-    return true;
-  }), [estimates, clients, filter, query]);
+  }
+  useEffect(() => {
+    void refresh();
+  }, []);
+
+  const filtered = useMemo(
+    () =>
+      estimates.filter((e) => {
+        if (filter !== "all" && e.status !== filter) return false;
+        if (query) {
+          const c = clients.find((x) => x.id === e.client_id)?.name?.toLowerCase() ?? "";
+          if (!`${e.estimate_number} ${c}`.toLowerCase().includes(query.toLowerCase()))
+            return false;
+        }
+        return true;
+      }),
+    [estimates, clients, filter, query],
+  );
 
   async function createBlank() {
     setCreating(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) return;
-      const { count } = await supabase.from("estimates").select("id", { count: "exact", head: true }).eq("user_id", user.id);
-      const num = 1001 + (count ?? 0);
-      const expiry = new Date(); expiry.setDate(expiry.getDate() + 30);
-      const { data: est } = await supabase.from("estimates").insert({
-        user_id: user.id,
-        estimate_number: `EST-${num}`,
-        status: "draft",
-        expiry_date: expiry.toISOString().slice(0, 10),
-      }).select("id").single();
-      if (est) window.location.href = `/estimates/${est.id}`;
+      window.location.href = `/magic-create?type=estimate`;
     } finally {
       setCreating(false);
     }
   }
 
-  const totals = useMemo(() => ({
-    pipeline: estimates.filter((e) => e.status === "sent" || e.status === "draft").reduce((s, e) => s + e.total_cents, 0),
-    accepted: estimates.filter((e) => e.status === "accepted" || e.status === "converted").reduce((s, e) => s + e.total_cents, 0),
-    open: estimates.filter((e) => e.status === "draft" || e.status === "sent").length,
-  }), [estimates]);
+  const totals = useMemo(
+    () => ({
+      pipeline: estimates
+        .filter((e) => e.status === "sent" || e.status === "draft")
+        .reduce((s, e) => s + e.total_cents, 0),
+      accepted: estimates
+        .filter((e) => e.status === "accepted" || e.status === "converted")
+        .reduce((s, e) => s + e.total_cents, 0),
+      open: estimates.filter((e) => e.status === "draft" || e.status === "sent").length,
+    }),
+    [estimates],
+  );
 
   return (
     <AppShell title="Estimates">
@@ -112,13 +124,16 @@ function EstimatesPage() {
           disabled={creating}
           className="inline-flex h-10 items-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground shadow-soft disabled:opacity-60"
         >
-          {creating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />} New estimate
+          {creating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}{" "}
+          New estimate
         </button>
       </div>
 
       <div className="rounded-2xl border border-border bg-surface shadow-soft">
         {loading ? (
-          <div className="grid place-items-center py-16 text-muted-foreground"><Loader2 className="h-5 w-5 animate-spin" /></div>
+          <div className="grid place-items-center py-16 text-muted-foreground">
+            <Loader2 className="h-5 w-5 animate-spin" />
+          </div>
         ) : filtered.length === 0 ? (
           <div className="py-16 text-center text-muted-foreground">
             No estimates{filter !== "all" ? ` with status "${filter}"` : ""}.
@@ -133,29 +148,81 @@ function EstimatesPage() {
                 <th className="px-6 py-3">Expires</th>
                 <th className="px-6 py-3">Status</th>
                 <th className="px-6 py-3 text-right">Total</th>
+                <th className="px-6 py-3 text-right">Send</th>
               </tr>
             </thead>
             <tbody>
-              {filtered.map((est) => (
-                <tr key={est.id} className="cursor-pointer border-b border-border/60 last:border-0 hover:bg-surface-muted/50">
+              {filtered.map((est) => {
+                const client = clients.find((c) => c.id === est.client_id);
+                return (
+                <tr
+                  key={est.id}
+                  className="cursor-pointer border-b border-border/60 last:border-0 hover:bg-surface-muted/50"
+                >
                   <td className="px-6 py-4 font-semibold">
-                    <Link to="/estimates/$id" params={{ id: est.id }} className="hover:text-primary">
+                    <Link
+                      to="/estimates/$id"
+                      params={{ id: est.id }}
+                      className="hover:text-primary"
+                    >
                       {est.estimate_number}
                     </Link>
                   </td>
-                  <td className="px-6 py-4 text-muted-foreground">{clients.find((c) => c.id === est.client_id)?.name ?? "—"}</td>
+                  <td className="px-6 py-4 text-muted-foreground">
+                    {clients.find((c) => c.id === est.client_id)?.name ?? "—"}
+                  </td>
                   <td className="px-6 py-4 text-muted-foreground">{formatDate(est.issue_date)}</td>
                   <td className="px-6 py-4 text-muted-foreground">{formatDate(est.expiry_date)}</td>
-                  <td className="px-6 py-4"><StatusPill status={est.status} /></td>
+                  <td className="px-6 py-4">
+                    <StatusPill status={est.status} />
+                  </td>
                   <td className="px-6 py-4 text-right font-semibold tabular-nums">
                     {formatCurrency(est.total_cents, est.currency)}
                   </td>
+                  <td className="px-6 py-4 text-right">
+                    <button
+                      onClick={() => setSending(est)}
+                      title="Email this estimate — pick a recipient or type any address"
+                      className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-border px-2.5 text-xs font-semibold text-muted-foreground transition-colors hover:border-primary hover:text-primary"
+                    >
+                      <Mail className="h-3.5 w-3.5" />
+                      Send
+                    </button>
+                  </td>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
         )}
-      </div>
+      </div>        <SendDocumentModal
+          open={!!sending}
+          onClose={() => setSending(null)}
+          title={`Send ${sending?.estimate_number ?? "estimate"}`}
+          defaultTo={
+            sending ? clients.find((c) => c.id === sending.client_id)?.email ?? "" : ""
+          }
+          clients={clients}
+          myEmail={myEmail ?? ""}
+        onSend={async (to, message) => {
+          if (!sending) return;
+          const client = clients.find((c) => c.id === sending.client_id);
+          await sendDoc.mutateAsync({
+            type: "estimate",
+            id: sending.id,
+            invoice_number: sending.estimate_number,
+            client_name: client?.name ?? "Client",
+            client_email: to,
+            total_amount: sending.total_cents / 100,
+            due_date: sending.expiry_date,
+            job_description: sending.job_description,
+            message,
+          });
+          toast.success(`Estimate ${sending.estimate_number} emailed to ${to}`);
+          setSending(null);
+          await refresh();
+        }}
+      />
     </AppShell>
   );
 }

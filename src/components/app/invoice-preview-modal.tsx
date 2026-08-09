@@ -15,7 +15,10 @@ export function InvoicePreviewModal({
   const [url, setUrl] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!open || !invoice) { setUrl(null); return; }
+    if (!open || !invoice) {
+      setUrl(null);
+      return;
+    }
     try {
       setUrl(invoicePdfDataUrl(invoice));
     } catch {

@@ -1,9 +1,11 @@
 # Invoice AI
 
 # HONESTINVOICE.COM COMPLETE REBUILD PROMPT
+
 ## Production-Ready Invoicing Platform for Lovable.dev
 
 ### OVERVIEW
+
 Rebuild honestinvoice.com from scratch as a production-ready, enterprise-grade invoicing and automated estimates platform. This is NOT a prototype - it must be 100% production ready with clean, efficient, logical code following industry standards.
 
 ---
@@ -11,6 +13,7 @@ Rebuild honestinvoice.com from scratch as a production-ready, enterprise-grade i
 ## PAGES TO RECREATE (from sitemap.xml)
 
 ### PUBLIC PAGES
+
 1. **Homepage** (`/`) - Landing page with hero, features, how-it-works, target audience, FAQ, footer
 2. **Blog** (`/blog`) - Blog listing page
 3. **Blog Posts** (5 articles):
@@ -32,6 +35,7 @@ Rebuild honestinvoice.com from scratch as a production-ready, enterprise-grade i
 ## CURRENT FEATURES IDENTIFIED
 
 ### Core Features
+
 - **Invoice Creation**: Professional invoice generator
 - **Estimates**: Estimate creation and management
 - **Recurring Invoices**: Automated recurring billing
@@ -41,6 +45,7 @@ Rebuild honestinvoice.com from scratch as a production-ready, enterprise-grade i
 - **Customizable Templates**: Branding with logo support
 
 ### Advanced Features (from pricing page)
+
 - **Lead Gen Engine**: Lead generation capabilities
 - **AI Extraction**: Automated line item extraction from job descriptions
 - **Offline Ready**: PWA/offline functionality
@@ -51,11 +56,13 @@ Rebuild honestinvoice.com from scratch as a production-ready, enterprise-grade i
 ## TECHNICAL REQUIREMENTS
 
 ### AI PROVIDERS
+
 - **Primary**: NVIDIA AI (Nemotron models via NVIDIA API)
 - **Backup**: OpenRouter API for redundancy/failover
 - **Implementation**: Dual-provider setup with automatic fallback
 
 #### NVIDIA Integration Details
+
 ```
 # NVIDIA AI Configuration
 NVIDIA_API_KEY=your_key_here
@@ -70,6 +77,7 @@ NVIDIA_MAX_TOKENS=4096
 ```
 
 #### AI Service Layer Implementation
+
 ```
 /src/services/ai.service.ts
 - Primary provider: NVIDIA API via fetch/axios
@@ -82,6 +90,7 @@ NVIDIA_MAX_TOKENS=4096
 ```
 
 #### AI Endpoints Detailed
+
 1. **Line Item Extraction** - Parse job descriptions into structured invoice items
 2. **Estimate Generation** - Transform project scope into professional estimates
 3. **Smart Reminders** - Generate personalized payment follow-up messages
@@ -91,16 +100,19 @@ NVIDIA_MAX_TOKENS=4096
 7. **Contract Review** - Analyze terms for potential issues (Pro feature)
 
 ### PAYMENT PROCESSING
+
 - **Provider**: Stripe (already in use - keep existing integration)
 - **Features**: Subscription billing, one-time payments, payment links
 - **PCI Compliance**: Handled by Stripe - never store card data
 - **Webhooks**: Handle subscription events, payment successes/failures
 
 ### EMAIL/SMTP
+
 - **Provider**: Resend (already configured)
 - **Usage**: Transactional emails (invoices, reminders, notifications)
 
 ### DATABASE
+
 - **Type**: SQL database (PostgreSQL recommended)
 - **Migrate from**: Any existing NoSQL to SQL
 - **Schema**: Fully normalize for production scale
@@ -110,6 +122,7 @@ NVIDIA_MAX_TOKENS=4096
 ## SECURITY STANDARDS (MUST IMPLEMENT ALL)
 
 ### Authentication & Authorization
+
 - JWT-based authentication with refresh tokens
 - OAuth 2.0 integration (Google Sign-In)
 - Multi-factor authentication (MFA) support
@@ -118,6 +131,7 @@ NVIDIA_MAX_TOKENS=4096
 - Rate limiting on auth endpoints
 
 ### Data Protection
+
 - Encryption at rest (AES-256)
 - TLS 1.3 for all communications
 - CSRF protection on all forms
@@ -127,12 +141,14 @@ NVIDIA_MAX_TOKENS=4096
 - CORS configured properly
 
 ### Compliance
+
 - GDPR compliance (data export/deletion)
 - SOC 2 Type II ready architecture
 - PCI DSS compliant (no card storage - use Stripe)
 - Privacy-first design (data minimization)
 
 ### Additional Security
+
 - Content Security Policy (CSP) headers
 - Security headers (HSTS, X-Frame-Options, X-Content-Type-Options)
 - API rate limiting (per-user, per-endpoint)
@@ -144,6 +160,7 @@ NVIDIA_MAX_TOKENS=4096
 ## FUTURE OF INVOICING & AUTOMATED ESTIMATES
 
 ### AI-Powered Features (The "Future" Aspect)
+
 1. **Smart Line Item Extraction**
    - Natural language processing for job descriptions
    - Auto-generate invoice line items from brief descriptions
@@ -399,6 +416,7 @@ CREATE INDEX idx_estimates_user_id ON estimates(user_id);
 ## FUNCTIONAL REQUIREMENTS
 
 ### User Management
+
 - Registration with email/password
 - OAuth via Google
 - Email verification
@@ -407,6 +425,7 @@ CREATE INDEX idx_estimates_user_id ON estimates(user_id);
 - MFA setup (TOTP)
 
 ### Invoice Management
+
 - Create/edit/delete invoices
 - PDF generation
 - Email invoices directly
@@ -416,6 +435,7 @@ CREATE INDEX idx_estimates_user_id ON estimates(user_id);
 - Invoice duplication
 
 ### Estimate Management
+
 - Create/edit/delete estimates
 - Convert estimates to invoices
 - PDF generation
@@ -423,18 +443,21 @@ CREATE INDEX idx_estimates_user_id ON estimates(user_id);
 - Expiration dates
 
 ### Recurring Invoices
+
 - Template creation
 - Frequency settings
 - Auto-generation
 - Status management
 
 ### Lead Management
+
 - Lead capture forms
 - Lead scoring (AI-powered)
 - Lead status tracking
 - Conversion tracking
 
 ### Reporting & Analytics
+
 - Revenue overview
 - Outstanding invoices
 - Payment history
@@ -446,6 +469,7 @@ CREATE INDEX idx_estimates_user_id ON estimates(user_id);
 ## DESIGN REQUIREMENTS
 
 ### UI/UX Standards
+
 - Clean, minimal design (SaaS aesthetic)
 - Responsive mobile-first
 - Dark/light mode toggle
@@ -454,6 +478,7 @@ CREATE INDEX idx_estimates_user_id ON estimates(user_id);
 - Fast loading (< 2s)
 
 ### Brand Elements
+
 - Primary color: Professional blues
 - Clean typography (Inter, system fonts)
 - Modern iconography (Lucide icons)
@@ -464,9 +489,11 @@ CREATE INDEX idx_estimates_user_id ON estimates(user_id);
 ## GENERATIVE ENGINE OPTIMIZATION (GEO) & SEO
 
 ### GEO (Generative Engine Optimization) - Based on Google's Official Guide
+
 **Note from Google:** "AEO" (Answer Engine Optimization) and "GEO" (Generative Engine Optimization) are terms used to describe work focused on AI search experiences, but from Google's perspective, optimizing for generative AI search is still SEO. Google Search does NOT use LLMS.txt files or special AI markup - focus on proven SEO best practices.
 
 ### What Actually Matters for GEO (per Google):
+
 1. **Foundational SEO is ALL you need** - Google's generative AI features use RAG (Retrieval-Augmented Generation) and query fan-out, which rely on traditional SEO-optimized content
 
 2. **Focus on Unique, Non-Commodity Content**
@@ -482,6 +509,7 @@ CREATE INDEX idx_estimates_user_id ON estimates(user_id);
    - Good page experience (fast, mobile-friendly, accessible)
 
 ### SEO Requirements (Complete Implementation)
+
 1. **Meta Tags**
    - Unique title tags (50-60 chars) for every page
    - Meta descriptions (150-160 chars) for every page
@@ -512,12 +540,14 @@ CREATE INDEX idx_estimates_user_id ON estimates(user_id);
    - Minify CSS/JS (Terser, CSSNano)
 
 ### What NOT to Do (per Google's Mythbusting)
+
 - ❌ No LLMS.txt or special AI markup needed
 - ❌ No "chunking" content into tiny pieces
 - ❌ No separate content for every query variation
 - ❌ No scaled content abuse for AI manipulation
 
 ### Internationalization (i18n)
+
 1. **Language Detection**
    - Auto-detect browser language
    - i18n support (en, es, fr, de, it, pt, nl minimum)
@@ -530,6 +560,7 @@ CREATE INDEX idx_estimates_user_id ON estimates(user_id);
    - Currency conversion in invoices
 
 ### SEO Implementation Files
+
 - `/src/components/SEO.tsx` - React helmet component for meta tags
 - `/src/lib/seo.ts` - SEO utilities and structured data generators
 - `/src/pages/sitemap.xml.ts` - Auto-generated sitemap
@@ -542,6 +573,7 @@ CREATE INDEX idx_estimates_user_id ON estimates(user_id);
 ## API ENDPOINTS (REST)
 
 ### Authentication
+
 - `POST /api/auth/register` - User registration
 - `POST /api/auth/login` - User login
 - `POST /api/auth/logout` - User logout
@@ -551,11 +583,13 @@ CREATE INDEX idx_estimates_user_id ON estimates(user_id);
 - `POST /api/auth/reset-password` - Password reset
 
 ### Users
+
 - `GET /api/users/profile` - Get user profile
 - `PUT /api/users/profile` - Update profile
 - `PUT /api/users/password` - Change password
 
 ### Clients
+
 - `GET /api/clients` - List clients
 - `POST /api/clients` - Create client
 - `GET /api/clients/{id}` - Get client
@@ -563,6 +597,7 @@ CREATE INDEX idx_estimates_user_id ON estimates(user_id);
 - `DELETE /api/clients/{id}` - Delete client
 
 ### Invoices
+
 - `GET /api/invoices` - List invoices
 - `POST /api/invoices` - Create invoice
 - `GET /api/invoices/{id}` - Get invoice
@@ -574,6 +609,7 @@ CREATE INDEX idx_estimates_user_id ON estimates(user_id);
 - `GET /api/invoices/public/{token}` - Public payment page
 
 ### Estimates
+
 - `GET /api/estimates` - List estimates
 - `POST /api/estimates` - Create estimate
 - `GET /api/estimates/{id}` - Get estimate
@@ -582,6 +618,7 @@ CREATE INDEX idx_estimates_user_id ON estimates(user_id);
 - `POST /api/estimates/{id}/convert` - Convert to invoice
 
 ### AI Features
+
 - `POST /api/ai/extract-line-items` - Extract from description
 - `POST /api/ai/generate-estimate` - AI estimate generation
 - `GET /api/ai/cash-forecast` - Cash flow prediction
@@ -592,11 +629,13 @@ CREATE INDEX idx_estimates_user_id ON estimates(user_id);
 ## INDUSTRY STANDARDS TO FOLLOW
 
 ### ISO/IEC 27001
+
 - Information security management
 - Risk assessment and treatment
 - Security controls implementation
 
 ### OWASP Top 10 (2021)
+
 - A01:2021 – Broken Access Control
 - A02:2021 – Cryptographic Failures
 - A03:2021 – Injection
@@ -609,6 +648,7 @@ CREATE INDEX idx_estimates_user_id ON estimates(user_id);
 - A10:2021 – Server-Side Request Forgery (SSRF)
 
 ### SOC 2 Type II
+
 - Security
 - Availability
 - Processing integrity
@@ -616,6 +656,7 @@ CREATE INDEX idx_estimates_user_id ON estimates(user_id);
 - Privacy
 
 ### PCI DSS
+
 - Use Stripe for payments (never store card data)
 - Secure transmission of cardholder data
 - Vulnerability management
@@ -625,6 +666,7 @@ CREATE INDEX idx_estimates_user_id ON estimates(user_id);
 ## INFRASTRUCTURE
 
 ### Tech Stack
+
 - **Frontend**: React + TypeScript + Tailwind CSS
 - **Backend**: Node.js (NestJS) or Python (FastAPI/Django)
 - **Database**: PostgreSQL
@@ -633,6 +675,7 @@ CREATE INDEX idx_estimates_user_id ON estimates(user_id);
 - **Storage**: AWS S3 or Cloudflare R2 for attachments
 
 ### Environment Variables (Required)
+
 ```
 # Database
 DATABASE_URL=postgresql://...
@@ -675,6 +718,7 @@ NEXT_PUBLIC_SITE_NAME=\"Honest Invoice\"
 ## DEPLOYMENT CHECKLIST
 
 ### Pre-Launch Mandatory Checks
+
 - [ ] All pages responsive on mobile/tablet/desktop
 - [ ] SSL certificate installed and valid
 - [ ] Database migrations run successfully
@@ -708,6 +752,7 @@ NEXT_PUBLIC_SITE_NAME=\"Honest Invoice\"
 ## DELIVERABLES
 
 The final deliverable must include:
+
 1. **Complete source code** with clear structure
 2. **SQL schema and migrations**
 3. **Environment configuration examples**

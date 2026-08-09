@@ -31,7 +31,10 @@ export function LineItemsEditor({
         <span />
       </div>
       {items.map((it, idx) => (
-        <div key={idx} className="mb-2 grid grid-cols-[1fr_90px_120px_120px_40px] items-center gap-2">
+        <div
+          key={idx}
+          className="mb-2 grid grid-cols-[1fr_90px_120px_120px_40px] items-center gap-2"
+        >
           <input
             value={it.description}
             onChange={(e) => update(idx, { description: e.target.value })}

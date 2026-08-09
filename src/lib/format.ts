@@ -5,5 +5,9 @@ export function formatCurrency(cents: number, currency = "USD") {
 export function formatDate(iso: string | Date | null | undefined) {
   if (!iso) return "—";
   const d = typeof iso === "string" ? new Date(iso) : iso;
-  return new Intl.DateTimeFormat("en-US", { year: "numeric", month: "short", day: "numeric" }).format(d);
+  return new Intl.DateTimeFormat("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  }).format(d);
 }

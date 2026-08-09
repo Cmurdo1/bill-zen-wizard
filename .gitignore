@@ -20,6 +20,21 @@ dist-ssr
 .wrangler/
 .dev.vars
 
+# Secrets / environment files — never commit these
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Local test scripts containing live credentials (service-role key, user JWT)
+/test-mcp.js
+/test-mcp.cjs
+/test-invoice.mjs
+/test_token_client.mjs
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

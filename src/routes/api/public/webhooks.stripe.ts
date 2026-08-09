@@ -38,7 +38,9 @@ async function verifyStripeSignature(rawBody: string, signatureHeader: string, s
     ["sign"],
   );
   const sigBytes = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(payload));
-  const expected = Array.from(new Uint8Array(sigBytes)).map((b) => b.toString(16).padStart(2, "0")).join("");
+  const expected = Array.from(new Uint8Array(sigBytes))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
   // Constant-time compare
   if (expected.length !== v1.length) return false;
   let mismatch = 0;
@@ -65,8 +67,11 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
         const invoiceId = metadata.invoice_id;
         const invoiceToken = metadata.invoice_token;
         const paymentIntent = (obj.payment_intent ?? obj.id) as string | undefined;
-        const sessionId = event.type.startsWith("checkout.session") ? (obj.id as string | undefined) : undefined;
-        const amountTotal = (obj.amount_total ?? obj.amount_received ?? obj.amount) as number | undefined;
+        const sessionId = event.type.startsWith("checkout.session")
+          ? (obj.id as string | undefined)
+          : undefined;
+        const amountTotal = (obj.amount_total ?? obj.amount_received ?? obj.amount) as
+          number | undefined;
 
         if (!["checkout.session.completed", "payment_intent.succeeded"].includes(event.type)) {
           return new Response("ignored", { status: 200 });
@@ -75,7 +80,10 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
         // Locate invoice by metadata; skip silently if none provided.
-        let query = supabaseAdmin.from("invoices").select("id,user_id,total_cents,currency").limit(1);
+        let query = supabaseAdmin
+          .from("invoices")
+          .select("id,user_id,total_cents,currency")
+          .limit(1);
         if (invoiceId) query = query.eq("id", invoiceId);
         else if (invoiceToken) query = query.eq("payment_link_token", invoiceToken);
         else return new Response("no invoice metadata; ignored", { status: 200 });
@@ -84,12 +92,15 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
         const invoice = invoices?.[0] as { id: string; user_id: string } | undefined;
         if (!invoice) return new Response("invoice not found; ignored", { status: 200 });
 
-        await supabaseAdmin.from("invoices").update({
-          status: "paid",
-          paid_at: new Date().toISOString(),
-          stripe_session_id: sessionId ?? null,
-          stripe_payment_intent_id: (paymentIntent as string) ?? null,
-        }).eq("id", invoice.id);
+        await supabaseAdmin
+          .from("invoices")
+          .update({
+            status: "paid",
+            paid_at: new Date().toISOString(),
+            stripe_session_id: sessionId ?? null,
+            stripe_payment_intent_id: (paymentIntent as string) ?? null,
+          })
+          .eq("id", invoice.id);
 
         await supabaseAdmin.from("document_activity").insert({
           user_id: invoice.user_id,

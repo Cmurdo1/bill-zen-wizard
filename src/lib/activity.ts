@@ -13,7 +13,9 @@ export async function logActivity(
   action: string,
   detail?: string,
 ) {
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) return;
   await supabase.from("document_activity").insert({
     user_id: user.id,

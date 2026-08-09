@@ -1,19 +1,41 @@
 import { Link } from "@tanstack/react-router";
-import hiLogo from "@/assets/hi-logo.png.asset.json";
+import { useState } from "react";
 
-export function Logo({ className = "" }: { className?: string }) {
+function LogoIcon() {
+  const [failed, setFailed] = useState(false);
+
+  if (failed) {
+    return (
+      <span className="grid h-9 w-9 place-items-center rounded-lg bg-primary text-primary-foreground">
+        <span className="font-display text-sm font-bold">HI</span>
+      </span>
+    );
+  }
+
   return (
-    <Link to="/" className={`inline-flex items-center gap-2 font-semibold text-foreground ${className}`}>
+    <>
       <img
-        src={hiLogo.url}
+        src="/favicon.ico"
         alt="Honest Invoice"
         className="h-9 w-9 rounded-full object-contain dark:hidden"
         width={36}
         height={36}
+        onError={() => setFailed(true)}
       />
       <span className="hidden h-9 w-9 place-items-center rounded-lg bg-primary text-primary-foreground dark:grid">
         <span className="font-display text-sm font-bold">HI</span>
       </span>
+    </>
+  );
+}
+
+export function Logo({ className = "" }: { className?: string }) {
+  return (
+    <Link
+      to="/"
+      className={`inline-flex items-center gap-2 font-semibold text-foreground ${className}`}
+    >
+      <LogoIcon />
       <span className="text-lg tracking-tight">Honest Invoice</span>
     </Link>
   );
@@ -25,9 +47,18 @@ export function MarketingHeader() {
       <div className="container-page flex h-16 items-center justify-between">
         <Logo />
         <nav className="hidden items-center gap-8 md:flex" aria-label="Primary">
-          <Link to="/pricing" className="text-sm text-muted-foreground hover:text-foreground">Pricing</Link>
-          <Link to="/blog" className="text-sm text-muted-foreground hover:text-foreground">Blog</Link>
-          <Link to="/pitch" className="text-sm text-muted-foreground hover:text-foreground">Investors</Link>
+          <Link to="/pricing" className="text-sm text-muted-foreground hover:text-foreground">
+            Pricing
+          </Link>
+          <Link to="/mcp" className="text-sm text-muted-foreground hover:text-foreground">
+            MCP
+          </Link>
+          <Link to="/blog" className="text-sm text-muted-foreground hover:text-foreground">
+            Blog
+          </Link>
+          <Link to="/pitch" className="text-sm text-muted-foreground hover:text-foreground">
+            Investors
+          </Link>
         </nav>
         <div className="flex items-center gap-2">
           <Link
@@ -62,19 +93,56 @@ export function MarketingFooter() {
         <div>
           <h3 className="text-sm font-semibold text-foreground">Product</h3>
           <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
-            <li><Link to="/pricing" className="hover:text-foreground">Pricing</Link></li>
-            <li><Link to="/signup" className="hover:text-foreground">Sign up</Link></li>
-            <li><Link to="/login" className="hover:text-foreground">Log in</Link></li>
-            <li><Link to="/pay-invoice" className="hover:text-foreground">Pay an invoice</Link></li>
+            <li>
+              <Link to="/pricing" className="hover:text-foreground">
+                Pricing
+              </Link>
+            </li>
+            <li>
+              <Link to="/mcp" className="hover:text-foreground">
+                MCP for AI agents
+              </Link>
+            </li>
+            <li>
+              <Link to="/signup" className="hover:text-foreground">
+                Sign up
+              </Link>
+            </li>
+            <li>
+              <Link to="/login" className="hover:text-foreground">
+                Log in
+              </Link>
+            </li>
+            <li>
+              <Link to="/pay-invoice" className="hover:text-foreground">
+                Pay an invoice
+              </Link>
+            </li>
           </ul>
         </div>
         <div>
           <h3 className="text-sm font-semibold text-foreground">Company</h3>
           <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
-            <li><Link to="/blog" className="hover:text-foreground">Blog</Link></li>
-            <li><Link to="/pitch" className="hover:text-foreground">Investors</Link></li>
-            <li><Link to="/privacy" className="hover:text-foreground">Privacy</Link></li>
-            <li><Link to="/terms" className="hover:text-foreground">Terms</Link></li>
+            <li>
+              <Link to="/blog" className="hover:text-foreground">
+                Blog
+              </Link>
+            </li>
+            <li>
+              <Link to="/pitch" className="hover:text-foreground">
+                Investors
+              </Link>
+            </li>
+            <li>
+              <Link to="/privacy" className="hover:text-foreground">
+                Privacy
+              </Link>
+            </li>
+            <li>
+              <Link to="/terms" className="hover:text-foreground">
+                Terms
+              </Link>
+            </li>
           </ul>
         </div>
       </div>

@@ -22,7 +22,8 @@ function planFromStatus(status: string | null | undefined, activeUntil: Date | n
   const expired = activeUntil ? activeUntil.getTime() < Date.now() : false;
   if (expired) return "free";
   if (status === "business" || status === "active_business") return "business";
-  if (status === "pro" || status === "active" || status === "active_pro" || status === "trialing") return "pro";
+  if (status === "pro" || status === "active" || status === "active_pro" || status === "trialing")
+    return "pro";
   return "free";
 }
 
@@ -42,15 +43,30 @@ export function useSubscription(): SubscriptionInfo {
   });
 
   const load = useCallback(async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) { setState((s) => ({ ...s, loading: false })); return; }
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
+      setState((s) => ({ ...s, loading: false }));
+      return;
+    }
     const monthStart = new Date();
-    monthStart.setDate(1); monthStart.setHours(0, 0, 0, 0);
+    monthStart.setDate(1);
+    monthStart.setHours(0, 0, 0, 0);
     const [profRes, countRes] = await Promise.all([
-      supabase.from("profiles").select("subscription_status,subscription_end").eq("id", user.id).maybeSingle(),
-      supabase.from("invoices").select("id", { count: "exact", head: true }).gte("created_at", monthStart.toISOString()),
+      supabase
+        .from("profiles")
+        .select("subscription_status,subscription_end")
+        .eq("id", user.id)
+        .maybeSingle(),
+      supabase
+        .from("invoices")
+        .select("id", { count: "exact", head: true })
+        .gte("created_at", monthStart.toISOString()),
     ]);
-    const activeUntil = profRes.data?.subscription_end ? new Date(profRes.data.subscription_end) : null;
+    const activeUntil = profRes.data?.subscription_end
+      ? new Date(profRes.data.subscription_end)
+      : null;
     const plan = planFromStatus(profRes.data?.subscription_status, activeUntil);
     setState({
       plan,
@@ -61,11 +77,14 @@ export function useSubscription(): SubscriptionInfo {
     });
   }, []);
 
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => {
+    void load();
+  }, [load]);
 
   const limits = limitsFor(state.plan);
   const isActive = state.plan !== "free";
-  const canCreateInvoice = limits.invoiceLimit === null || state.invoicesThisMonth < limits.invoiceLimit;
+  const canCreateInvoice =
+    limits.invoiceLimit === null || state.invoicesThisMonth < limits.invoiceLimit;
 
   return {
     ...state,
@@ -84,12 +103,30 @@ export function useIsAdmin() {
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { if (!cancelled) { setIsAdmin(false); setLoading(false); } return; }
-      const { data } = await supabase.from("user_roles").select("role").eq("user_id", user.id).eq("role", "admin").maybeSingle();
-      if (!cancelled) { setIsAdmin(Boolean(data)); setLoading(false); }
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) {
+        if (!cancelled) {
+          setIsAdmin(false);
+          setLoading(false);
+        }
+        return;
+      }
+      const { data } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id)
+        .eq("role", "admin")
+        .maybeSingle();
+      if (!cancelled) {
+        setIsAdmin(Boolean(data));
+        setLoading(false);
+      }
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, []);
   return { isAdmin, loading };
 }

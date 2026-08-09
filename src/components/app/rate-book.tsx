@@ -25,18 +25,31 @@ export function RateBookEditor({ currency = "USD" }: { currency?: string }) {
     setRows((data as PricingRuleRow[]) ?? []);
     setLoading(false);
   }
-  useEffect(() => { void load(); }, []);
+  useEffect(() => {
+    void load();
+  }, []);
 
   async function add() {
     setError(null);
     const label = draft.label.trim();
     const unit = draft.unit.trim() || "each";
     const rate = Number(draft.rate);
-    if (label.length < 2) { setError("Give the rate a name."); return; }
-    if (!Number.isFinite(rate) || rate < 0) { setError("Enter a valid rate."); return; }
+    if (label.length < 2) {
+      setError("Give the rate a name.");
+      return;
+    }
+    if (!Number.isFinite(rate) || rate < 0) {
+      setError("Enter a valid rate.");
+      return;
+    }
     setSaving(true);
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) { setSaving(false); return; }
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
+      setSaving(false);
+      return;
+    }
     const { error: insErr } = await supabase.from("pricing_rules").insert({
       user_id: user.id,
       label,
@@ -45,7 +58,10 @@ export function RateBookEditor({ currency = "USD" }: { currency?: string }) {
       notes: draft.notes.trim() || null,
     });
     setSaving(false);
-    if (insErr) { setError(insErr.message); return; }
+    if (insErr) {
+      setError(insErr.message);
+      return;
+    }
     setDraft({ label: "", unit, rate: "", notes: "" });
     await load();
   }
@@ -58,7 +74,9 @@ export function RateBookEditor({ currency = "USD" }: { currency?: string }) {
   return (
     <div>
       {loading ? (
-        <div className="grid place-items-center py-8 text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" /></div>
+        <div className="grid place-items-center py-8 text-muted-foreground">
+          <Loader2 className="h-4 w-4 animate-spin" />
+        </div>
       ) : rows.length === 0 ? (
         <p className="text-sm text-muted-foreground">
           No rates yet. Add your standard prices so AI estimates stay consistent job to job.
@@ -73,9 +91,16 @@ export function RateBookEditor({ currency = "USD" }: { currency?: string }) {
               </div>
               <div className="flex items-center gap-3">
                 <span className="tabular-nums">
-                  {new Intl.NumberFormat("en-US", { style: "currency", currency }).format(r.rate_cents / 100)} / {r.unit}
+                  {new Intl.NumberFormat("en-US", { style: "currency", currency }).format(
+                    r.rate_cents / 100,
+                  )}{" "}
+                  / {r.unit}
                 </span>
-                <button onClick={() => remove(r.id)} aria-label={`Delete ${r.label}`} className="text-muted-foreground hover:text-destructive">
+                <button
+                  onClick={() => remove(r.id)}
+                  aria-label={`Delete ${r.label}`}
+                  className="text-muted-foreground hover:text-destructive"
+                >
                   <Trash2 className="h-4 w-4" />
                 </button>
               </div>
@@ -109,7 +134,12 @@ export function RateBookEditor({ currency = "USD" }: { currency?: string }) {
           disabled={saving}
           className="inline-flex h-10 items-center gap-1.5 rounded-lg bg-primary px-3 text-xs font-semibold text-primary-foreground disabled:opacity-60"
         >
-          {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Plus className="h-3.5 w-3.5" />} Add rate
+          {saving ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : (
+            <Plus className="h-3.5 w-3.5" />
+          )}{" "}
+          Add rate
         </button>
       </div>
       {error && <p className="mt-2 text-xs font-semibold text-destructive">{error}</p>}

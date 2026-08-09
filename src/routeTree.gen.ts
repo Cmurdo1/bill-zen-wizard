@@ -23,27 +23,36 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as BlogIndexRouteImport } from './routes/blog.index'
 import { Route as BlogSlugRouteImport } from './routes/blog.$slug'
+import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
+import { Route as AuthenticatedMagicCreateRouteImport } from './routes/_authenticated/magic-create'
 import { Route as AuthenticatedLeadsRouteImport } from './routes/_authenticated/leads'
 import { Route as AuthenticatedInvoicesRouteImport } from './routes/_authenticated/invoices'
 import { Route as AuthenticatedImportDataRouteImport } from './routes/_authenticated/import-data'
 import { Route as AuthenticatedEstimatesRouteImport } from './routes/_authenticated/estimates'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedClientsRouteImport } from './routes/_authenticated/clients'
-import { Route as AuthenticatedCashVelocityRouteImport } from './routes/_authenticated/cash-velocity'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/_admin'
-import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
-import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
+import { Route as ApiMcpRateBookRouteImport } from './routes/api/mcp/rate-book'
+import { Route as ApiMcpProfileRouteImport } from './routes/api/mcp/profile'
+import { Route as ApiMcpLeadsRouteImport } from './routes/api/mcp/leads'
+import { Route as ApiMcpKeysRouteImport } from './routes/api/mcp/keys'
+import { Route as ApiMcpDocumentsRouteImport } from './routes/api/mcp/documents'
+import { Route as ApiMcpClientsRouteImport } from './routes/api/mcp/clients'
+import { Route as AuthenticatedLeadsIdRouteImport } from './routes/_authenticated/leads.$id'
 import { Route as AuthenticatedInvoicesIdRouteImport } from './routes/_authenticated/invoices.$id'
 import { Route as AuthenticatedEstimatesIdRouteImport } from './routes/_authenticated/estimates.$id'
-import { Route as AuthenticatedAdminEmailRouteImport } from './routes/_authenticated/_admin/email'
 import { Route as AuthenticatedAdminAdminRouteImport } from './routes/_authenticated/_admin/admin'
-import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
-import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
 import { Route as ApiPublicWebhooksStripeRouteImport } from './routes/api/public/webhooks.stripe'
+import { Route as ApiMcpLeadsWebhookRouteImport } from './routes/api/mcp/leads.webhook'
+import { Route as ApiMcpLeadsTrackRouteImport } from './routes/api/mcp/leads.track'
+import { Route as ApiMcpLeadsScrapeRouteImport } from './routes/api/mcp/leads.scrape'
+import { Route as ApiMcpDocumentsSendRouteImport } from './routes/api/mcp/documents.send'
+import { Route as ApiMcpDocumentsExtractRouteImport } from './routes/api/mcp/documents.extract'
+import { Route as ApiMcpDocumentsActivityRouteImport } from './routes/api/mcp/documents.activity'
 
 const TermsRoute = TermsRouteImport.update({
   id: '/terms',
@@ -114,6 +123,11 @@ const BlogSlugRoute = BlogSlugRouteImport.update({
   path: '/blog/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthCallbackRoute = AuthCallbackRouteImport.update({
+  id: '/callback',
+  path: '/callback',
+  getParentRoute: () => AuthRoute,
+} as any)
 const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -124,6 +138,12 @@ const AuthenticatedOnboardingRoute = AuthenticatedOnboardingRouteImport.update({
   path: '/onboarding',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedMagicCreateRoute =
+  AuthenticatedMagicCreateRouteImport.update({
+    id: '/magic-create',
+    path: '/magic-create',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedLeadsRoute = AuthenticatedLeadsRouteImport.update({
   id: '/leads',
   path: '/leads',
@@ -154,28 +174,45 @@ const AuthenticatedClientsRoute = AuthenticatedClientsRouteImport.update({
   path: '/clients',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedCashVelocityRoute =
-  AuthenticatedCashVelocityRouteImport.update({
-    id: '/cash-velocity',
-    path: '/cash-velocity',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
 const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   id: '/_admin',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const Char91DotwellKnownChar93OauthProtectedResourceRoute =
-  Char91DotwellKnownChar93OauthProtectedResourceRouteImport.update({
-    id: '/.well-known/oauth-protected-resource',
-    path: '/.well-known/oauth-protected-resource',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const Char91DotmcpChar93ListToolsRoute =
-  Char91DotmcpChar93ListToolsRouteImport.update({
-    id: '/.mcp/list-tools',
-    path: '/.mcp/list-tools',
-    getParentRoute: () => rootRouteImport,
-  } as any)
+const ApiMcpRateBookRoute = ApiMcpRateBookRouteImport.update({
+  id: '/api/mcp/rate-book',
+  path: '/api/mcp/rate-book',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiMcpProfileRoute = ApiMcpProfileRouteImport.update({
+  id: '/api/mcp/profile',
+  path: '/api/mcp/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiMcpLeadsRoute = ApiMcpLeadsRouteImport.update({
+  id: '/api/mcp/leads',
+  path: '/api/mcp/leads',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiMcpKeysRoute = ApiMcpKeysRouteImport.update({
+  id: '/api/mcp/keys',
+  path: '/api/mcp/keys',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiMcpDocumentsRoute = ApiMcpDocumentsRouteImport.update({
+  id: '/api/mcp/documents',
+  path: '/api/mcp/documents',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiMcpClientsRoute = ApiMcpClientsRouteImport.update({
+  id: '/api/mcp/clients',
+  path: '/api/mcp/clients',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedLeadsIdRoute = AuthenticatedLeadsIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => AuthenticatedLeadsRoute,
+} as any)
 const AuthenticatedInvoicesIdRoute = AuthenticatedInvoicesIdRouteImport.update({
   id: '/$id',
   path: '/$id',
@@ -187,26 +224,10 @@ const AuthenticatedEstimatesIdRoute =
     path: '/$id',
     getParentRoute: () => AuthenticatedEstimatesRoute,
   } as any)
-const AuthenticatedAdminEmailRoute = AuthenticatedAdminEmailRouteImport.update({
-  id: '/email',
-  path: '/email',
-  getParentRoute: () => AuthenticatedAdminRoute,
-} as any)
 const AuthenticatedAdminAdminRoute = AuthenticatedAdminAdminRouteImport.update({
   id: '/admin',
   path: '/admin',
   getParentRoute: () => AuthenticatedAdminRoute,
-} as any)
-const Char91DotmcpChar93InvokeToolToolRoute =
-  Char91DotmcpChar93InvokeToolToolRouteImport.update({
-    id: '/.mcp/invoke-tool/$tool',
-    path: '/.mcp/invoke-tool/$tool',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const DotlovableOauthConsentRoute = DotlovableOauthConsentRouteImport.update({
-  id: '/.lovable/oauth/consent',
-  path: '/.lovable/oauth/consent',
-  getParentRoute: () => rootRouteImport,
 } as any)
 const LovableEmailAuthWebhookRoute = LovableEmailAuthWebhookRouteImport.update({
   id: '/lovable/email/auth/webhook',
@@ -223,10 +244,40 @@ const ApiPublicWebhooksStripeRoute = ApiPublicWebhooksStripeRouteImport.update({
   path: '/api/public/webhooks/stripe',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiMcpLeadsWebhookRoute = ApiMcpLeadsWebhookRouteImport.update({
+  id: '/webhook',
+  path: '/webhook',
+  getParentRoute: () => ApiMcpLeadsRoute,
+} as any)
+const ApiMcpLeadsTrackRoute = ApiMcpLeadsTrackRouteImport.update({
+  id: '/track',
+  path: '/track',
+  getParentRoute: () => ApiMcpLeadsRoute,
+} as any)
+const ApiMcpLeadsScrapeRoute = ApiMcpLeadsScrapeRouteImport.update({
+  id: '/scrape',
+  path: '/scrape',
+  getParentRoute: () => ApiMcpLeadsRoute,
+} as any)
+const ApiMcpDocumentsSendRoute = ApiMcpDocumentsSendRouteImport.update({
+  id: '/send',
+  path: '/send',
+  getParentRoute: () => ApiMcpDocumentsRoute,
+} as any)
+const ApiMcpDocumentsExtractRoute = ApiMcpDocumentsExtractRouteImport.update({
+  id: '/extract',
+  path: '/extract',
+  getParentRoute: () => ApiMcpDocumentsRoute,
+} as any)
+const ApiMcpDocumentsActivityRoute = ApiMcpDocumentsActivityRouteImport.update({
+  id: '/activity',
+  path: '/activity',
+  getParentRoute: () => ApiMcpDocumentsRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/auth': typeof AuthRoute
+  '/auth': typeof AuthRouteWithChildren
   '/login': typeof LoginRoute
   '/mcp': typeof McpRoute
   '/pay-invoice': typeof PayInvoiceRoute
@@ -236,32 +287,41 @@ export interface FileRoutesByFullPath {
   '/signup': typeof SignupRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
-  '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
-  '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
-  '/cash-velocity': typeof AuthenticatedCashVelocityRoute
   '/clients': typeof AuthenticatedClientsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/estimates': typeof AuthenticatedEstimatesRouteWithChildren
   '/import-data': typeof AuthenticatedImportDataRoute
   '/invoices': typeof AuthenticatedInvoicesRouteWithChildren
-  '/leads': typeof AuthenticatedLeadsRoute
+  '/leads': typeof AuthenticatedLeadsRouteWithChildren
+  '/magic-create': typeof AuthenticatedMagicCreateRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/settings': typeof AuthenticatedSettingsRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/blog/': typeof BlogIndexRoute
-  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
-  '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/admin': typeof AuthenticatedAdminAdminRoute
-  '/email': typeof AuthenticatedAdminEmailRoute
   '/estimates/$id': typeof AuthenticatedEstimatesIdRoute
   '/invoices/$id': typeof AuthenticatedInvoicesIdRoute
+  '/leads/$id': typeof AuthenticatedLeadsIdRoute
+  '/api/mcp/clients': typeof ApiMcpClientsRoute
+  '/api/mcp/documents': typeof ApiMcpDocumentsRouteWithChildren
+  '/api/mcp/keys': typeof ApiMcpKeysRoute
+  '/api/mcp/leads': typeof ApiMcpLeadsRouteWithChildren
+  '/api/mcp/profile': typeof ApiMcpProfileRoute
+  '/api/mcp/rate-book': typeof ApiMcpRateBookRoute
+  '/api/mcp/documents/activity': typeof ApiMcpDocumentsActivityRoute
+  '/api/mcp/documents/extract': typeof ApiMcpDocumentsExtractRoute
+  '/api/mcp/documents/send': typeof ApiMcpDocumentsSendRoute
+  '/api/mcp/leads/scrape': typeof ApiMcpLeadsScrapeRoute
+  '/api/mcp/leads/track': typeof ApiMcpLeadsTrackRoute
+  '/api/mcp/leads/webhook': typeof ApiMcpLeadsWebhookRoute
   '/api/public/webhooks/stripe': typeof ApiPublicWebhooksStripeRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/auth': typeof AuthRoute
+  '/auth': typeof AuthRouteWithChildren
   '/login': typeof LoginRoute
   '/mcp': typeof McpRoute
   '/pay-invoice': typeof PayInvoiceRoute
@@ -271,25 +331,34 @@ export interface FileRoutesByTo {
   '/signup': typeof SignupRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
-  '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
-  '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
-  '/cash-velocity': typeof AuthenticatedCashVelocityRoute
   '/clients': typeof AuthenticatedClientsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/estimates': typeof AuthenticatedEstimatesRouteWithChildren
   '/import-data': typeof AuthenticatedImportDataRoute
   '/invoices': typeof AuthenticatedInvoicesRouteWithChildren
-  '/leads': typeof AuthenticatedLeadsRoute
+  '/leads': typeof AuthenticatedLeadsRouteWithChildren
+  '/magic-create': typeof AuthenticatedMagicCreateRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/settings': typeof AuthenticatedSettingsRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/blog': typeof BlogIndexRoute
-  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
-  '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/admin': typeof AuthenticatedAdminAdminRoute
-  '/email': typeof AuthenticatedAdminEmailRoute
   '/estimates/$id': typeof AuthenticatedEstimatesIdRoute
   '/invoices/$id': typeof AuthenticatedInvoicesIdRoute
+  '/leads/$id': typeof AuthenticatedLeadsIdRoute
+  '/api/mcp/clients': typeof ApiMcpClientsRoute
+  '/api/mcp/documents': typeof ApiMcpDocumentsRouteWithChildren
+  '/api/mcp/keys': typeof ApiMcpKeysRoute
+  '/api/mcp/leads': typeof ApiMcpLeadsRouteWithChildren
+  '/api/mcp/profile': typeof ApiMcpProfileRoute
+  '/api/mcp/rate-book': typeof ApiMcpRateBookRoute
+  '/api/mcp/documents/activity': typeof ApiMcpDocumentsActivityRoute
+  '/api/mcp/documents/extract': typeof ApiMcpDocumentsExtractRoute
+  '/api/mcp/documents/send': typeof ApiMcpDocumentsSendRoute
+  '/api/mcp/leads/scrape': typeof ApiMcpLeadsScrapeRoute
+  '/api/mcp/leads/track': typeof ApiMcpLeadsTrackRoute
+  '/api/mcp/leads/webhook': typeof ApiMcpLeadsWebhookRoute
   '/api/public/webhooks/stripe': typeof ApiPublicWebhooksStripeRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
@@ -298,7 +367,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
-  '/auth': typeof AuthRoute
+  '/auth': typeof AuthRouteWithChildren
   '/login': typeof LoginRoute
   '/mcp': typeof McpRoute
   '/pay-invoice': typeof PayInvoiceRoute
@@ -308,26 +377,35 @@ export interface FileRoutesById {
   '/signup': typeof SignupRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
-  '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
-  '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/_authenticated/_admin': typeof AuthenticatedAdminRouteWithChildren
-  '/_authenticated/cash-velocity': typeof AuthenticatedCashVelocityRoute
   '/_authenticated/clients': typeof AuthenticatedClientsRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/estimates': typeof AuthenticatedEstimatesRouteWithChildren
   '/_authenticated/import-data': typeof AuthenticatedImportDataRoute
   '/_authenticated/invoices': typeof AuthenticatedInvoicesRouteWithChildren
-  '/_authenticated/leads': typeof AuthenticatedLeadsRoute
+  '/_authenticated/leads': typeof AuthenticatedLeadsRouteWithChildren
+  '/_authenticated/magic-create': typeof AuthenticatedMagicCreateRoute
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/blog/': typeof BlogIndexRoute
-  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
-  '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/_authenticated/_admin/admin': typeof AuthenticatedAdminAdminRoute
-  '/_authenticated/_admin/email': typeof AuthenticatedAdminEmailRoute
   '/_authenticated/estimates/$id': typeof AuthenticatedEstimatesIdRoute
   '/_authenticated/invoices/$id': typeof AuthenticatedInvoicesIdRoute
+  '/_authenticated/leads/$id': typeof AuthenticatedLeadsIdRoute
+  '/api/mcp/clients': typeof ApiMcpClientsRoute
+  '/api/mcp/documents': typeof ApiMcpDocumentsRouteWithChildren
+  '/api/mcp/keys': typeof ApiMcpKeysRoute
+  '/api/mcp/leads': typeof ApiMcpLeadsRouteWithChildren
+  '/api/mcp/profile': typeof ApiMcpProfileRoute
+  '/api/mcp/rate-book': typeof ApiMcpRateBookRoute
+  '/api/mcp/documents/activity': typeof ApiMcpDocumentsActivityRoute
+  '/api/mcp/documents/extract': typeof ApiMcpDocumentsExtractRoute
+  '/api/mcp/documents/send': typeof ApiMcpDocumentsSendRoute
+  '/api/mcp/leads/scrape': typeof ApiMcpLeadsScrapeRoute
+  '/api/mcp/leads/track': typeof ApiMcpLeadsTrackRoute
+  '/api/mcp/leads/webhook': typeof ApiMcpLeadsWebhookRoute
   '/api/public/webhooks/stripe': typeof ApiPublicWebhooksStripeRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
@@ -346,25 +424,34 @@ export interface FileRouteTypes {
     | '/signup'
     | '/sitemap.xml'
     | '/terms'
-    | '/.mcp/list-tools'
-    | '/.well-known/oauth-protected-resource'
-    | '/cash-velocity'
     | '/clients'
     | '/dashboard'
     | '/estimates'
     | '/import-data'
     | '/invoices'
     | '/leads'
+    | '/magic-create'
     | '/onboarding'
     | '/settings'
+    | '/auth/callback'
     | '/blog/$slug'
     | '/blog/'
-    | '/.lovable/oauth/consent'
-    | '/.mcp/invoke-tool/$tool'
     | '/admin'
-    | '/email'
     | '/estimates/$id'
     | '/invoices/$id'
+    | '/leads/$id'
+    | '/api/mcp/clients'
+    | '/api/mcp/documents'
+    | '/api/mcp/keys'
+    | '/api/mcp/leads'
+    | '/api/mcp/profile'
+    | '/api/mcp/rate-book'
+    | '/api/mcp/documents/activity'
+    | '/api/mcp/documents/extract'
+    | '/api/mcp/documents/send'
+    | '/api/mcp/leads/scrape'
+    | '/api/mcp/leads/track'
+    | '/api/mcp/leads/webhook'
     | '/api/public/webhooks/stripe'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
@@ -381,25 +468,34 @@ export interface FileRouteTypes {
     | '/signup'
     | '/sitemap.xml'
     | '/terms'
-    | '/.mcp/list-tools'
-    | '/.well-known/oauth-protected-resource'
-    | '/cash-velocity'
     | '/clients'
     | '/dashboard'
     | '/estimates'
     | '/import-data'
     | '/invoices'
     | '/leads'
+    | '/magic-create'
     | '/onboarding'
     | '/settings'
+    | '/auth/callback'
     | '/blog/$slug'
     | '/blog'
-    | '/.lovable/oauth/consent'
-    | '/.mcp/invoke-tool/$tool'
     | '/admin'
-    | '/email'
     | '/estimates/$id'
     | '/invoices/$id'
+    | '/leads/$id'
+    | '/api/mcp/clients'
+    | '/api/mcp/documents'
+    | '/api/mcp/keys'
+    | '/api/mcp/leads'
+    | '/api/mcp/profile'
+    | '/api/mcp/rate-book'
+    | '/api/mcp/documents/activity'
+    | '/api/mcp/documents/extract'
+    | '/api/mcp/documents/send'
+    | '/api/mcp/leads/scrape'
+    | '/api/mcp/leads/track'
+    | '/api/mcp/leads/webhook'
     | '/api/public/webhooks/stripe'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
@@ -417,26 +513,35 @@ export interface FileRouteTypes {
     | '/signup'
     | '/sitemap.xml'
     | '/terms'
-    | '/.mcp/list-tools'
-    | '/.well-known/oauth-protected-resource'
     | '/_authenticated/_admin'
-    | '/_authenticated/cash-velocity'
     | '/_authenticated/clients'
     | '/_authenticated/dashboard'
     | '/_authenticated/estimates'
     | '/_authenticated/import-data'
     | '/_authenticated/invoices'
     | '/_authenticated/leads'
+    | '/_authenticated/magic-create'
     | '/_authenticated/onboarding'
     | '/_authenticated/settings'
+    | '/auth/callback'
     | '/blog/$slug'
     | '/blog/'
-    | '/.lovable/oauth/consent'
-    | '/.mcp/invoke-tool/$tool'
     | '/_authenticated/_admin/admin'
-    | '/_authenticated/_admin/email'
     | '/_authenticated/estimates/$id'
     | '/_authenticated/invoices/$id'
+    | '/_authenticated/leads/$id'
+    | '/api/mcp/clients'
+    | '/api/mcp/documents'
+    | '/api/mcp/keys'
+    | '/api/mcp/leads'
+    | '/api/mcp/profile'
+    | '/api/mcp/rate-book'
+    | '/api/mcp/documents/activity'
+    | '/api/mcp/documents/extract'
+    | '/api/mcp/documents/send'
+    | '/api/mcp/leads/scrape'
+    | '/api/mcp/leads/track'
+    | '/api/mcp/leads/webhook'
     | '/api/public/webhooks/stripe'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
@@ -445,7 +550,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
-  AuthRoute: typeof AuthRoute
+  AuthRoute: typeof AuthRouteWithChildren
   LoginRoute: typeof LoginRoute
   McpRoute: typeof McpRoute
   PayInvoiceRoute: typeof PayInvoiceRoute
@@ -455,12 +560,14 @@ export interface RootRouteChildren {
   SignupRoute: typeof SignupRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   TermsRoute: typeof TermsRoute
-  Char91DotmcpChar93ListToolsRoute: typeof Char91DotmcpChar93ListToolsRoute
-  Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   BlogSlugRoute: typeof BlogSlugRoute
   BlogIndexRoute: typeof BlogIndexRoute
-  DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
-  Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
+  ApiMcpClientsRoute: typeof ApiMcpClientsRoute
+  ApiMcpDocumentsRoute: typeof ApiMcpDocumentsRouteWithChildren
+  ApiMcpKeysRoute: typeof ApiMcpKeysRoute
+  ApiMcpLeadsRoute: typeof ApiMcpLeadsRouteWithChildren
+  ApiMcpProfileRoute: typeof ApiMcpProfileRoute
+  ApiMcpRateBookRoute: typeof ApiMcpRateBookRoute
   ApiPublicWebhooksStripeRoute: typeof ApiPublicWebhooksStripeRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
   LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
@@ -566,6 +673,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BlogSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/auth/callback': {
+      id: '/auth/callback'
+      path: '/callback'
+      fullPath: '/auth/callback'
+      preLoaderRoute: typeof AuthCallbackRouteImport
+      parentRoute: typeof AuthRoute
+    }
     '/_authenticated/settings': {
       id: '/_authenticated/settings'
       path: '/settings'
@@ -578,6 +692,13 @@ declare module '@tanstack/react-router' {
       path: '/onboarding'
       fullPath: '/onboarding'
       preLoaderRoute: typeof AuthenticatedOnboardingRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/magic-create': {
+      id: '/_authenticated/magic-create'
+      path: '/magic-create'
+      fullPath: '/magic-create'
+      preLoaderRoute: typeof AuthenticatedMagicCreateRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/leads': {
@@ -622,13 +743,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedClientsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/cash-velocity': {
-      id: '/_authenticated/cash-velocity'
-      path: '/cash-velocity'
-      fullPath: '/cash-velocity'
-      preLoaderRoute: typeof AuthenticatedCashVelocityRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
     '/_authenticated/_admin': {
       id: '/_authenticated/_admin'
       path: ''
@@ -636,19 +750,54 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/.well-known/oauth-protected-resource': {
-      id: '/.well-known/oauth-protected-resource'
-      path: '/.well-known/oauth-protected-resource'
-      fullPath: '/.well-known/oauth-protected-resource'
-      preLoaderRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRouteImport
+    '/api/mcp/rate-book': {
+      id: '/api/mcp/rate-book'
+      path: '/api/mcp/rate-book'
+      fullPath: '/api/mcp/rate-book'
+      preLoaderRoute: typeof ApiMcpRateBookRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/.mcp/list-tools': {
-      id: '/.mcp/list-tools'
-      path: '/.mcp/list-tools'
-      fullPath: '/.mcp/list-tools'
-      preLoaderRoute: typeof Char91DotmcpChar93ListToolsRouteImport
+    '/api/mcp/profile': {
+      id: '/api/mcp/profile'
+      path: '/api/mcp/profile'
+      fullPath: '/api/mcp/profile'
+      preLoaderRoute: typeof ApiMcpProfileRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/api/mcp/leads': {
+      id: '/api/mcp/leads'
+      path: '/api/mcp/leads'
+      fullPath: '/api/mcp/leads'
+      preLoaderRoute: typeof ApiMcpLeadsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/mcp/keys': {
+      id: '/api/mcp/keys'
+      path: '/api/mcp/keys'
+      fullPath: '/api/mcp/keys'
+      preLoaderRoute: typeof ApiMcpKeysRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/mcp/documents': {
+      id: '/api/mcp/documents'
+      path: '/api/mcp/documents'
+      fullPath: '/api/mcp/documents'
+      preLoaderRoute: typeof ApiMcpDocumentsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/mcp/clients': {
+      id: '/api/mcp/clients'
+      path: '/api/mcp/clients'
+      fullPath: '/api/mcp/clients'
+      preLoaderRoute: typeof ApiMcpClientsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/leads/$id': {
+      id: '/_authenticated/leads/$id'
+      path: '/$id'
+      fullPath: '/leads/$id'
+      preLoaderRoute: typeof AuthenticatedLeadsIdRouteImport
+      parentRoute: typeof AuthenticatedLeadsRoute
     }
     '/_authenticated/invoices/$id': {
       id: '/_authenticated/invoices/$id'
@@ -664,33 +813,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedEstimatesIdRouteImport
       parentRoute: typeof AuthenticatedEstimatesRoute
     }
-    '/_authenticated/_admin/email': {
-      id: '/_authenticated/_admin/email'
-      path: '/email'
-      fullPath: '/email'
-      preLoaderRoute: typeof AuthenticatedAdminEmailRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
     '/_authenticated/_admin/admin': {
       id: '/_authenticated/_admin/admin'
       path: '/admin'
       fullPath: '/admin'
       preLoaderRoute: typeof AuthenticatedAdminAdminRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
-    }
-    '/.mcp/invoke-tool/$tool': {
-      id: '/.mcp/invoke-tool/$tool'
-      path: '/.mcp/invoke-tool/$tool'
-      fullPath: '/.mcp/invoke-tool/$tool'
-      preLoaderRoute: typeof Char91DotmcpChar93InvokeToolToolRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/.lovable/oauth/consent': {
-      id: '/.lovable/oauth/consent'
-      path: '/.lovable/oauth/consent'
-      fullPath: '/.lovable/oauth/consent'
-      preLoaderRoute: typeof DotlovableOauthConsentRouteImport
-      parentRoute: typeof rootRouteImport
     }
     '/lovable/email/auth/webhook': {
       id: '/lovable/email/auth/webhook'
@@ -713,17 +841,57 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicWebhooksStripeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/mcp/leads/webhook': {
+      id: '/api/mcp/leads/webhook'
+      path: '/webhook'
+      fullPath: '/api/mcp/leads/webhook'
+      preLoaderRoute: typeof ApiMcpLeadsWebhookRouteImport
+      parentRoute: typeof ApiMcpLeadsRoute
+    }
+    '/api/mcp/leads/track': {
+      id: '/api/mcp/leads/track'
+      path: '/track'
+      fullPath: '/api/mcp/leads/track'
+      preLoaderRoute: typeof ApiMcpLeadsTrackRouteImport
+      parentRoute: typeof ApiMcpLeadsRoute
+    }
+    '/api/mcp/leads/scrape': {
+      id: '/api/mcp/leads/scrape'
+      path: '/scrape'
+      fullPath: '/api/mcp/leads/scrape'
+      preLoaderRoute: typeof ApiMcpLeadsScrapeRouteImport
+      parentRoute: typeof ApiMcpLeadsRoute
+    }
+    '/api/mcp/documents/send': {
+      id: '/api/mcp/documents/send'
+      path: '/send'
+      fullPath: '/api/mcp/documents/send'
+      preLoaderRoute: typeof ApiMcpDocumentsSendRouteImport
+      parentRoute: typeof ApiMcpDocumentsRoute
+    }
+    '/api/mcp/documents/extract': {
+      id: '/api/mcp/documents/extract'
+      path: '/extract'
+      fullPath: '/api/mcp/documents/extract'
+      preLoaderRoute: typeof ApiMcpDocumentsExtractRouteImport
+      parentRoute: typeof ApiMcpDocumentsRoute
+    }
+    '/api/mcp/documents/activity': {
+      id: '/api/mcp/documents/activity'
+      path: '/activity'
+      fullPath: '/api/mcp/documents/activity'
+      preLoaderRoute: typeof ApiMcpDocumentsActivityRouteImport
+      parentRoute: typeof ApiMcpDocumentsRoute
+    }
   }
 }
 
 interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminAdminRoute: typeof AuthenticatedAdminAdminRoute
-  AuthenticatedAdminEmailRoute: typeof AuthenticatedAdminEmailRoute
 }
 
 const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminAdminRoute: AuthenticatedAdminAdminRoute,
-  AuthenticatedAdminEmailRoute: AuthenticatedAdminEmailRoute,
 }
 
 const AuthenticatedAdminRouteWithChildren =
@@ -756,28 +924,39 @@ const AuthenticatedInvoicesRouteWithChildren =
     AuthenticatedInvoicesRouteChildren,
   )
 
+interface AuthenticatedLeadsRouteChildren {
+  AuthenticatedLeadsIdRoute: typeof AuthenticatedLeadsIdRoute
+}
+
+const AuthenticatedLeadsRouteChildren: AuthenticatedLeadsRouteChildren = {
+  AuthenticatedLeadsIdRoute: AuthenticatedLeadsIdRoute,
+}
+
+const AuthenticatedLeadsRouteWithChildren =
+  AuthenticatedLeadsRoute._addFileChildren(AuthenticatedLeadsRouteChildren)
+
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRouteWithChildren
-  AuthenticatedCashVelocityRoute: typeof AuthenticatedCashVelocityRoute
   AuthenticatedClientsRoute: typeof AuthenticatedClientsRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedEstimatesRoute: typeof AuthenticatedEstimatesRouteWithChildren
   AuthenticatedImportDataRoute: typeof AuthenticatedImportDataRoute
   AuthenticatedInvoicesRoute: typeof AuthenticatedInvoicesRouteWithChildren
-  AuthenticatedLeadsRoute: typeof AuthenticatedLeadsRoute
+  AuthenticatedLeadsRoute: typeof AuthenticatedLeadsRouteWithChildren
+  AuthenticatedMagicCreateRoute: typeof AuthenticatedMagicCreateRoute
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminRoute: AuthenticatedAdminRouteWithChildren,
-  AuthenticatedCashVelocityRoute: AuthenticatedCashVelocityRoute,
   AuthenticatedClientsRoute: AuthenticatedClientsRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedEstimatesRoute: AuthenticatedEstimatesRouteWithChildren,
   AuthenticatedImportDataRoute: AuthenticatedImportDataRoute,
   AuthenticatedInvoicesRoute: AuthenticatedInvoicesRouteWithChildren,
-  AuthenticatedLeadsRoute: AuthenticatedLeadsRoute,
+  AuthenticatedLeadsRoute: AuthenticatedLeadsRouteWithChildren,
+  AuthenticatedMagicCreateRoute: AuthenticatedMagicCreateRoute,
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
 }
@@ -785,10 +964,52 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
 const AuthenticatedRouteRouteWithChildren =
   AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
+interface AuthRouteChildren {
+  AuthCallbackRoute: typeof AuthCallbackRoute
+}
+
+const AuthRouteChildren: AuthRouteChildren = {
+  AuthCallbackRoute: AuthCallbackRoute,
+}
+
+const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
+
+interface ApiMcpDocumentsRouteChildren {
+  ApiMcpDocumentsActivityRoute: typeof ApiMcpDocumentsActivityRoute
+  ApiMcpDocumentsExtractRoute: typeof ApiMcpDocumentsExtractRoute
+  ApiMcpDocumentsSendRoute: typeof ApiMcpDocumentsSendRoute
+}
+
+const ApiMcpDocumentsRouteChildren: ApiMcpDocumentsRouteChildren = {
+  ApiMcpDocumentsActivityRoute: ApiMcpDocumentsActivityRoute,
+  ApiMcpDocumentsExtractRoute: ApiMcpDocumentsExtractRoute,
+  ApiMcpDocumentsSendRoute: ApiMcpDocumentsSendRoute,
+}
+
+const ApiMcpDocumentsRouteWithChildren = ApiMcpDocumentsRoute._addFileChildren(
+  ApiMcpDocumentsRouteChildren,
+)
+
+interface ApiMcpLeadsRouteChildren {
+  ApiMcpLeadsScrapeRoute: typeof ApiMcpLeadsScrapeRoute
+  ApiMcpLeadsTrackRoute: typeof ApiMcpLeadsTrackRoute
+  ApiMcpLeadsWebhookRoute: typeof ApiMcpLeadsWebhookRoute
+}
+
+const ApiMcpLeadsRouteChildren: ApiMcpLeadsRouteChildren = {
+  ApiMcpLeadsScrapeRoute: ApiMcpLeadsScrapeRoute,
+  ApiMcpLeadsTrackRoute: ApiMcpLeadsTrackRoute,
+  ApiMcpLeadsWebhookRoute: ApiMcpLeadsWebhookRoute,
+}
+
+const ApiMcpLeadsRouteWithChildren = ApiMcpLeadsRoute._addFileChildren(
+  ApiMcpLeadsRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
-  AuthRoute: AuthRoute,
+  AuthRoute: AuthRouteWithChildren,
   LoginRoute: LoginRoute,
   McpRoute: McpRoute,
   PayInvoiceRoute: PayInvoiceRoute,
@@ -798,13 +1019,14 @@ const rootRouteChildren: RootRouteChildren = {
   SignupRoute: SignupRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   TermsRoute: TermsRoute,
-  Char91DotmcpChar93ListToolsRoute: Char91DotmcpChar93ListToolsRoute,
-  Char91DotwellKnownChar93OauthProtectedResourceRoute:
-    Char91DotwellKnownChar93OauthProtectedResourceRoute,
   BlogSlugRoute: BlogSlugRoute,
   BlogIndexRoute: BlogIndexRoute,
-  DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
-  Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
+  ApiMcpClientsRoute: ApiMcpClientsRoute,
+  ApiMcpDocumentsRoute: ApiMcpDocumentsRouteWithChildren,
+  ApiMcpKeysRoute: ApiMcpKeysRoute,
+  ApiMcpLeadsRoute: ApiMcpLeadsRouteWithChildren,
+  ApiMcpProfileRoute: ApiMcpProfileRoute,
+  ApiMcpRateBookRoute: ApiMcpRateBookRoute,
   ApiPublicWebhooksStripeRoute: ApiPublicWebhooksStripeRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
   LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,

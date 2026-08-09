@@ -1,13 +1,31 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { extractLineItems } from "@/lib/invoices.functions";
+import {
+  createInvoiceRecord,
+  insertInvoiceItems,
+  updateInvoiceTotals,
+} from "@/lib/invoice-schema";
 import { useServerFn } from "@tanstack/react-start";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { AppShell } from "@/components/app/shell";
 import { useSubscription } from "@/lib/subscription";
 import { PlanBadge, UsageMeter, UpgradeCallout } from "@/components/app/plan-badge";
-import { Plus, Sparkles, Loader2, Trash2, Lock } from "lucide-react";
+import { SendDocumentModal } from "@/components/app/send-document-modal";
+import { useSendDocument, useMyEmail } from "@/hooks/useInvoices";
+import {
+  Plus,
+  Sparkles,
+  Loader2,
+  Trash2,
+  Lock,
+  TrendingUp,
+  AlertCircle,
+  Clock,
+  Mail,
+} from "lucide-react";
+import { toast } from "sonner";
 
 type Invoice = {
   id: string;
@@ -24,7 +42,9 @@ type Client = { id: string; name: string; email: string | null };
 type LineItem = { description: string; quantity: number; rate_cents: number };
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
-  head: () => ({ meta: [{ title: "Dashboard — Honest Invoice" }, { name: "robots", content: "noindex" }] }),
+  head: () => ({
+    meta: [{ title: "Dashboard — Honest Invoice" }, { name: "robots", content: "noindex" }],
+  }),
   component: DashboardPage,
 });
 
@@ -33,9 +53,22 @@ function DashboardPage() {
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
   const [showNew, setShowNew] = useState(false);
+  const [pendingSend, setPendingSend] = useState<{
+    id: string;
+    invoice_number: string;
+    client_id: string | null;
+    total_cents: number;
+    due_date: string | null;
+    job_description: string | null;
+  } | null>(null);
   const sub = useSubscription();
+  const sendDoc = useSendDocument();
+  const { data: myEmail } = useMyEmail();
+  const navigate = useNavigate();
 
-  useEffect(() => { void refresh(); }, []);
+  useEffect(() => {
+    void refresh();
+  }, []);
 
   async function refresh() {
     setLoading(true);
@@ -51,36 +84,81 @@ function DashboardPage() {
   const outstanding = invoices
     .filter((i) => i.status === "sent" || i.status === "overdue")
     .reduce((s, i) => s + i.total_cents, 0);
-  const paidThisMonth = invoices
-    .filter((i) => i.status === "paid" && new Date(i.issue_date).getMonth() === new Date().getMonth())
+  const overdue = invoices
+    .filter((i) => i.status === "overdue")
     .reduce((s, i) => s + i.total_cents, 0);
+  const paidThisMonth = invoices
+    .filter(
+      (i) => i.status === "paid" && new Date(i.issue_date).getMonth() === new Date().getMonth(),
+    )
+    .reduce((s, i) => s + i.total_cents, 0);
+  const paidLast30 = invoices
+    .filter(
+      (i) => i.status === "paid" && Date.now() - new Date(i.issue_date).getTime() < 30 * 864e5,
+    )
+    .reduce((s, i) => s + i.total_cents, 0);
+
+  const dsoDays = (() => {
+    const paid = invoices.filter((i) => i.status === "paid" && i.due_date);
+    if (!paid.length) return 0;
+    const total = paid.reduce((sum, i) => {
+      const issued = new Date(i.issue_date).getTime();
+      const due = new Date(i.due_date!).getTime();
+      return sum + Math.max(0, (due - issued) / 864e5);
+    }, 0);
+    return Math.round(total / paid.length);
+  })();
 
   return (
     <AppShell title="Dashboard">
       <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
         <div className="flex items-center gap-3">
-          <p className="text-sm text-muted-foreground">Your invoices, cash, and clients in one place.</p>
+          <p className="text-sm text-muted-foreground">
+            Your invoices, cash, and clients in one place.
+          </p>
           <PlanBadge plan={sub.plan} />
         </div>
         <button
           onClick={() => setShowNew(true)}
           disabled={!sub.canCreateInvoice}
-          title={!sub.canCreateInvoice ? "Free plan monthly limit reached — upgrade to continue" : undefined}
+          title={
+            !sub.canCreateInvoice
+              ? "Free plan monthly limit reached — upgrade to continue"
+              : undefined
+          }
           className="inline-flex h-11 items-center gap-2 rounded-xl bg-primary px-5 text-sm font-semibold text-primary-foreground shadow-soft hover:opacity-90 disabled:opacity-50"
         >
-          {sub.canCreateInvoice ? <Plus className="h-4 w-4" /> : <Lock className="h-4 w-4" />} New invoice
+          {sub.canCreateInvoice ? <Plus className="h-4 w-4" /> : <Lock className="h-4 w-4" />} New
+          invoice
         </button>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Stat label="Outstanding" value={formatCurrency(outstanding)} />
-        <Stat label="Paid this month" value={formatCurrency(paidThisMonth)} />
-        <Stat label="Clients" value={clients.length.toString()} />
+        <Stat label="Overdue" value={formatCurrency(overdue)} tone="danger" />
+        <Stat label="Paid this month" value={formatCurrency(paidThisMonth)} tone="success" />
+        <Stat label="Avg DSO" value={`${dsoDays}d`} />
+      </div>
+
+      <div className="mt-6 rounded-2xl border border-border bg-surface p-6 shadow-soft">
+        <h2 className="font-display text-xl">Last 30 days</h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Collected {formatCurrency(paidLast30)} across{" "}
+          {invoices.filter((i) => i.status === "paid").length} paid invoices.
+        </p>
+        <p className="mt-4 text-xs text-muted-foreground">
+          Full trend charts and forecasting land with the Pro plan's Real-time DSO & Cash Flow
+          Analytics module.
+        </p>
       </div>
 
       {sub.plan === "free" && !sub.loading && (
         <div className="mt-6 grid gap-4 sm:grid-cols-2">
-          <UsageMeter used={sub.invoicesThisMonth} limit={sub.invoiceLimit} label="Invoices this month" />
+          <UsageMeter
+            used={sub.invoicesThisMonth}
+            limit={sub.invoiceLimit}
+            label="Invoices this month"
+          />
           {!sub.canUseAI && <UpgradeCallout feature="AI line-item extraction" />}
         </div>
       )}
@@ -88,10 +166,14 @@ function DashboardPage() {
       <section className="mt-10 rounded-2xl border border-border bg-surface shadow-soft">
         <div className="flex items-center justify-between border-b border-border px-6 py-4">
           <h2 className="text-lg font-semibold">Invoices</h2>
-          <Link to="/pay-invoice" className="text-xs text-muted-foreground hover:text-foreground">Public payment page →</Link>
+          <Link to="/pay-invoice" className="text-xs text-muted-foreground hover:text-foreground">
+            Public payment page →
+          </Link>
         </div>
         {loading ? (
-          <div className="grid place-items-center py-16 text-muted-foreground"><Loader2 className="h-5 w-5 animate-spin" /></div>
+          <div className="grid place-items-center py-16 text-muted-foreground">
+            <Loader2 className="h-5 w-5 animate-spin" />
+          </div>
         ) : invoices.length === 0 ? (
           <div className="py-16 text-center">
             <p className="text-muted-foreground">No invoices yet.</p>
@@ -116,13 +198,22 @@ function DashboardPage() {
             </thead>
             <tbody>
               {invoices.map((inv) => (
-                <tr key={inv.id} className="border-b border-border/60 last:border-0 hover:bg-surface-muted/50">
+                <tr
+                  key={inv.id}
+                  className="border-b border-border/60 last:border-0 hover:bg-surface-muted/50"
+                >
                   <td className="px-6 py-4 font-semibold">{inv.invoice_number}</td>
-                  <td className="px-6 py-4 text-muted-foreground">{clients.find((c) => c.id === inv.client_id)?.name ?? "—"}</td>
+                  <td className="px-6 py-4 text-muted-foreground">
+                    {clients.find((c) => c.id === inv.client_id)?.name ?? "—"}
+                  </td>
                   <td className="px-6 py-4 text-muted-foreground">{formatDate(inv.issue_date)}</td>
                   <td className="px-6 py-4 text-muted-foreground">{formatDate(inv.due_date)}</td>
-                  <td className="px-6 py-4"><StatusPill status={inv.status} /></td>
-                  <td className="px-6 py-4 text-right font-semibold tabular-nums">{formatCurrency(inv.total_cents, inv.currency)}</td>
+                  <td className="px-6 py-4">
+                    <StatusPill status={inv.status} />
+                  </td>
+                  <td className="px-6 py-4 text-right font-semibold tabular-nums">
+                    {formatCurrency(inv.total_cents, inv.currency)}
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -135,10 +226,48 @@ function DashboardPage() {
           clients={clients}
           canUseAI={sub.canUseAI}
           onClose={() => setShowNew(false)}
-          onCreated={async () => { setShowNew(false); await refresh(); await sub.refresh(); }}
+          onCreated={async () => {
+            setShowNew(false);
+            await refresh();
+            await sub.refresh();
+          }}
           onClientCreated={async () => {
             const { data } = await supabase.from("clients").select("id,name,email").order("name");
             setClients((data as Client[]) ?? []);
+          }}
+          onSaveAndEmail={(doc) => setPendingSend(doc)}
+        />
+      )}
+
+      {pendingSend && (
+        <SendDocumentModal
+          open={!!pendingSend}
+          onClose={() => {
+            const doc = pendingSend;
+            setPendingSend(null);
+            navigate({ to: "/invoices/$id", params: { id: doc.id } });
+          }}
+          title={`Send ${pendingSend.invoice_number}`}
+          defaultTo={clients.find((c) => c.id === pendingSend.client_id)?.email ?? ""}
+          clients={clients}
+          myEmail={myEmail ?? ""}
+          onSend={async (to, message) => {
+            const doc = pendingSend;
+            const client = clients.find((c) => c.id === doc.client_id);
+            await sendDoc.mutateAsync({
+              type: "invoice",
+              id: doc.id,
+              invoice_number: doc.invoice_number,
+              client_name: client?.name ?? "Client",
+              client_email: to,
+              total_amount: doc.total_cents / 100,
+              due_date: doc.due_date,
+              job_description: doc.job_description,
+              message,
+            });
+            toast.success(`Invoice ${doc.invoice_number} emailed to ${to}`);
+            setPendingSend(null);
+            navigate({ to: "/invoices/$id", params: { id: doc.id } });
           }}
         />
       )}
@@ -146,11 +275,25 @@ function DashboardPage() {
   );
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
+function Stat({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: string;
+  tone?: "success" | "danger";
+}) {
+  const color =
+    tone === "success"
+      ? "text-success"
+      : tone === "danger"
+        ? "text-destructive"
+        : "text-foreground";
   return (
     <div className="rounded-2xl border border-border bg-surface p-5 shadow-soft">
       <p className="text-xs uppercase tracking-widest text-muted-foreground">{label}</p>
-      <p className="mt-2 font-display text-3xl text-foreground">{value}</p>
+      <p className={`mt-2 font-display text-3xl ${color}`}>{value}</p>
     </div>
   );
 }
@@ -163,7 +306,11 @@ function StatusPill({ status }: { status: string }) {
     overdue: "bg-destructive/10 text-destructive",
     void: "bg-muted text-muted-foreground line-through",
   };
-  return <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${map[status] ?? map.draft}`}>{status}</span>;
+  return (
+    <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${map[status] ?? map.draft}`}>
+      {status}
+    </span>
+  );
 }
 
 function NewInvoiceDialog({
@@ -172,13 +319,23 @@ function NewInvoiceDialog({
   onClose,
   onCreated,
   onClientCreated,
+  onSaveAndEmail,
 }: {
   clients: Client[];
   canUseAI: boolean;
   onClose: () => void;
   onCreated: () => void;
   onClientCreated: () => Promise<void>;
+  onSaveAndEmail: (doc: {
+    id: string;
+    invoice_number: string;
+    client_id: string | null;
+    total_cents: number;
+    due_date: string | null;
+    job_description: string | null;
+  }) => void;
 }) {
+  const navigate = useNavigate();
   const extract = useServerFn(extractLineItems);
   const [clientId, setClientId] = useState<string>(clients[0]?.id ?? "");
   const [newClientName, setNewClientName] = useState("");
@@ -190,17 +347,22 @@ function NewInvoiceDialog({
   const [error, setError] = useState<string | null>(null);
   const [taxRate, setTaxRate] = useState(0);
   const [dueDate, setDueDate] = useState(() => {
-    const d = new Date(); d.setDate(d.getDate() + 30);
+    const d = new Date();
+    d.setDate(d.getDate() + 30);
     return d.toISOString().slice(0, 10);
   });
 
-  const subtotal = items.reduce((s, i) => s + Math.round((i.quantity || 0) * (i.rate_cents || 0)), 0);
+  const subtotal = items.reduce(
+    (s, i) => s + Math.round((i.quantity || 0) * (i.rate_cents || 0)),
+    0,
+  );
   const tax = Math.round(subtotal * taxRate);
   const total = subtotal + tax;
 
   async function handleAi() {
     if (!description.trim()) return;
-    setAiLoading(true); setError(null);
+    setAiLoading(true);
+    setError(null);
     try {
       const result = await extract({ data: { description, currency: "USD" } });
       setItems(result.items.length ? result.items : items);
@@ -213,63 +375,69 @@ function NewInvoiceDialog({
 
   async function createClient() {
     if (!newClientName.trim()) return;
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     if (!user) return;
-    const { data, error } = await supabase.from("clients").insert({
-      user_id: user.id, name: newClientName.trim(), email: newClientEmail.trim() || null,
-    }).select("id").single();
-    if (error) { setError(error.message); return; }
+    const { data, error } = await supabase
+      .from("clients")
+      .insert({
+        user_id: user.id,
+        name: newClientName.trim(),
+        email: newClientEmail.trim() || null,
+      })
+      .select("id")
+      .single();
+    if (error) {
+      setError(error.message);
+      return;
+    }
     await onClientCreated();
     if (data) setClientId(data.id);
-    setNewClientName(""); setNewClientEmail("");
+    setNewClientName("");
+    setNewClientEmail("");
   }
 
-  async function save() {
-    setSaving(true); setError(null);
+  async function save(emailAfter = false) {
+    setSaving(true);
+    setError(null);
+    let createdId: string | null = null;
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not signed in");
-
-      // Fetch or create profile with next invoice number
-      const { data: profile } = await supabase.from("profiles").select("invoice_prefix,next_invoice_number").eq("id", user.id).maybeSingle();
-      const prefix = profile?.invoice_prefix ?? "INV";
-      const num = profile?.next_invoice_number ?? 1001;
-
       const validItems = items.filter((i) => i.description.trim() && i.rate_cents > 0);
-      const subtotalCents = validItems.reduce((s, i) => s + Math.round(i.quantity * i.rate_cents), 0);
-      const taxCents = Math.round(subtotalCents * taxRate);
-      const totalCents = subtotalCents + taxCents;
-
-      const { data: inv, error: invErr } = await supabase.from("invoices").insert({
-        user_id: user.id,
+      const doc = await createInvoiceRecord({
         client_id: clientId || null,
-        invoice_number: `${prefix}-${num}`,
-        status: "draft",
+        job_description: description.trim() || null,
         due_date: dueDate,
-        subtotal_cents: subtotalCents,
-        tax_rate: taxRate,
-        tax_cents: taxCents,
-        total_cents: totalCents,
-        currency: "USD",
-      }).select("id").single();
-      if (invErr) throw invErr;
-
-      if (validItems.length && inv) {
-        const rows = validItems.map((it, i) => ({
-          invoice_id: inv.id,
-          description: it.description,
-          quantity: it.quantity,
-          rate_cents: it.rate_cents,
-          amount_cents: Math.round(it.quantity * it.rate_cents),
-          sort_order: i,
-        }));
-        const { error: itemErr } = await supabase.from("invoice_items").insert(rows);
-        if (itemErr) throw itemErr;
+      });
+      createdId = doc.id;
+      if (validItems.length) {
+        await insertInvoiceItems(doc.id, validItems);
+        await updateInvoiceTotals(doc.id, taxRate);
       }
-
-      await supabase.from("profiles").upsert({ id: user.id, next_invoice_number: num + 1 });
-      onCreated();
+      await onCreated();
+      if (emailAfter) {
+        // Hand off to the page-level modal so it survives this dialog closing.
+        onSaveAndEmail({
+          id: doc.id,
+          invoice_number: doc.invoice_number,
+          client_id: clientId || null,
+          total_cents: total,
+          due_date: dueDate,
+          job_description: description.trim() || null,
+        });
+      } else {
+        // Take the user straight to the new invoice so they can review and email it.
+        navigate({ to: "/invoices/$id", params: { id: doc.id } });
+      }
     } catch (e) {
+      // Roll back the header row so a failed create doesn't pollute the list.
+      if (createdId) {
+        try {
+          await supabase.from("invoices").delete().eq("id", createdId);
+        } catch {
+          // best-effort rollback
+        }
+      }
       setError(e instanceof Error ? e.message : "Could not save invoice");
     } finally {
       setSaving(false);
@@ -281,28 +449,58 @@ function NewInvoiceDialog({
       <div className="max-h-[92vh] w-full max-w-3xl overflow-auto rounded-2xl bg-surface p-8 shadow-lifted">
         <div className="flex items-center justify-between">
           <h2 className="font-display text-2xl">New invoice</h2>
-          <button onClick={onClose} className="text-sm text-muted-foreground hover:text-foreground">Close</button>
+          <button onClick={onClose} className="text-sm text-muted-foreground hover:text-foreground">
+            Close
+          </button>
         </div>
 
         <div className="mt-6 grid gap-3 sm:grid-cols-2">
           <div>
             <label className="mb-1.5 block text-xs font-semibold">Client</label>
             {clients.length > 0 ? (
-              <select value={clientId} onChange={(e) => setClientId(e.target.value)} className="h-10 w-full rounded-lg border border-border bg-background px-3 text-sm">
+              <select
+                value={clientId}
+                onChange={(e) => setClientId(e.target.value)}
+                className="h-10 w-full rounded-lg border border-border bg-background px-3 text-sm"
+              >
                 <option value="">— Select —</option>
-                {clients.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                {clients.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
               </select>
             ) : (
               <div className="flex gap-2">
-                <input value={newClientName} onChange={(e) => setNewClientName(e.target.value)} placeholder="New client name" className="h-10 flex-1 rounded-lg border border-border bg-background px-3 text-sm" />
-                <input value={newClientEmail} onChange={(e) => setNewClientEmail(e.target.value)} placeholder="Email" className="h-10 flex-1 rounded-lg border border-border bg-background px-3 text-sm" />
-                <button onClick={createClient} className="h-10 rounded-lg bg-primary px-3 text-xs font-semibold text-primary-foreground">Add</button>
+                <input
+                  value={newClientName}
+                  onChange={(e) => setNewClientName(e.target.value)}
+                  placeholder="New client name"
+                  className="h-10 flex-1 rounded-lg border border-border bg-background px-3 text-sm"
+                />
+                <input
+                  value={newClientEmail}
+                  onChange={(e) => setNewClientEmail(e.target.value)}
+                  placeholder="Email"
+                  className="h-10 flex-1 rounded-lg border border-border bg-background px-3 text-sm"
+                />
+                <button
+                  onClick={createClient}
+                  className="h-10 rounded-lg bg-primary px-3 text-xs font-semibold text-primary-foreground"
+                >
+                  Add
+                </button>
               </div>
             )}
           </div>
           <div>
             <label className="mb-1.5 block text-xs font-semibold">Due date</label>
-            <input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} className="h-10 w-full rounded-lg border border-border bg-background px-3 text-sm" />
+            <input
+              type="date"
+              value={dueDate}
+              onChange={(e) => setDueDate(e.target.value)}
+              className="h-10 w-full rounded-lg border border-border bg-background px-3 text-sm"
+            />
           </div>
         </div>
 
@@ -310,10 +508,16 @@ function NewInvoiceDialog({
           <div className="flex items-center gap-2">
             <Sparkles className="h-4 w-4 text-accent" />
             <p className="text-sm font-semibold">AI line-item extraction</p>
-            {!canUseAI && <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold uppercase text-muted-foreground">Pro</span>}
+            {!canUseAI && (
+              <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold uppercase text-muted-foreground">
+                Pro
+              </span>
+            )}
           </div>
           <p className="mt-1 text-xs text-muted-foreground">
-            {canUseAI ? "Describe the job in plain English. AI will generate itemized labor and materials." : "Upgrade to Pro to describe jobs in plain English and auto-generate itemized line items."}
+            {canUseAI
+              ? "Describe the job in plain English. AI will generate itemized labor and materials."
+              : "Upgrade to Pro to describe jobs in plain English and auto-generate itemized line items."}
           </p>
           <textarea
             value={description}
@@ -328,52 +532,139 @@ function NewInvoiceDialog({
             disabled={aiLoading || !description.trim() || !canUseAI}
             className="mt-3 inline-flex h-9 items-center gap-2 rounded-lg bg-accent px-4 text-xs font-semibold text-accent-foreground disabled:opacity-60"
           >
-            {aiLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
+            {aiLoading ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Sparkles className="h-3.5 w-3.5" />
+            )}
             {aiLoading ? "Thinking…" : canUseAI ? "Generate line items" : "Upgrade to use AI"}
           </button>
         </div>
 
         <div className="mt-6">
           <div className="mb-2 grid grid-cols-[1fr_90px_120px_120px_40px] gap-2 text-xs font-semibold text-muted-foreground">
-            <span>Description</span><span>Qty</span><span>Rate</span><span className="text-right">Amount</span><span />
+            <span>Description</span>
+            <span>Qty</span>
+            <span>Rate</span>
+            <span className="text-right">Amount</span>
+            <span />
           </div>
           {items.map((it, idx) => (
-            <div key={idx} className="mb-2 grid grid-cols-[1fr_90px_120px_120px_40px] items-center gap-2">
-              <input value={it.description} onChange={(e) => setItems(items.map((x, i) => i === idx ? { ...x, description: e.target.value } : x))} className="h-9 rounded-md border border-border bg-background px-2 text-sm" placeholder="Line item" />
-              <input type="number" step="0.01" value={it.quantity} onChange={(e) => setItems(items.map((x, i) => i === idx ? { ...x, quantity: Number(e.target.value) } : x))} className="h-9 rounded-md border border-border bg-background px-2 text-sm" />
-              <input type="number" step="0.01" value={(it.rate_cents / 100).toFixed(2)} onChange={(e) => setItems(items.map((x, i) => i === idx ? { ...x, rate_cents: Math.round(Number(e.target.value) * 100) } : x))} className="h-9 rounded-md border border-border bg-background px-2 text-sm" />
-              <span className="text-right text-sm font-semibold tabular-nums">{formatCurrency(Math.round(it.quantity * it.rate_cents))}</span>
-              <button onClick={() => setItems(items.filter((_, i) => i !== idx))} className="text-muted-foreground hover:text-destructive"><Trash2 className="h-4 w-4" /></button>
+            <div
+              key={idx}
+              className="mb-2 grid grid-cols-[1fr_90px_120px_120px_40px] items-center gap-2"
+            >
+              <input
+                value={it.description}
+                onChange={(e) =>
+                  setItems(
+                    items.map((x, i) => (i === idx ? { ...x, description: e.target.value } : x)),
+                  )
+                }
+                className="h-9 rounded-md border border-border bg-background px-2 text-sm"
+                placeholder="Line item"
+              />
+              <input
+                type="number"
+                step="0.01"
+                value={it.quantity}
+                onChange={(e) =>
+                  setItems(
+                    items.map((x, i) =>
+                      i === idx ? { ...x, quantity: Number(e.target.value) } : x,
+                    ),
+                  )
+                }
+                className="h-9 rounded-md border border-border bg-background px-2 text-sm"
+              />
+              <input
+                type="number"
+                step="0.01"
+                value={(it.rate_cents / 100).toFixed(2)}
+                onChange={(e) =>
+                  setItems(
+                    items.map((x, i) =>
+                      i === idx
+                        ? { ...x, rate_cents: Math.round(Number(e.target.value) * 100) }
+                        : x,
+                    ),
+                  )
+                }
+                className="h-9 rounded-md border border-border bg-background px-2 text-sm"
+              />
+              <span className="text-right text-sm font-semibold tabular-nums">
+                {formatCurrency(Math.round(it.quantity * it.rate_cents))}
+              </span>
+              <button
+                onClick={() => setItems(items.filter((_, i) => i !== idx))}
+                className="text-muted-foreground hover:text-destructive"
+              >
+                <Trash2 className="h-4 w-4" />
+              </button>
             </div>
           ))}
-          <button onClick={() => setItems([...items, { description: "", quantity: 1, rate_cents: 0 }])} className="mt-2 text-xs font-semibold text-primary hover:underline">+ Add line item</button>
+          <button
+            onClick={() => setItems([...items, { description: "", quantity: 1, rate_cents: 0 }])}
+            className="mt-2 text-xs font-semibold text-primary hover:underline"
+          >
+            + Add line item
+          </button>
         </div>
 
         <div className="mt-6 flex justify-end">
           <div className="w-64 space-y-2 text-sm">
-            <div className="flex justify-between"><span className="text-muted-foreground">Subtotal</span><span>{formatCurrency(subtotal)}</span></div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Subtotal</span>
+              <span>{formatCurrency(subtotal)}</span>
+            </div>
             <div className="flex items-center justify-between">
               <span className="text-muted-foreground">Tax</span>
               <div className="flex items-center gap-1">
-                <input type="number" step="0.01" value={(taxRate * 100).toFixed(2)} onChange={(e) => setTaxRate(Number(e.target.value) / 100)} className="h-8 w-16 rounded-md border border-border bg-background px-1 text-right text-xs" />
+                <input
+                  type="number"
+                  step="0.01"
+                  value={(taxRate * 100).toFixed(2)}
+                  onChange={(e) => setTaxRate(Number(e.target.value) / 100)}
+                  className="h-8 w-16 rounded-md border border-border bg-background px-1 text-right text-xs"
+                />
                 <span className="text-xs text-muted-foreground">%</span>
               </div>
             </div>
             <div className="flex justify-between border-t border-border pt-2 text-base font-semibold">
-              <span>Total</span><span>{formatCurrency(total)}</span>
+              <span>Total</span>
+              <span>{formatCurrency(total)}</span>
             </div>
           </div>
         </div>
 
-        {error && <p className="mt-4 rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</p>}
+        {error && (
+          <p className="mt-4 rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">
+            {error}
+          </p>
+        )}
 
         <div className="mt-6 flex justify-end gap-2">
-          <button onClick={onClose} className="h-10 rounded-lg border border-border px-4 text-sm">Cancel</button>
-          <button onClick={save} disabled={saving} className="inline-flex h-10 items-center gap-2 rounded-lg bg-primary px-5 text-sm font-semibold text-primary-foreground disabled:opacity-60">
+          <button onClick={onClose} className="h-10 rounded-lg border border-border px-4 text-sm">
+            Cancel
+          </button>
+          <button
+            onClick={() => save(true)}
+            disabled={saving}
+            className="inline-flex h-10 items-center gap-2 rounded-lg border border-border px-5 text-sm font-semibold transition-colors hover:border-primary hover:text-primary disabled:opacity-60"
+          >
+            <Mail className="h-4 w-4" />
+            {saving ? "Saving…" : "Save & email"}
+          </button>
+          <button
+            onClick={() => save()}
+            disabled={saving}
+            className="inline-flex h-10 items-center gap-2 rounded-lg bg-primary px-5 text-sm font-semibold text-primary-foreground disabled:opacity-60"
+          >
             {saving && <Loader2 className="h-4 w-4 animate-spin" />} Save invoice
           </button>
         </div>
       </div>
+
     </div>
   );
 }

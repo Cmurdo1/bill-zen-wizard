@@ -6,45 +6,52 @@ import { formatCurrency, formatDate } from "@/lib/format";
 import { INVOICE_STATUSES, StatusPill, type InvoiceStatus } from "@/lib/documents";
 import { useSubscription } from "@/lib/subscription";
 import { UsageMeter } from "@/components/app/plan-badge";
-import { Loader2, Plus, Search, Lock } from "lucide-react";
+import { SendDocumentModal } from "@/components/app/send-document-modal";
+import { Loader2, Plus, Search, Lock, Mail } from "lucide-react";
+import { toast } from "sonner";
+import { fetchInvoiceList, type UnifiedInvoice } from "@/lib/invoice-schema";
+import { useSendDocument, useMyEmail } from "@/hooks/useInvoices";
 
-type Invoice = {
-  id: string;
-  invoice_number: string;
-  status: string;
-  total_cents: number;
-  currency: string;
-  issue_date: string;
-  due_date: string | null;
-  client_id: string | null;
-};
-type Client = { id: string; name: string };
+type Client = { id: string; name: string; email: string | null };
 
 export const Route = createFileRoute("/_authenticated/invoices")({
-  head: () => ({ meta: [{ title: "Invoices — Honest Invoice" }, { name: "robots", content: "noindex" }] }),
+  head: () => ({
+    meta: [{ title: "Invoices — Honest Invoice" }, { name: "robots", content: "noindex" }],
+  }),
   component: InvoicesPage,
 });
 
 function InvoicesPage() {
-  const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [invoices, setInvoices] = useState<UnifiedInvoice[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"all" | InvoiceStatus>("all");
   const [query, setQuery] = useState("");
   const [creating, setCreating] = useState(false);
+  const [sending, setSending] = useState<UnifiedInvoice | null>(null);
   const sub = useSubscription();
+  const sendDoc = useSendDocument();
+  const { data: myEmail } = useMyEmail();
 
   async function refresh() {
     setLoading(true);
-    const [invRes, cliRes] = await Promise.all([
-      supabase.from("invoices").select("id,invoice_number,status,total_cents,currency,issue_date,due_date,client_id").order("created_at", { ascending: false }),
-      supabase.from("clients").select("id,name").order("name"),
-    ]);
-    setInvoices((invRes.data as Invoice[]) ?? []);
-    setClients((cliRes.data as Client[]) ?? []);
-    setLoading(false);
+    try {
+      const [invoices, cliRes] = await Promise.all([
+        fetchInvoiceList(),
+        supabase.from("clients").select("id,name,email").order("name"),
+      ]);
+      setInvoices(invoices);
+      setClients((cliRes.data as Client[]) ?? []);
+    } catch (e) {
+      toast.error(`Couldn't load invoices: ${e instanceof Error ? e.message : "unknown error"}`);
+      setInvoices([]);
+    } finally {
+      setLoading(false);
+    }
   }
-  useEffect(() => { void refresh(); }, []);
+  useEffect(() => {
+    void refresh();
+  }, []);
 
   const filtered = useMemo(() => {
     return invoices.filter((i) => {
@@ -62,31 +69,26 @@ function InvoicesPage() {
     if (!sub.canCreateInvoice) return;
     setCreating(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) return;
-      const { data: profile } = await supabase.from("profiles").select("invoice_prefix,next_invoice_number").eq("id", user.id).maybeSingle();
-      const prefix = profile?.invoice_prefix ?? "INV";
-      const num = profile?.next_invoice_number ?? 1001;
-      const due = new Date(); due.setDate(due.getDate() + 30);
-      const { data: inv } = await supabase.from("invoices").insert({
-        user_id: user.id,
-        invoice_number: `${prefix}-${num}`,
-        status: "draft",
-        due_date: due.toISOString().slice(0, 10),
-      }).select("id").single();
-      await supabase.from("profiles").upsert({ id: user.id, next_invoice_number: num + 1 });
-      await sub.refresh();
-      if (inv) window.location.href = `/invoices/${inv.id}`;
+      window.location.href = `/magic-create?type=invoice`;
     } finally {
       setCreating(false);
     }
   }
 
-  const totals = useMemo(() => ({
-    outstanding: invoices.filter((i) => i.status === "sent" || i.status === "overdue").reduce((s, i) => s + i.total_cents, 0),
-    paid: invoices.filter((i) => i.status === "paid").reduce((s, i) => s + i.total_cents, 0),
-    draft: invoices.filter((i) => i.status === "draft").length,
-  }), [invoices]);
+  const totals = useMemo(
+    () => ({
+      outstanding: invoices
+        .filter((i) => i.status === "sent" || i.status === "overdue")
+        .reduce((s, i) => s + i.total_cents, 0),
+      paid: invoices.filter((i) => i.status === "paid").reduce((s, i) => s + i.total_cents, 0),
+      draft: invoices.filter((i) => i.status === "draft").length,
+    }),
+    [invoices],
+  );
 
   return (
     <AppShell title="Invoices">
@@ -98,7 +100,11 @@ function InvoicesPage() {
 
       {sub.plan === "free" && !sub.loading && (
         <div className="mb-4">
-          <UsageMeter used={sub.invoicesThisMonth} limit={sub.invoiceLimit} label="Invoices this month" />
+          <UsageMeter
+            used={sub.invoicesThisMonth}
+            limit={sub.invoiceLimit}
+            label="Invoices this month"
+          />
         </div>
       )}
 
@@ -126,16 +132,29 @@ function InvoicesPage() {
         <button
           onClick={createBlank}
           disabled={creating || !sub.canCreateInvoice}
-          title={!sub.canCreateInvoice ? "Free plan monthly limit reached — upgrade to continue" : undefined}
+          title={
+            !sub.canCreateInvoice
+              ? "Free plan monthly limit reached — upgrade to continue"
+              : undefined
+          }
           className="inline-flex h-10 items-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground shadow-soft disabled:opacity-60"
         >
-          {creating ? <Loader2 className="h-4 w-4 animate-spin" /> : sub.canCreateInvoice ? <Plus className="h-4 w-4" /> : <Lock className="h-4 w-4" />} New invoice
+          {creating ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : sub.canCreateInvoice ? (
+            <Plus className="h-4 w-4" />
+          ) : (
+            <Lock className="h-4 w-4" />
+          )}{" "}
+          New invoice
         </button>
       </div>
 
       <div className="rounded-2xl border border-border bg-surface shadow-soft">
         {loading ? (
-          <div className="grid place-items-center py-16 text-muted-foreground"><Loader2 className="h-5 w-5 animate-spin" /></div>
+          <div className="grid place-items-center py-16 text-muted-foreground">
+            <Loader2 className="h-5 w-5 animate-spin" />
+          </div>
         ) : filtered.length === 0 ? (
           <div className="py-16 text-center text-muted-foreground">
             No invoices{filter !== "all" ? ` with status "${filter}"` : ""}.
@@ -150,29 +169,77 @@ function InvoicesPage() {
                 <th className="px-6 py-3">Due</th>
                 <th className="px-6 py-3">Status</th>
                 <th className="px-6 py-3 text-right">Total</th>
+                <th className="px-6 py-3 text-right">Send</th>
               </tr>
             </thead>
             <tbody>
-              {filtered.map((inv) => (
-                <tr key={inv.id} className="cursor-pointer border-b border-border/60 last:border-0 hover:bg-surface-muted/50">
+              {filtered.map((inv) => {
+                const client = clients.find((c) => c.id === inv.client_id);
+                return (
+                <tr
+                  key={inv.id}
+                  className="cursor-pointer border-b border-border/60 last:border-0 hover:bg-surface-muted/50"
+                >
                   <td className="px-6 py-4 font-semibold">
                     <Link to="/invoices/$id" params={{ id: inv.id }} className="hover:text-primary">
                       {inv.invoice_number}
                     </Link>
                   </td>
-                  <td className="px-6 py-4 text-muted-foreground">{clients.find((c) => c.id === inv.client_id)?.name ?? "—"}</td>
+                  <td className="px-6 py-4 text-muted-foreground">
+                    {clients.find((c) => c.id === inv.client_id)?.name ?? "—"}
+                  </td>
                   <td className="px-6 py-4 text-muted-foreground">{formatDate(inv.issue_date)}</td>
                   <td className="px-6 py-4 text-muted-foreground">{formatDate(inv.due_date)}</td>
-                  <td className="px-6 py-4"><StatusPill status={inv.status} /></td>
+                  <td className="px-6 py-4">
+                    <StatusPill status={inv.status} />
+                  </td>
                   <td className="px-6 py-4 text-right font-semibold tabular-nums">
                     {formatCurrency(inv.total_cents, inv.currency)}
                   </td>
+                  <td className="px-6 py-4 text-right">
+                    <button
+                      onClick={() => setSending(inv)}
+                      title="Email this invoice — pick a recipient or type any address"
+                      className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-border px-2.5 text-xs font-semibold text-muted-foreground transition-colors hover:border-primary hover:text-primary"
+                    >
+                      <Mail className="h-3.5 w-3.5" />
+                      Send
+                    </button>
+                  </td>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
         )}
-      </div>
+      </div>        <SendDocumentModal
+          open={!!sending}
+          onClose={() => setSending(null)}
+          title={`Send ${sending?.invoice_number ?? "invoice"}`}
+          defaultTo={
+            sending ? clients.find((c) => c.id === sending.client_id)?.email ?? "" : ""
+          }
+          clients={clients}
+          myEmail={myEmail ?? ""}
+        onSend={async (to, message) => {
+          if (!sending) return;
+          const client = clients.find((c) => c.id === sending.client_id);
+          await sendDoc.mutateAsync({
+            type: "invoice",
+            id: sending.id,
+            invoice_number: sending.invoice_number,
+            client_name: client?.name ?? "Client",
+            client_email: to,
+            total_amount: sending.total_cents / 100,
+            due_date: sending.due_date,
+            job_description: sending.job_description,
+            message,
+          });
+          toast.success(`Invoice ${sending.invoice_number} emailed to ${to}`);
+          setSending(null);
+          await refresh();
+        }}
+      />
     </AppShell>
   );
 }

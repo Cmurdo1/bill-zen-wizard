@@ -5,13 +5,23 @@ export type LineItem = {
 };
 
 export function computeTotals(items: LineItem[], taxRate: number) {
-  const subtotal = items.reduce((s, i) => s + Math.round((i.quantity || 0) * (i.rate_cents || 0)), 0);
+  const subtotal = items.reduce(
+    (s, i) => s + Math.round((i.quantity || 0) * (i.rate_cents || 0)),
+    0,
+  );
   const tax = Math.round(subtotal * taxRate);
   return { subtotal, tax, total: subtotal + tax };
 }
 
 export const INVOICE_STATUSES = ["draft", "sent", "paid", "overdue", "void"] as const;
-export const ESTIMATE_STATUSES = ["draft", "sent", "accepted", "declined", "expired", "converted"] as const;
+export const ESTIMATE_STATUSES = [
+  "draft",
+  "sent",
+  "accepted",
+  "declined",
+  "expired",
+  "converted",
+] as const;
 
 export type InvoiceStatus = (typeof INVOICE_STATUSES)[number];
 export type EstimateStatus = (typeof ESTIMATE_STATUSES)[number];
@@ -32,5 +42,11 @@ export function statusClass(status: string): string {
 }
 
 export function StatusPill({ status }: { status: string }) {
-  return <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold capitalize ${statusClass(status)}`}>{status}</span>;
+  return (
+    <span
+      className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold capitalize ${statusClass(status)}`}
+    >
+      {status}
+    </span>
+  );
 }

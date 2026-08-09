@@ -1,12 +1,16 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { MarketingShell } from "@/components/marketing/shell";
-import { ArrowRight, TrendingUp, Target, Users, Sparkles } from "lucide-react";
+import { ArrowRight, TrendingUp, Target, Users, Sparkles, Bot } from "lucide-react";
 
 export const Route = createFileRoute("/pitch")({
   head: () => ({
     meta: [
       { title: "Investor Pitch — Honest Invoice" },
-      { name: "description", content: "Honest Invoice is rebuilding invoicing for the 30 million service businesses that still get paid on paper." },
+      {
+        name: "description",
+        content:
+          "Honest Invoice is rebuilding invoicing for the 30 million service businesses that still get paid on paper.",
+      },
       { property: "og:title", content: "Investor Pitch — Honest Invoice" },
       { property: "og:url", content: "/pitch" },
     ],
@@ -20,7 +24,9 @@ function PitchPage() {
     <MarketingShell>
       <section className="bg-hero">
         <div className="container-page py-20">
-          <p className="text-sm font-semibold uppercase tracking-widest text-accent-foreground/80">Investor overview · Series Seed</p>
+          <p className="text-sm font-semibold uppercase tracking-widest text-accent-foreground/80">
+            Investor overview · Series Seed
+          </p>
           <h1 className="mt-3 font-display text-5xl tracking-tight text-foreground sm:text-6xl">
             Invoicing, rebuilt for the 30M
             <br />
@@ -65,6 +71,28 @@ function PitchPage() {
         </p>
       </Section>
 
+      <Section title="MCP: AI agents as your sales force" icon={Bot}>
+        <div>
+          <p>
+            On active Pro and Business plans, Honest Invoice exposes a Model Context Protocol (MCP)
+            server so AI agents like Claude and Cursor can create and send estimates on a
+            contractor's behalf. When a lead posts on Craigslist or Nextdoor, the contractor's AI
+            agent can generate a professional estimate and email it — in seconds. Every request is
+            scoped to the contractor account associated with its access token.
+          </p>
+          <p className="mt-4">
+            MCP access is a paid-plan feature. Pro and Business users can connect an agent to work
+            with their own clients, estimates, and invoices; Free accounts cannot call MCP tools.
+          </p>
+          <ul className="mt-4 list-disc pl-5 text-sm">
+            <li>MCP stdio transport for desktop agents (Claude, Cursor, Windsurf)</li>
+            <li>REST API at /api/mcp/documents for cloud agents and webhooks</li>
+            <li>AI-powered line-item extraction for Pro and Business</li>
+            <li>Estimate-to-invoice conversion with one API call</li>
+          </ul>
+        </div>
+      </Section>
+
       <Section title="Traction & plan" icon={Users}>
         <ul className="list-disc pl-5 text-sm">
           <li>Public launch: Q3 2026</li>
@@ -89,7 +117,11 @@ function PitchPage() {
               investors@honestinvoice.com <ArrowRight className="h-4 w-4" />
             </a>
             <p className="mt-6 text-xs text-primary-foreground/60">
-              Or <Link to="/signup" className="underline">try the product yourself</Link>.
+              Or{" "}
+              <Link to="/signup" className="underline">
+                try the product yourself
+              </Link>
+              .
             </p>
           </div>
         </div>

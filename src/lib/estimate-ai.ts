@@ -20,7 +20,10 @@ export const EstimateSchema = {
       items: {
         type: "object",
         properties: {
-          description: { type: "string", description: "Step of the job, including measured/estimated quantities" },
+          description: {
+            type: "string",
+            description: "Step of the job, including measured/estimated quantities",
+          },
           quantity: { type: "number" },
           unit: { type: "string", description: "sq ft, linear ft, hour, each, gallon, etc." },
           rate_cents: { type: "integer", description: "Unit price in cents" },
@@ -81,7 +84,9 @@ export function isPaidPlan(status: string | null | undefined, end: string | null
   const expired = activeUntil ? activeUntil.getTime() < Date.now() : false;
   return (
     !expired &&
-    ["pro", "business", "active", "active_pro", "active_business", "trialing"].includes(status ?? "free")
+    ["pro", "business", "active", "active_pro", "active_business", "trialing"].includes(
+      status ?? "free",
+    )
   );
 }
 
@@ -106,7 +111,12 @@ type EmailEstimate = {
 
 export function buildEstimateEmailHtml(
   estimate: EmailEstimate,
-  items: Array<{ description: string; quantity: number; rate_cents: number; amount_cents: number | null }>,
+  items: Array<{
+    description: string;
+    quantity: number;
+    rate_cents: number;
+    amount_cents: number | null;
+  }>,
   businessName: string,
   message?: string,
 ) {

@@ -42,25 +42,36 @@ export function EstimateAiPanel({
     const rows = (data as PhotoRow[]) ?? [];
     const withUrls = await Promise.all(
       rows.map(async (r) => {
-        const { data: signed } = await supabase.storage.from("estimate-photos").createSignedUrl(r.storage_path, 3600);
+        const { data: signed } = await supabase.storage
+          .from("estimate-photos")
+          .createSignedUrl(r.storage_path, 3600);
         return { ...r, url: signed?.signedUrl };
       }),
     );
     setPhotos(withUrls);
   }
-  useEffect(() => { void loadPhotos(); }, [estimateId]);
+  useEffect(() => {
+    void loadPhotos();
+  }, [estimateId]);
 
   async function upload(files: FileList | null) {
     if (!files?.length) return;
     setError(null);
     setUploading(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) throw new Error("Not signed in");
       for (const file of Array.from(files).slice(0, 10)) {
         if (!file.type.startsWith("image/")) throw new Error("Only image files can be uploaded.");
         if (file.size > 10 * 1024 * 1024) throw new Error(`${file.name} is larger than 10MB.`);
-        const ext = file.name.split(".").pop()?.toLowerCase().replace(/[^a-z0-9]/g, "") || "jpg";
+        const ext =
+          file.name
+            .split(".")
+            .pop()
+            ?.toLowerCase()
+            .replace(/[^a-z0-9]/g, "") || "jpg";
         const path = `${user.id}/${estimateId}/${crypto.randomUUID()}.${ext}`;
         const { error: upErr } = await supabase.storage.from("estimate-photos").upload(path, file, {
           contentType: file.type,
@@ -98,9 +109,11 @@ export function EstimateAiPanel({
     }
     setRunning(true);
     try {
-      const res = await analyze({ data: { estimateId, description: description.trim(), currency } });
+      const res = await analyze({
+        data: { estimateId, description: description.trim(), currency },
+      });
       onItems(
-        res.items.map((i: { description: string; quantity: number; rate_cents: number }) => ({
+        res.items.map((i) => ({
           description: i.description,
           quantity: i.quantity,
           rate_cents: i.rate_cents,
@@ -117,12 +130,18 @@ export function EstimateAiPanel({
   return (
     <section className="rounded-2xl border border-border bg-surface p-6 shadow-soft">
       <div className="flex items-center justify-between gap-3">
-        <h2 className="text-sm font-semibold uppercase tracking-widest text-muted-foreground">AI photo estimate</h2>
-        <span className="text-xs text-muted-foreground">{photos.length} photo{photos.length === 1 ? "" : "s"}</span>
+        <h2 className="text-sm font-semibold uppercase tracking-widest text-muted-foreground">
+          AI photo estimate
+        </h2>
+        <span className="text-xs text-muted-foreground">
+          {photos.length} photo{photos.length === 1 ? "" : "s"}
+        </span>
       </div>
 
       <label className="mt-4 block">
-        <span className="mb-1.5 block text-xs font-semibold text-muted-foreground">Brief job description (required)</span>
+        <span className="mb-1.5 block text-xs font-semibold text-muted-foreground">
+          Brief job description (required)
+        </span>
         <textarea
           value={description}
           onChange={(e) => onDescriptionChange(e.target.value)}
@@ -134,9 +153,16 @@ export function EstimateAiPanel({
 
       <div className="mt-4 grid grid-cols-3 gap-3 sm:grid-cols-4">
         {photos.map((p) => (
-          <div key={p.id} className="group relative overflow-hidden rounded-lg border border-border">
+          <div
+            key={p.id}
+            className="group relative overflow-hidden rounded-lg border border-border"
+          >
             {p.url ? (
-              <img src={p.url} alt={p.caption ?? "Job photo"} className="h-24 w-full object-cover" />
+              <img
+                src={p.url}
+                alt={p.caption ?? "Job photo"}
+                className="h-24 w-full object-cover"
+              />
             ) : (
               <div className="h-24 w-full bg-surface-muted" />
             )}
@@ -154,9 +180,23 @@ export function EstimateAiPanel({
           disabled={uploading}
           className="grid h-24 place-items-center rounded-lg border border-dashed border-border text-xs font-semibold text-muted-foreground hover:bg-surface-muted disabled:opacity-60"
         >
-          {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <span className="inline-flex flex-col items-center gap-1"><ImagePlus className="h-4 w-4" /> Add photos</span>}
+          {uploading ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <span className="inline-flex flex-col items-center gap-1">
+              <ImagePlus className="h-4 w-4" /> Add photos
+            </span>
+          )}
         </button>
-        <input ref={fileRef} type="file" accept="image/*" multiple capture="environment" hidden onChange={(e) => upload(e.target.files)} />
+        <input
+          ref={fileRef}
+          type="file"
+          accept="image/*"
+          multiple
+          capture="environment"
+          hidden
+          onChange={(e) => upload(e.target.files)}
+        />
       </div>
 
       <button
@@ -168,28 +208,44 @@ export function EstimateAiPanel({
         {running ? "Measuring & pricing…" : "Generate line items from photos"}
       </button>
       {!canUseAI && (
-        <p className="mt-2 text-xs text-muted-foreground">AI photo estimating is included with Pro and Business plans.</p>
+        <p className="mt-2 text-xs text-muted-foreground">
+          AI photo estimating is included with Pro and Business plans.
+        </p>
       )}
-      {error && <p className="mt-3 rounded-lg bg-destructive/10 px-3 py-2 text-xs font-semibold text-destructive">{error}</p>}
+      {error && (
+        <p className="mt-3 rounded-lg bg-destructive/10 px-3 py-2 text-xs font-semibold text-destructive">
+          {error}
+        </p>
+      )}
 
       {result && (
         <div className="mt-4 grid gap-3 sm:grid-cols-2">
           <div className="rounded-xl border border-border bg-background p-4">
-            <h3 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Measurements</h3>
+            <h3 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+              Measurements
+            </h3>
             <ul className="mt-2 space-y-1 text-xs">
               {result.measurements.map((m, i) => (
                 <li key={i} className="flex justify-between gap-2">
                   <span className="text-muted-foreground">{m.label}</span>
-                  <span className="tabular-nums">{m.value} <span className="text-muted-foreground">({m.confidence})</span></span>
+                  <span className="tabular-nums">
+                    {m.value} <span className="text-muted-foreground">({m.confidence})</span>
+                  </span>
                 </li>
               ))}
-              {result.measurements.length === 0 && <li className="text-muted-foreground">None derived.</li>}
+              {result.measurements.length === 0 && (
+                <li className="text-muted-foreground">None derived.</li>
+              )}
             </ul>
           </div>
           <div className="rounded-xl border border-border bg-background p-4">
-            <h3 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Assumptions</h3>
+            <h3 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+              Assumptions
+            </h3>
             <ul className="mt-2 list-disc space-y-1 pl-4 text-xs text-muted-foreground">
-              {result.assumptions.map((a, i) => <li key={i}>{a}</li>)}
+              {result.assumptions.map((a, i) => (
+                <li key={i}>{a}</li>
+              ))}
               {result.assumptions.length === 0 && <li>None.</li>}
             </ul>
           </div>

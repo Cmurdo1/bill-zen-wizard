@@ -13,6 +13,7 @@ import {
   logMcpAction,
 } from "@/lib/mcp-api-shared";
 import { escapeHtml } from "@/lib/estimate-ai";
+import { extractLineItemsWithAI } from "@/lib/ai-extract";
 
 /**
  * POST /api/mcp/leads/webhook
@@ -176,7 +177,6 @@ export const Route = createFileRoute("/api/mcp/leads/webhook")({
           {
             // Use AI extraction (OpenRouter primary, NVIDIA backup) for paid MCP accounts.
             try {
-              const { extractLineItemsWithAI } = await import("@/lib/ai-extract");
               const result = await extractLineItemsWithAI({
                 description: `${parsed.title}\n${parsed.description}`,
                 currency: "USD",

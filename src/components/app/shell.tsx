@@ -22,8 +22,8 @@ const NAV = [
   { to: "/clients", label: "Clients", icon: Users },
   { to: "/estimates", label: "Estimates", icon: ClipboardList },
   { to: "/invoices", label: "Invoices", icon: FileText },
-  { to: "/magic-create?type=estimate", label: "Create Estimate", icon: Target },
-  { to: "/magic-create?type=invoice", label: "Create Invoice", icon: FileText },
+  { to: "/magic-create", search: { type: "estimate" }, label: "Create Estimate", icon: Target },
+  { to: "/magic-create", search: { type: "invoice" }, label: "Create Invoice", icon: FileText },
   { to: "/leads", label: "Lead Board", icon: Target },
   { to: "/import-data", label: "Import Data", icon: Upload },
   { to: "/settings", label: "Settings", icon: SettingsIcon },
@@ -87,12 +87,15 @@ export function AppShell({ children, title }: { children: React.ReactNode; title
           <Logo />
         </div>
         <nav className="flex-1 space-y-1 p-3" aria-label="App navigation">
-          {nav.map(({ to, label, icon: Icon }) => {
+          {nav.map((item) => {
+            const { to, label, icon: Icon } = item;
+            const search = "search" in item ? item.search : undefined;
             const active = pathname === to;
             return (
               <Link
-                key={to}
+                key={label}
                 to={to}
+                search={search}
                 className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
                   active
                     ? "bg-primary text-primary-foreground shadow-soft"
@@ -127,12 +130,15 @@ export function AppShell({ children, title }: { children: React.ReactNode; title
           className="flex gap-1 overflow-x-auto border-b border-border bg-surface px-3 py-2 lg:hidden"
           aria-label="Mobile app navigation"
         >
-          {nav.map(({ to, label, icon: Icon }) => {
+          {nav.map((item) => {
+            const { to, label, icon: Icon } = item;
+            const search = "search" in item ? item.search : undefined;
             const active = pathname === to;
             return (
               <Link
-                key={to}
+                key={label}
                 to={to}
+                search={search}
                 className={`inline-flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium ${
                   active
                     ? "bg-primary text-primary-foreground"

@@ -36,7 +36,7 @@ export const Route = createFileRoute("/api/mcp/documents/activity")({
             .select("id")
             .eq("id", query.document_id)
             .eq("user_id", context.userId);
-          if (legacy) documentQuery = documentQuery.eq("type", query.document_type);
+          if (legacy) (documentQuery as any).eq("type", query.document_type);
           const { data: document, error: documentError } = await documentQuery.maybeSingle();
           if (documentError) throw documentError;
           if (!document) return json({ error: "Document not found" }, 404);

@@ -391,7 +391,7 @@ export async function createMcpContext(request: Request): Promise<McpContext> {
     userId = keyRow.user_id;
     apiKeyId = keyRow.id;
     scopes = (Array.isArray(keyRow.scopes) ? keyRow.scopes : []).filter(
-      (scope): scope is McpScope => MCP_SCOPES.includes(scope as McpScope),
+      (scope: unknown): scope is McpScope => MCP_SCOPES.includes(scope as McpScope),
     );
     supabase = supabaseAdmin;
     await db

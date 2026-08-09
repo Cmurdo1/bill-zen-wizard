@@ -68,7 +68,7 @@ function EstimateDetailPage() {
   const [msg, setMsg] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [activity, setActivity] = useState<ActivityRow[]>([]);
-  const { canUseAI, subscription } = useSubscription();
+  const { canUseAI, isActive: subscribed } = useSubscription();
   const sendEmail = useServerFn(sendEstimateEmail);
   const [sendOpen, setSendOpen] = useState(false);
   const [sendTo, setSendTo] = useState("");
@@ -343,7 +343,7 @@ function EstimateDetailPage() {
   }
 
   const handleExportPDF = async () => {
-    if (!subscription.subscribed) {
+    if (!subscribed) {
       toast.error("PDF export is a Pro feature. Upgrade to export estimates.");
       return;
     }
@@ -356,6 +356,7 @@ function EstimateDetailPage() {
         invoice_number: estimate.estimate_number,
         items: items.filter((i) => i.description.trim()),
         ...branding,
+        due_date: estimate.expiry_date ?? null,
         documentType: "estimate",
       });
       toast.success("Estimate PDF exported successfully!");
@@ -366,7 +367,7 @@ function EstimateDetailPage() {
   };
 
   const handleSendEmail = async () => {
-    if (!subscription.subscribed) {
+    if (!subscribed) {
       toast.error("Email sending is a Pro feature. Upgrade to send estimates via email.");
       return;
     }
@@ -388,9 +389,9 @@ function EstimateDetailPage() {
 
       await updateStatus("sent");
       toast.success(`Estimate emailed to ${client.email}!`);
-    } catch (error: Error) {
+    } catch (error) {
       console.error("Email sending error:", error);
-      toast.error(error.message || "Failed to send email. Please try again.");
+      toast.error(error instanceof Error ? error.message : "Failed to send email. Please try again.");
     } finally {
       setIsSendingEmail(false);
     }

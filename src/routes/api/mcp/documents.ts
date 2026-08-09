@@ -242,7 +242,7 @@ export const Route = createFileRoute("/api/mcp/documents")({
               .eq("user_id", userId)
               .order("created_at", { ascending: false })
               .limit(100);
-            if (legacy) docsQuery = docsQuery.eq("type", parsed.type);
+            if (legacy) (docsQuery as any).eq("type", parsed.type);
             const { data: docs } = await docsQuery;
             let maxNum = 0;
             for (const doc of docs ?? []) {
@@ -427,7 +427,7 @@ export const Route = createFileRoute("/api/mcp/documents")({
             .select("*")
             .eq("id", parsed.document_id)
             .eq("user_id", userId);
-          if (legacy) documentQuery = documentQuery.eq("type", parsed.document_type);
+          if (legacy) (documentQuery as any).eq("type", parsed.document_type);
           const { data: current, error: currentError } = await documentQuery.maybeSingle();
           if (currentError) throw currentError;
           if (!current) throw new McpHttpError(404, "Document not found");
@@ -451,7 +451,7 @@ export const Route = createFileRoute("/api/mcp/documents")({
           }
 
           const taxRate = parsed.tax_rate ?? Number(currentRow.tax_rate ?? 0);
-          const subtotalCents = items.reduce(
+          const subtotalCents = (items ?? []).reduce(
             (sum, item) => sum + Math.round(item.quantity * item.rate_cents),
             0,
           );
@@ -497,7 +497,7 @@ export const Route = createFileRoute("/api/mcp/documents")({
               .delete()
               .eq(itemForeignKey, parsed.document_id);
             if (deleteError) throw deleteError;
-            const itemRows = items.map((item, index) =>
+            const itemRows = (items ?? []).map((item, index) =>
               legacy
                 ? {
                     invoice_id: parsed.document_id,

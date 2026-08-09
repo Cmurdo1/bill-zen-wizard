@@ -1,4 +1,5 @@
 import { createFileRoute, Link, useNavigate, useSearch } from "@tanstack/react-router";
+import { z } from "zod";
 import { useState, useRef } from "react";
 import { AppShell } from "@/components/app/shell";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -58,10 +59,12 @@ interface ExtractedLineItem {
   unit_price: number;
 }
 
+const MagicCreateSearch = z.object({
+  type: z.enum(["invoice", "estimate"]).default("invoice"),
+});
+
 export const Route = createFileRoute("/_authenticated/magic-create")({
-  validateSearch: (search) => ({
-    type: search.type ?? "invoice",
-  }),
+  validateSearch: (search: unknown) => MagicCreateSearch.parse(search),
   head: () => ({
     meta: [{ title: "Magic Create — Honest Invoice" }, { name: "robots", content: "noindex" }],
   }),
@@ -282,7 +285,7 @@ function MagicCreatePage() {
 
         await recalculateEstimateTotals.mutateAsync({
           estimate_id: invoice.id,
-          tax_rate: profile?.tax_rate || 0,
+          tax_rate: (profile as { tax_rate?: number } | null)?.tax_rate || 0,
         });
       } else {
         await addInvoiceItems.mutateAsync({
@@ -297,7 +300,7 @@ function MagicCreatePage() {
 
         await recalculateTotals.mutateAsync({
           invoice_id: invoice.id,
-          tax_rate: profile?.tax_rate || 0,
+          tax_rate: (profile as { tax_rate?: number } | null)?.tax_rate || 0,
         });
       }
 
@@ -372,7 +375,7 @@ function MagicCreatePage() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => navigate("/settings")}
+              onClick={() => navigate({ to: "/settings" })}
               className="gap-2"
             >
               <RefreshCw className="h-4 w-4" />

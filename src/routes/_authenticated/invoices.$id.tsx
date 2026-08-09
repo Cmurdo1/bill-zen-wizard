@@ -78,7 +78,7 @@ function InvoiceDetailPage() {
   const [sendAsEstimate, setSendAsEstimate] = useState(false);
   const [isSendingEmail, setIsSendingEmail] = useState(false);
   const [isCopyingLink, setIsCopyingLink] = useState(false);
-  const { subscription } = useSubscription();
+  const { isActive: subscribed } = useSubscription();
   const sendEmail = useServerFn(sendInvoiceEmail);
 
   useEffect(() => {
@@ -170,7 +170,7 @@ function InvoiceDetailPage() {
   }
 
   const handleExportPDF = async () => {
-    if (!subscription.subscribed) {
+    if (!subscribed) {
       toast.error("PDF export is a Pro feature. Upgrade to export invoices.");
       return;
     }
@@ -192,7 +192,7 @@ function InvoiceDetailPage() {
   };
 
   const handleSendEmail = async () => {
-    if (!subscription.subscribed) {
+    if (!subscribed) {
       toast.error("Email sending is a Pro feature. Upgrade to send invoices via email.");
       return;
     }
@@ -222,9 +222,9 @@ function InvoiceDetailPage() {
       await updateStatus("sent");
       const docType = sendAsEstimate ? "Estimate" : "Invoice";
       toast.success(`${docType} emailed to ${client.email}!`);
-    } catch (error: Error) {
+    } catch (error) {
       console.error("Email sending error:", error);
-      toast.error(error.message || "Failed to send email. Please try again.");
+      toast.error(error instanceof Error ? error.message : "Failed to send email. Please try again.");
     } finally {
       setIsSendingEmail(false);
     }

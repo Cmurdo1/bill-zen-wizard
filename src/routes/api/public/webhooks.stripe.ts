@@ -10,13 +10,43 @@ import { createFileRoute } from "@tanstack/react-router";
  *        - checkout.session.completed
  *        - payment_intent.succeeded
  *   3. Copy the signing secret and save it as STRIPE_WEBHOOK_SECRET
- *      as an environment variable. Optionally add STRIPE_SECRET_KEY too if you
- *      later want to fetch the full session server-side.
+ *      as an environment variable. Add STRIPE_SECRET_KEY so the webhook can
+ *      fetch checkout-session details (needed for subscription activation).
  *
  * To link a Stripe payment to an invoice, include the invoice id in the
  * payment link / checkout session metadata as `invoice_id`, OR include the
  * invoice's `payment_link_token` in the metadata as `invoice_token`.
+ *
+ * Subscription activation: when a checkout session was created from one of the
+ * pricing-page payment links (VITE_STRIPE_PAYMENT_LINK_PRO / _BUSINESS), the
+ * webhook looks up the paying user by email and sets their
+ * subscription_status to `pro` / `business` with a subscription_end one month out.
  */
+
+const SUBSCRIPTION_LINKS: Array<{ id: string; status: string }> = [
+  {
+    id: process.env.VITE_STRIPE_PAYMENT_LINK_BUSINESS ?? "",
+    status: "business",
+  },
+  { id: process.env.VITE_STRIPE_PAYMENT_LINK_PRO ?? "", status: "pro" },
+];
+
+async function activateSubscription(email: string | null | undefined, plan: string) {
+  if (!email) return;
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data: profile } = await supabaseAdmin
+    .from("profiles")
+    .select("id")
+    .eq("email", email)
+    .maybeSingle();
+  if (!profile) return;
+  const end = new Date();
+  end.setMonth(end.getMonth() + 1);
+  await supabaseAdmin
+    .from("profiles")
+    .update({ subscription_status: plan, subscription_end: end.toISOString() })
+    .eq("id", profile.id);
+}
 
 async function verifyStripeSignature(rawBody: string, signatureHeader: string, secret: string) {
   // Stripe-Signature: t=timestamp,v1=signature[,v1=…]
@@ -75,6 +105,22 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
 
         if (!["checkout.session.completed", "payment_intent.succeeded"].includes(event.type)) {
           return new Response("ignored", { status: 200 });
+        }
+
+        // Subscription purchase via pricing-page payment link? Activate the plan.
+        const paymentLinkId =
+          (obj.payment_link as string | undefined) ??
+          ((obj as { payment_link?: { id?: string } }).payment_link?.id) ??
+          undefined;
+        const subscribedPlan = SUBSCRIPTION_LINKS.find(
+          (l) => l.id && l.id === paymentLinkId,
+        )?.status;
+        if (event.type === "checkout.session.completed" && subscribedPlan) {
+          const customerEmail =
+            (obj.customer_details as { email?: string } | undefined)?.email ??
+            (obj.customer_email as string | undefined);
+          await activateSubscription(customerEmail, subscribedPlan);
+          return new Response("ok", { status: 200 });
         }
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");

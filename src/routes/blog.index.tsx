@@ -6,13 +6,13 @@ import { ArrowRight } from "lucide-react";
 export const Route = createFileRoute("/blog/")({
   head: () => ({
     meta: [
-      { title: "Blog — Honest Invoice" },
+      { title: "Blog   Honest Invoice" },
       {
         name: "description",
         content:
-          "Practical writing on invoicing, cash flow, and getting paid — for contractors, freelancers, and service businesses.",
+          "Practical writing on invoicing, cash flow, and getting paid for contractors, freelancers, and service businesses.",
       },
-      { property: "og:title", content: "Blog — Honest Invoice" },
+      { property: "og:title", content: "Blog   Honest Invoice" },
       { property: "og:url", content: "/blog" },
     ],
     links: [{ rel: "canonical", href: "/blog" }],

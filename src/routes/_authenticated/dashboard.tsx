@@ -2,11 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { extractLineItems } from "@/lib/invoices.functions";
-import {
-  createInvoiceRecord,
-  insertInvoiceItems,
-  updateInvoiceTotals,
-} from "@/lib/invoice-schema";
+import { createInvoiceRecord, insertInvoiceItems, updateInvoiceTotals } from "@/lib/invoice-schema";
 import { useServerFn } from "@tanstack/react-start";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { AppShell } from "@/components/app/shell";
@@ -24,6 +20,10 @@ import {
   AlertCircle,
   Clock,
   Mail,
+  ArrowRight,
+  Bot,
+  KeyRound,
+  Terminal,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -140,6 +140,8 @@ function DashboardPage() {
         <Stat label="Avg DSO" value={`${dsoDays}d`} />
       </div>
 
+      {!sub.loading && <McpPromoCard isPaid={sub.plan !== "free"} />}
+
       <div className="mt-6 rounded-2xl border border-border bg-surface p-6 shadow-soft">
         <h2 className="font-display text-xl">Last 30 days</h2>
         <p className="mt-1 text-sm text-muted-foreground">
@@ -147,10 +149,11 @@ function DashboardPage() {
           {invoices.filter((i) => i.status === "paid").length} paid invoices.
         </p>
         <p className="mt-4 text-xs text-muted-foreground">
-          Full trend charts and forecasting land with the Pro plan's Real-time DSO & Cash Flow
-          Analytics module.
+          Pro and Business plans get the full 6-month cash flow trend and 30-day projection below.
         </p>
       </div>
+
+      {sub.plan !== "free" && !sub.loading && <CashFlowAnalytics invoices={invoices} />}
 
       {sub.plan === "free" && !sub.loading && (
         <div className="mt-6 grid gap-4 sm:grid-cols-2">
@@ -272,6 +275,166 @@ function DashboardPage() {
         />
       )}
     </AppShell>
+  );
+}
+
+function McpPromoCard({ isPaid }: { isPaid: boolean }) {
+  return (
+    <div className="mt-6 overflow-hidden rounded-2xl bg-primary-gradient p-6 text-primary-foreground shadow-soft sm:p-8">
+      <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+        <div className="max-w-xl">
+          <span className="inline-flex items-center gap-2 rounded-full border border-primary-foreground/25 bg-primary-foreground/10 px-3 py-1 text-xs font-medium">
+            <Bot className="h-3.5 w-3.5" /> AI-NATIVE
+          </span>
+          <h2 className="mt-4 font-display text-2xl leading-tight tracking-tight sm:text-3xl">
+            Your AI agent can do the billing.
+          </h2>
+          <p className="mt-3 text-sm text-primary-foreground/80">
+            {isPaid
+              ? "Claude, Cursor, or any agent can create estimates, email clients, and track leads from your account — using a dedicated key you control and can revoke anytime."
+              : "Pro and Business plans include MCP + API access so your AI agent can create and send estimates from your account."}
+          </p>
+          <div className="mt-5 flex flex-wrap gap-3">
+            <Link
+              to="/mcp"
+              className="inline-flex h-10 items-center gap-2 rounded-xl bg-accent px-4 text-sm font-semibold text-accent-foreground transition-transform hover:-translate-y-0.5"
+            >
+              See how MCP works <ArrowRight className="h-4 w-4" />
+            </Link>
+            {isPaid ? (
+              <Link
+                to="/settings"
+                className="inline-flex h-10 items-center gap-2 rounded-xl border border-primary-foreground/25 bg-primary-foreground/10 px-4 text-sm font-semibold text-primary-foreground hover:bg-primary-foreground/20"
+              >
+                <KeyRound className="h-4 w-4" /> Get an API key
+              </Link>
+            ) : (
+              <Link
+                to="/pricing"
+                className="inline-flex h-10 items-center gap-2 rounded-xl border border-primary-foreground/25 bg-primary-foreground/10 px-4 text-sm font-semibold text-primary-foreground hover:bg-primary-foreground/20"
+              >
+                Upgrade to Pro <ArrowRight className="h-4 w-4" />
+              </Link>
+            )}
+          </div>
+        </div>
+        {isPaid && (
+          <div className="w-full max-w-sm shrink-0 rounded-xl border border-primary-foreground/15 bg-background/95 p-4 shadow-lifted">
+            <div className="flex items-center gap-2 text-[11px] font-semibold text-muted-foreground">
+              <Terminal className="h-3.5 w-3.5" /> Your agent, connected
+            </div>
+            <pre className="mt-3 overflow-x-auto rounded-lg bg-surface-muted p-3 font-mono text-[11px] leading-relaxed text-foreground/80">
+              <code>{`curl -X POST /api/mcp/documents \\
+  -H "Authorization: Bearer hi_mcp_YOUR_KEY" \\
+  -d '{ "type": "estimate", "client_name": "Jane", "items": [...] }'`}</code>
+            </pre>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function CashFlowAnalytics({ invoices }: { invoices: Invoice[] }) {
+  const months = (() => {
+    const buckets: Array<{ label: string; invoiced: number; collected: number }> = [];
+    const now = new Date();
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      buckets.push({
+        label: d.toLocaleString("en-US", { month: "short" }),
+        invoiced: 0,
+        collected: 0,
+      });
+    }
+    for (const inv of invoices) {
+      const d = new Date(`${inv.issue_date}T00:00:00`);
+      if (Number.isNaN(d.getTime())) continue;
+      const idx = (now.getFullYear() - d.getFullYear()) * 12 + (now.getMonth() - d.getMonth());
+      if (idx < 0 || idx >= 6) continue;
+      const bucket = buckets[5 - idx];
+      const cents = inv.total_cents ?? 0;
+      bucket.invoiced += cents;
+      if (inv.status === "paid") bucket.collected += cents;
+    }
+    return buckets;
+  })();
+
+  const maxCents = Math.max(1, ...months.map((m) => Math.max(m.invoiced, m.collected)));
+  const collected30 = invoices
+    .filter(
+      (i) => i.status === "paid" && Date.now() - new Date(i.issue_date).getTime() < 30 * 864e5,
+    )
+    .reduce((s, i) => s + (i.total_cents ?? 0), 0);
+  const outstanding = invoices
+    .filter((i) => i.status === "sent" || i.status === "overdue")
+    .reduce((s, i) => s + (i.total_cents ?? 0), 0);
+  const projected30 = Math.round(collected30 * 0.9);
+
+  return (
+    <div className="mt-6 rounded-2xl border border-border bg-surface p-6 shadow-soft">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <h2 className="font-display text-xl">Cash flow analytics</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Invoiced vs. collected, trailing 6 months.
+          </p>
+        </div>
+        <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
+          Pro
+        </span>
+      </div>
+
+      <div className="mt-6 grid items-end gap-3 sm:grid-cols-6">
+        {months.map((m) => (
+          <div key={m.label} className="flex flex-col items-center gap-1">
+            <div className="flex h-28 w-full items-end justify-center gap-1">
+              <div
+                className="w-3 rounded-t bg-primary/70"
+                style={{ height: `${Math.max(4, (m.invoiced / maxCents) * 100)}%` }}
+                title={`Invoiced ${formatCurrency(m.invoiced)}`}
+              />
+              <div
+                className="w-3 rounded-t bg-success"
+                style={{ height: `${Math.max(4, (m.collected / maxCents) * 100)}%` }}
+                title={`Collected ${formatCurrency(m.collected)}`}
+              />
+            </div>
+            <span className="text-xs font-medium text-muted-foreground">{m.label}</span>
+          </div>
+        ))}
+      </div>
+      <div className="mt-2 flex items-center justify-center gap-4 text-xs text-muted-foreground">
+        <span className="inline-flex items-center gap-1.5">
+          <span className="h-2 w-2 rounded-full bg-primary/70" /> Invoiced
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          <span className="h-2 w-2 rounded-full bg-success" /> Collected
+        </span>
+      </div>
+
+      <div className="mt-6 grid gap-4 sm:grid-cols-3">
+        <MiniStat label="Collected, last 30 days" value={formatCurrency(collected30)} />
+        <MiniStat label="Outstanding (sent + overdue)" value={formatCurrency(outstanding)} />
+        <MiniStat
+          label="Projected collections, next 30 days"
+          value={formatCurrency(projected30)}
+          hint="Based on your trailing 30-day pace"
+        />
+      </div>
+    </div>
+  );
+}
+
+function MiniStat({ label, value, hint }: { label: string; value: string; hint?: string }) {
+  return (
+    <div className="rounded-xl border border-border bg-surface-muted/50 p-4">
+      <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+        {label}
+      </p>
+      <p className="mt-1 font-display text-2xl text-foreground">{value}</p>
+      {hint && <p className="mt-1 text-[11px] text-muted-foreground">{hint}</p>}
+    </div>
   );
 }
 
@@ -664,7 +827,6 @@ function NewInvoiceDialog({
           </button>
         </div>
       </div>
-
     </div>
   );
 }

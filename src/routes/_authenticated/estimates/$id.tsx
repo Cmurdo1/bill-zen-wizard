@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { AppShell } from "@/components/app/shell";
 import { supabase } from "@/integrations/supabase/client";
+import { brandingPresetsClient } from "@/lib/branding-presets";
 import { formatCurrency } from "@/lib/format";
 import { LineItemsEditor } from "@/components/app/line-items-editor";
 import {
@@ -17,11 +18,7 @@ import { EstimateAiPanel } from "@/components/app/estimate-ai-panel";
 import { useServerFn } from "@tanstack/react-start";
 import { sendEstimateEmail } from "@/lib/estimates.functions";
 import { useSubscription } from "@/lib/subscription";
-import {
-  createInvoiceRecord,
-  insertInvoiceItems,
-  updateInvoiceTotals,
-} from "@/lib/invoice-schema";
+import { createInvoiceRecord, insertInvoiceItems, updateInvoiceTotals } from "@/lib/invoice-schema";
 import {
   deleteEstimateRecord,
   fetchEstimate,
@@ -33,6 +30,7 @@ import {
 } from "@/lib/estimate-schema";
 import { downloadBrandedInvoicePdf } from "@/lib/pdf-invoice";
 import { fetchDocumentBranding } from "@/lib/document-branding";
+import { fetchBusinessName } from "@/lib/invoice-schema";
 import { CheckCircle2, Mail, Download, Copy, Link as LinkIcon, Eye } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -61,6 +59,7 @@ function EstimateDetailPage() {
   const [estimate, setEstimate] = useState<Estimate | null>(null);
   const [items, setItems] = useState<LineItem[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
+  const [presets, setPresets] = useState<{ id: string; name: string }[]>([]);
   const [legacy, setLegacy] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -89,20 +88,26 @@ function EstimateDetailPage() {
     setLoading(true);
     try {
       setLegacy(await isLegacyEstimateSchema());
-      const [est, estItems, cliRes] = await Promise.all([
+      const [est, estItems, cliRes, presetRows] = await Promise.all([
         fetchEstimate(id),
         fetchEstimateItems(id),
         supabase.from("clients").select("id,name,email").order("name"),
+        brandingPresetsClient()
+          .select("id,name")
+          .order("name", { ascending: true })
+          .then(
+            (r) => r as { data: { id: string; name: string }[] | null },
+            () => ({ data: [] as { id: string; name: string }[] }),
+          ),
       ]);
       if (!est) {
         setError("Estimate not found");
         return;
       }
       setEstimate(est);
-      setItems(
-        estItems.length ? estItems : [{ description: "", quantity: 1, rate_cents: 0 }],
-      );
+      setItems(estItems.length ? estItems : [{ description: "", quantity: 1, rate_cents: 0 }]);
       setClients((cliRes.data as Client[]) ?? []);
+      setPresets((presetRows.data as { id: string; name: string }[]) ?? []);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Could not load estimate");
     } finally {
@@ -130,6 +135,7 @@ function EstimateDetailPage() {
         total_cents: total,
         currency: estimate.currency,
         status: estimate.status,
+        branding_preset_id: estimate.branding_preset_id,
         ...overrides,
       });
       await replaceEstimateItems(estimate.id, validItems);
@@ -243,7 +249,12 @@ function EstimateDetailPage() {
           .eq("id", estimate.id);
       }
 
-      await logActivity("estimate", estimate.id, "converted", `Created invoice ${inv.invoice_number}`);
+      await logActivity(
+        "estimate",
+        estimate.id,
+        "converted",
+        `Created invoice ${inv.invoice_number}`,
+      );
       await logActivity(
         "invoice",
         inv.id,
@@ -315,6 +326,7 @@ function EstimateDetailPage() {
           estimateId: estimate.id,
           to: sendTo.trim(),
           message: sendMessage.trim() || undefined,
+          business_name: await fetchBusinessName(estimate.branding_preset_id),
         },
       });
       const stamp = new Date().toISOString();
@@ -350,7 +362,7 @@ function EstimateDetailPage() {
     if (!estimate) return;
 
     try {
-      const branding = await fetchDocumentBranding(estimate.client_id);
+      const branding = await fetchDocumentBranding(estimate.client_id, estimate.branding_preset_id);
       await downloadBrandedInvoicePdf({
         ...estimate,
         invoice_number: estimate.estimate_number,
@@ -384,6 +396,7 @@ function EstimateDetailPage() {
           estimateId: estimate.id,
           to: client.email!,
           message: "",
+          business_name: await fetchBusinessName(estimate.branding_preset_id),
         },
       });
 
@@ -391,7 +404,9 @@ function EstimateDetailPage() {
       toast.success(`Estimate emailed to ${client.email}!`);
     } catch (error) {
       console.error("Email sending error:", error);
-      toast.error(error instanceof Error ? error.message : "Failed to send email. Please try again.");
+      toast.error(
+        error instanceof Error ? error.message : "Failed to send email. Please try again.",
+      );
     } finally {
       setIsSendingEmail(false);
     }
@@ -644,6 +659,22 @@ function EstimateDetailPage() {
                   }
                   className="h-10 w-full rounded-lg border border-border bg-background px-3 text-sm"
                 />
+              </Field>
+              <Field label="Brand">
+                <select
+                  value={estimate.branding_preset_id ?? ""}
+                  onChange={(e) =>
+                    setEstimate({ ...estimate, branding_preset_id: e.target.value || null })
+                  }
+                  className="h-10 w-full rounded-lg border border-border bg-background px-3 text-sm"
+                >
+                  <option value="">Account default</option>
+                  {presets.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.name}
+                    </option>
+                  ))}
+                </select>
               </Field>
             </div>
           </section>

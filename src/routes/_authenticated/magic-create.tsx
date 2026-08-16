@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate, useSearch } from "@tanstack/react-router";
 import { z } from "zod";
-import { useState, useRef } from "react";
+import { useEffect, useState, useRef } from "react";
 import { AppShell } from "@/components/app/shell";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -24,6 +24,7 @@ import {
   useRecalculateEstimateTotals,
 } from "@/hooks/useInvoices";
 import { useProfile } from "@/hooks/useProfile";
+import { fetchBrandingPresets, type BrandingPreset } from "@/lib/branding-presets";
 import { extractLineItems } from "@/lib/invoices.functions";
 import { SendDocumentModal } from "@/components/app/send-document-modal";
 import { useSendDocument, useMyEmail } from "@/hooks/useInvoices";
@@ -87,6 +88,8 @@ function MagicCreatePage() {
 
   const [jobDescription, setJobDescription] = useState("");
   const [selectedClientId, setSelectedClientId] = useState<string>("");
+  const [presets, setPresets] = useState<BrandingPreset[]>([]);
+  const [selectedPresetId, setSelectedPresetId] = useState<string>("");
   const [extracting, setExtracting] = useState(false);
   const [extractedItems, setExtractedItems] = useState<ExtractedLineItem[] | null>(null);
   const [creating, setCreating] = useState(false);
@@ -97,6 +100,7 @@ function MagicCreatePage() {
     invoice_number: string;
     total_cents: number;
     due_date: string | null;
+    branding_preset_id: string | null;
   } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const sendDoc = useSendDocument();
@@ -106,6 +110,16 @@ function MagicCreatePage() {
     profile?.city && profile?.state ? `${profile.city}, ${profile.state}` : null;
 
   const currentColMultiplier = profile?.col_multiplier || 1.0;
+
+  useEffect(() => {
+    void fetchBrandingPresets()
+      .then((list) => {
+        setPresets(list);
+        const def = list.find((p) => p.is_default) ?? list[0];
+        if (def) setSelectedPresetId(def.id);
+      })
+      .catch(() => setPresets([]));
+  }, []);
 
   const handleImageUpload = async (files: FileList | null) => {
     if (!files) return;
@@ -262,6 +276,7 @@ function MagicCreatePage() {
         client_id: selectedClientId || null,
         job_description: jobDescription,
         type: type,
+        branding_preset_id: selectedPresetId || null,
       });
       // createInvoiceRecord returns {id,invoice_number}, createEstimateRecord
       // returns {id,estimate_number} — normalize to a single shape.
@@ -313,6 +328,7 @@ function MagicCreatePage() {
           invoice_number: invoice.invoice_number,
           total_cents: Math.round(estimatedTotal * 100),
           due_date: new Date(Date.now() + 30 * 864e5).toISOString().slice(0, 10),
+          branding_preset_id: selectedPresetId || null,
         });
       } else {
         navigate({
@@ -412,6 +428,27 @@ function MagicCreatePage() {
                 </SelectContent>
               </Select>
             </div>
+
+            {/* Brand select */}
+            {presets.length > 0 && (
+              <div className="space-y-2">
+                <Label htmlFor="brand">Brand</Label>
+                <Select value={selectedPresetId} onValueChange={setSelectedPresetId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Account default" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Account default</SelectItem>
+                    {presets.map((p) => (
+                      <SelectItem key={p.id} value={p.id}>
+                        {p.name}
+                        {p.is_default ? " (default)" : ""}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
             {/* Job Description */}
             <div className="space-y-2">
@@ -690,6 +727,7 @@ function MagicCreatePage() {
               total_amount: doc.total_cents / 100,
               due_date: doc.due_date,
               job_description: jobDescription.trim() || null,
+              branding_preset_id: doc.branding_preset_id,
               message,
             });
             toast.success(

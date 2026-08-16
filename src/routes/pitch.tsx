@@ -5,13 +5,13 @@ import { ArrowRight, TrendingUp, Target, Users, Sparkles, Bot } from "lucide-rea
 export const Route = createFileRoute("/pitch")({
   head: () => ({
     meta: [
-      { title: "Investor Pitch — Honest Invoice" },
+      { title: "Investor Pitch   Honest Invoice" },
       {
         name: "description",
         content:
           "Honest Invoice is rebuilding invoicing for the 30 million service businesses that still get paid on paper.",
       },
-      { property: "og:title", content: "Investor Pitch — Honest Invoice" },
+      { property: "og:title", content: "Investor Pitch   Honest Invoice" },
       { property: "og:url", content: "/pitch" },
     ],
     links: [{ rel: "canonical", href: "/pitch" }],
@@ -34,7 +34,7 @@ function PitchPage() {
           </h1>
           <p className="mt-5 max-w-2xl text-lg text-muted-foreground">
             QuickBooks was built for accountants. Freshbooks was built for freelancers a decade ago.
-            Honest Invoice is built for the modern contractor: mobile-first, AI-assisted, and honest
+            Honest Invoice is built for the modern contractor: mobile first, AI assisted, and honest
             about pricing.
           </p>
         </div>
@@ -65,8 +65,8 @@ function PitchPage() {
 
       <Section title="The wedge" icon={Sparkles}>
         <p>
-          AI line-item extraction converts a plain-English job description into a professional,
-          itemized invoice in under 10 seconds. That single feature — impossible two years ago —
+          AI line item extraction converts a plain English job description into a professional,
+          itemized invoice in under 10 seconds. That single feature was impossible two years ago,
           collapses the biggest friction point for contractors who hate paperwork.
         </p>
       </Section>
@@ -77,7 +77,7 @@ function PitchPage() {
             On active Pro and Business plans, Honest Invoice exposes a Model Context Protocol (MCP)
             server so AI agents like Claude and Cursor can create and send estimates on a
             contractor's behalf. When a lead posts on Craigslist or Nextdoor, the contractor's AI
-            agent can generate a professional estimate and email it — in seconds. Every request is
+            agent can generate a professional estimate and email it in seconds. Every request is
             scoped to the contractor account associated with its access token.
           </p>
           <p className="mt-4">
@@ -97,7 +97,7 @@ function PitchPage() {
         <ul className="list-disc pl-5 text-sm">
           <li>Public launch: Q3 2026</li>
           <li>Wedge: HVAC & electrical contractors in the US Southeast</li>
-          <li>Business model: $14 Pro / $39 Business SaaS with no per-payment take rate</li>
+          <li>Business model: $19.99 Pro / $49.99 Business SaaS with no per payment take rate</li>
           <li>18-month goal: 10,000 paying customers, $2.5M ARR</li>
         </ul>
       </Section>

@@ -76,10 +76,7 @@ function LeadDetailPage() {
       const db = supabase as any;
 
       // Fetch lead + response + estimate + items + tracking in parallel
-      const [
-        { data: leadData },
-        { data: respData },
-      ] = await Promise.all([
+      const [{ data: leadData }, { data: respData }] = await Promise.all([
         db.from("job_leads").select("*").eq("id", id).maybeSingle(),
         db
           .from("lead_responses")
@@ -109,11 +106,8 @@ function LeadDetailPage() {
         let numberField = "estimate_number";
         let isLegacy = false;
 
-        const { error: probeErr } = await db
-          .from("estimates")
-          .select("id")
-          .limit(1);
-        if (probeErr?.code === "42P01") {
+        const { error: probeErr } = await db.from("estimates").select("id").limit(1);
+        if (probeErr?.code === "42P01" || probeErr?.code === "PGRST205") {
           estTable = "invoices";
           itemsTable = "invoice_items";
           itemsFk = "invoice_id";
@@ -129,11 +123,7 @@ function LeadDetailPage() {
               .eq("id", respData.estimate_id)
               .eq("type", "estimate")
               .maybeSingle()
-          : db
-              .from("estimates")
-              .select("*")
-              .eq("id", respData.estimate_id)
-              .maybeSingle();
+          : db.from("estimates").select("*").eq("id", respData.estimate_id).maybeSingle();
 
         const itemsPromise = db
           .from(itemsTable)
@@ -149,20 +139,18 @@ function LeadDetailPage() {
               .order("created_at", { ascending: true })
           : Promise.resolve({ data: [] });
 
-        const [
-          { data: estData },
-          { data: itemsData },
-          { data: trackingData },
-        ] = await Promise.all([estPromise, itemsPromise, trackingPromise]);
+        const [{ data: estData }, { data: itemsData }, { data: trackingData }] = await Promise.all([
+          estPromise,
+          itemsPromise,
+          trackingPromise,
+        ]);
 
         setEstimate(
           estData
             ? {
                 ...estData,
                 [numberField]:
-                  estData[numberField] ||
-                  estData.estimate_number ||
-                  estData.invoice_number,
+                  estData[numberField] || estData.estimate_number || estData.invoice_number,
               }
             : null,
         );
@@ -197,7 +185,12 @@ function LeadDetailPage() {
           .from("estimates")
           .update({ approved_at: new Date().toISOString() })
           .eq("id", estimate.id);
-        if (approveErr && approveErr.code !== "42703" && approveErr.code !== "42P01") {
+        if (
+          approveErr &&
+          approveErr.code !== "42703" &&
+          approveErr.code !== "42P01" &&
+          approveErr.code !== "PGRST205"
+        ) {
           throw approveErr;
         }
       }
@@ -424,10 +417,7 @@ function LeadDetailPage() {
               {lead.contact_email && (
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Mail className="h-4 w-4 shrink-0" />
-                  <a
-                    href={`mailto:${lead.contact_email}`}
-                    className="text-primary hover:underline"
-                  >
+                  <a href={`mailto:${lead.contact_email}`} className="text-primary hover:underline">
                     {lead.contact_email}
                   </a>
                 </div>
@@ -435,10 +425,7 @@ function LeadDetailPage() {
               {lead.contact_phone && (
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Phone className="h-4 w-4 shrink-0" />
-                  <a
-                    href={`tel:${lead.contact_phone}`}
-                    className="text-primary hover:underline"
-                  >
+                  <a href={`tel:${lead.contact_phone}`} className="text-primary hover:underline">
                     {lead.contact_phone}
                   </a>
                 </div>
@@ -475,8 +462,7 @@ function LeadDetailPage() {
             <p className="mt-4 text-xs text-muted-foreground">
               <Clock className="mr-1 inline-block h-3 w-3" />
               Lead scraped {timeAgo(lead.created_at)}
-              {lead.updated_at !== lead.created_at &&
-                ` · Updated ${timeAgo(lead.updated_at)}`}
+              {lead.updated_at !== lead.created_at && ` · Updated ${timeAgo(lead.updated_at)}`}
             </p>
           </section>
 
@@ -528,9 +514,7 @@ function LeadDetailPage() {
                     <tbody className="divide-y divide-border">
                       {items.map((item: any, i: number) => {
                         const rate = item.rate_cents ?? Math.round((item.unit_price ?? 0) * 100);
-                        const amt =
-                          item.amount_cents ??
-                          Math.round((item.quantity ?? 0) * rate);
+                        const amt = item.amount_cents ?? Math.round((item.quantity ?? 0) * rate);
                         return (
                           <tr key={item.id || i}>
                             <td className="px-4 py-2.5 text-xs text-foreground">
@@ -563,23 +547,10 @@ function LeadDetailPage() {
                   </p>
                 </div>
                 <div className="text-right text-xs tabular-nums text-foreground">
-                  <p>
-                    {formatCurrency(
-                      estimate.subtotal_cents ?? 0,
-                      estimate.currency || "USD",
-                    )}
-                  </p>
-                  <p>
-                    {formatCurrency(
-                      estimate.tax_cents ?? 0,
-                      estimate.currency || "USD",
-                    )}
-                  </p>
+                  <p>{formatCurrency(estimate.subtotal_cents ?? 0, estimate.currency || "USD")}</p>
+                  <p>{formatCurrency(estimate.tax_cents ?? 0, estimate.currency || "USD")}</p>
                   <p className="mt-1 border-t border-border pt-1 text-sm font-bold">
-                    {formatCurrency(
-                      estimate.total_cents ?? 0,
-                      estimate.currency || "USD",
-                    )}
+                    {formatCurrency(estimate.total_cents ?? 0, estimate.currency || "USD")}
                   </p>
                 </div>
               </div>
@@ -613,11 +584,7 @@ function LeadDetailPage() {
                   color="text-blue-500"
                   bg="bg-blue-500/10"
                   label="Estimate created"
-                  detail={
-                    response.estimate_number
-                      ? response.estimate_number
-                      : "Auto-generated"
-                  }
+                  detail={response.estimate_number ? response.estimate_number : "Auto-generated"}
                   time={timeAgo(response.created_at)}
                 />
               )}
@@ -691,9 +658,7 @@ function LeadDetailPage() {
                         ? "Marked Lost"
                         : "Failed"
                   }
-                  detail={
-                    response.error_message || undefined
-                  }
+                  detail={response.error_message || undefined}
                   time={timeAgo(response.created_at)}
                 />
               )}
@@ -729,9 +694,7 @@ function LeadDetailPage() {
                         {t.event_type === "open" ? "Email opened" : "Link clicked"}
                       </p>
                       {t.url && (
-                        <p className="mt-0.5 truncate text-[10px] text-muted-foreground">
-                          {t.url}
-                        </p>
+                        <p className="mt-0.5 truncate text-[10px] text-muted-foreground">{t.url}</p>
                       )}
                       {t.user_agent && (
                         <p className="mt-0.5 truncate text-[10px] text-muted-foreground">
@@ -757,26 +720,19 @@ function LeadDetailPage() {
               {lead.budget_range && (
                 <div className="flex justify-between">
                   <dt className="text-muted-foreground">Budget</dt>
-                  <dd className="font-semibold text-foreground">
-                    {lead.budget_range}
-                  </dd>
+                  <dd className="font-semibold text-foreground">{lead.budget_range}</dd>
                 </div>
               )}
               {estimate && (
                 <>
                   <div className="flex justify-between">
                     <dt className="text-muted-foreground">Estimate</dt>
-                    <dd className="font-semibold text-foreground">
-                      {estimate.estimate_number}
-                    </dd>
+                    <dd className="font-semibold text-foreground">{estimate.estimate_number}</dd>
                   </div>
                   <div className="flex justify-between">
                     <dt className="text-muted-foreground">Total</dt>
                     <dd className="font-semibold text-foreground">
-                      {formatCurrency(
-                        estimate.total_cents ?? 0,
-                        estimate.currency || "USD",
-                      )}
+                      {formatCurrency(estimate.total_cents ?? 0, estimate.currency || "USD")}
                     </dd>
                   </div>
                 </>
@@ -796,17 +752,13 @@ function LeadDetailPage() {
                   {response.opened_at && (
                     <div className="flex justify-between">
                       <dt className="text-muted-foreground">Opened</dt>
-                      <dd className="text-xs text-foreground">
-                        {timeAgo(response.opened_at)}
-                      </dd>
+                      <dd className="text-xs text-foreground">{timeAgo(response.opened_at)}</dd>
                     </div>
                   )}
                   {response.clicked_at && (
                     <div className="flex justify-between">
                       <dt className="text-muted-foreground">Clicked</dt>
-                      <dd className="text-xs text-foreground">
-                        {timeAgo(response.clicked_at)}
-                      </dd>
+                      <dd className="text-xs text-foreground">{timeAgo(response.clicked_at)}</dd>
                     </div>
                   )}
                 </>
@@ -839,19 +791,13 @@ function TimelineEvent({
       {/* Connecting line */}
       <div className="absolute left-[11px] top-7 bottom-0 w-px bg-border last:hidden" />
       {/* Icon */}
-      <div
-        className={`z-10 grid h-6 w-6 shrink-0 place-items-center rounded-full ${bg}`}
-      >
+      <div className={`z-10 grid h-6 w-6 shrink-0 place-items-center rounded-full ${bg}`}>
         <span className={color}>{icon}</span>
       </div>
       {/* Content */}
       <div className="min-w-0 flex-1">
         <p className="text-xs font-semibold text-foreground">{label}</p>
-        {detail && (
-          <p className="mt-0.5 text-[11px] text-muted-foreground truncate">
-            {detail}
-          </p>
-        )}
+        {detail && <p className="mt-0.5 text-[11px] text-muted-foreground truncate">{detail}</p>}
         <p className="mt-0.5 text-[10px] text-muted-foreground">{time}</p>
       </div>
     </li>

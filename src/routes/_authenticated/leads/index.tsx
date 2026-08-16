@@ -1,6 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+// The Lead Board reads schema-adaptive tables (legacy + new schema), so
+// untyped row access is intentional here.
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useCallback, useEffect, useState } from "react";
 import { AppShell } from "@/components/app/shell";
+import { UpgradeCallout } from "@/components/app/plan-badge";
+import { useSubscription } from "@/lib/subscription";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Loader2,
@@ -24,7 +29,7 @@ import {
   Trash2,
 } from "lucide-react";
 
-export const Route = createFileRoute("/_authenticated/leads")({
+export const Route = createFileRoute("/_authenticated/leads/")({
   head: () => ({
     meta: [{ title: "Lead Board — Honest Invoice" }, { name: "robots", content: "noindex" }],
   }),
@@ -64,18 +69,48 @@ type ScrapeRunRow = {
 
 const PIPELINE_STAGES = [
   { key: "new", label: "New Leads", icon: Target, color: "text-blue-400", bg: "bg-blue-400/5" },
-  { key: "estimate_sent", label: "Estimate Sent", icon: Send, color: "text-blue-500", bg: "bg-blue-500/5" },
+  {
+    key: "estimate_sent",
+    label: "Estimate Sent",
+    icon: Send,
+    color: "text-blue-500",
+    bg: "bg-blue-500/5",
+  },
   { key: "opened", label: "Opened", icon: Eye, color: "text-amber-400", bg: "bg-amber-400/5" },
-  { key: "clicked", label: "Clicked", icon: MousePointerClick, color: "text-green-500", bg: "bg-green-500/5" },
-  { key: "failed", label: "Failed", icon: AlertCircle, color: "text-destructive", bg: "bg-destructive/5" },
-  { key: "closed", label: "Closed", icon: CheckCircle2, color: "text-slate-400", bg: "bg-slate-400/10" },
+  {
+    key: "clicked",
+    label: "Clicked",
+    icon: MousePointerClick,
+    color: "text-green-500",
+    bg: "bg-green-500/5",
+  },
+  {
+    key: "failed",
+    label: "Failed",
+    icon: AlertCircle,
+    color: "text-destructive",
+    bg: "bg-destructive/5",
+  },
+  {
+    key: "closed",
+    label: "Closed",
+    icon: CheckCircle2,
+    color: "text-slate-400",
+    bg: "bg-slate-400/10",
+  },
 ];
 
 const FILTER_TABS = [
   ...PIPELINE_STAGES.slice(0, 5), // New → Failed (no Closed)
   { key: "won", label: "Won", icon: Trophy, color: "text-amber-500", bg: "bg-amber-500/5" },
   { key: "lost", label: "Lost", icon: ThumbsDown, color: "text-slate-400", bg: "bg-slate-400/5" },
-  { key: "closed", label: "Closed", icon: CheckCircle2, color: "text-slate-400", bg: "bg-slate-400/10" },
+  {
+    key: "closed",
+    label: "Closed",
+    icon: CheckCircle2,
+    color: "text-slate-400",
+    bg: "bg-slate-400/10",
+  },
 ];
 
 const SOURCE_LABELS: Record<string, string> = {
@@ -104,6 +139,7 @@ function timeAgo(date: string): string {
 }
 
 function LeadBoardPage() {
+  const sub = useSubscription();
   const [leads, setLeads] = useState<LeadWithResponse[]>([]);
   const [scrapeRuns, setScrapeRuns] = useState<ScrapeRunRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -119,18 +155,22 @@ function LeadBoardPage() {
       if (!userData.user) return;
 
       const userId = userData.user.id;
-      const db = supabase as any; // eslint-disable-line
+      const db = supabase as any;
 
       const [{ data: allLeads, error: leadsError }, { data: responses, error: respError }] =
         await Promise.all([
           db
             .from("job_leads")
-            .select("id, title, description, location, contact_email, contact_phone, budget_range, source, status, created_at")
+            .select(
+              "id, title, description, location, contact_email, contact_phone, budget_range, source, status, created_at",
+            )
             .order("created_at", { ascending: false })
             .limit(100),
           db
             .from("lead_responses")
-            .select("id, lead_id, estimate_id, estimate_number, client_email, status, error_message, created_at, tracking_id, opened_at, clicked_at")
+            .select(
+              "id, lead_id, estimate_id, estimate_number, client_email, status, error_message, created_at, tracking_id, opened_at, clicked_at",
+            )
             .eq("user_id", userId)
             .order("created_at", { ascending: false })
             .limit(200),
@@ -227,7 +267,7 @@ function LeadBoardPage() {
           .update({ approved_at: new Date().toISOString() })
           .eq("id", lead.estimate_id);
 
-        if (approveErr && approveErr.code === "42P01") {
+        if (approveErr && (approveErr.code === "42P01" || approveErr.code === "PGRST205")) {
           // Legacy schema — estimates live in invoices table
           const { error: legacyApproveErr } = await db
             .from("invoices")
@@ -322,7 +362,9 @@ function LeadBoardPage() {
   const newLeads = leads.filter((l) => l.response_status === null).length;
   const estimatesSent = leads.filter((l) => l.response_status === "estimate_sent").length;
   const openedCount = leads.filter((l) => l.response_status === "opened" || !!l.opened_at).length;
-  const clickedCount = leads.filter((l) => l.response_status === "clicked" || !!l.clicked_at).length;
+  const clickedCount = leads.filter(
+    (l) => l.response_status === "clicked" || !!l.clicked_at,
+  ).length;
   const wonCount = leads.filter((l) => l.response_status === "won").length;
   const lostCount = leads.filter((l) => l.response_status === "lost").length;
   const failedCount = leads.filter((l) => l.response_status === "failed").length;
@@ -344,7 +386,9 @@ function LeadBoardPage() {
     if (activeStage === "new") return leads.filter((l) => !l.response_status);
     if (activeStage === "opened")
       return leads.filter(
-        (l) => l.response_status === "opened" || (l.response_status === "estimate_sent" && !!l.opened_at),
+        (l) =>
+          l.response_status === "opened" ||
+          (l.response_status === "estimate_sent" && !!l.opened_at),
       );
     if (activeStage === "clicked")
       return leads.filter((l) => l.response_status === "clicked" || !!l.clicked_at);
@@ -358,6 +402,16 @@ function LeadBoardPage() {
       <AppShell title="Lead Board">
         <div className="grid place-items-center py-16 text-muted-foreground">
           <Loader2 className="h-6 w-6 animate-spin" />
+        </div>
+      </AppShell>
+    );
+  }
+
+  if (!sub.loading && sub.plan === "free") {
+    return (
+      <AppShell title="Lead Board">
+        <div className="max-w-xl">
+          <UpgradeCallout feature="Lead Gen Engine" />
         </div>
       </AppShell>
     );
@@ -439,9 +493,14 @@ function LeadBoardPage() {
         {PIPELINE_STAGES.map((stage) => {
           const stageLeads = leads.filter((l) => {
             if (stage.key === "new") return !l.response_status;
-            if (stage.key === "opened") return l.response_status === "opened" || (l.response_status === "estimate_sent" && !!l.opened_at);
+            if (stage.key === "opened")
+              return (
+                l.response_status === "opened" ||
+                (l.response_status === "estimate_sent" && !!l.opened_at)
+              );
             if (stage.key === "clicked") return l.response_status === "clicked" || !!l.clicked_at;
-            if (stage.key === "closed") return l.response_status === "won" || l.response_status === "lost";
+            if (stage.key === "closed")
+              return l.response_status === "won" || l.response_status === "lost";
             return l.response_status === stage.key;
           });
 
@@ -466,7 +525,8 @@ function LeadBoardPage() {
                 )}
                 {leadsToShow.map((lead, i) => {
                   const isBusy = actionLoading === lead.lead_id;
-                  const showActions = lead.response_status &&
+                  const showActions =
+                    lead.response_status &&
                     !["won", "lost", "failed"].includes(lead.response_status);
                   const menuOpen = openMenuId === lead.lead_id;
 
@@ -475,23 +535,21 @@ function LeadBoardPage() {
                       key={lead.lead_id || i}
                       className="group relative rounded-xl border border-border bg-surface p-4 shadow-soft transition-shadow hover:shadow-lifted"
                     >
-                    <div className="flex items-start justify-between gap-2">
-                      <Link
-                        to="/leads/$id"
-                        params={{ id: lead.lead_id }}
-                        className="text-sm font-semibold text-foreground line-clamp-2 hover:text-primary transition-colors"
-                      >
-                        {lead.title}
-                      </Link>
-                      <span className="shrink-0 rounded-full bg-surface-muted px-2 py-0.5 text-[10px] font-medium uppercase text-muted-foreground">
-                        {SOURCE_LABELS[lead.source] || lead.source}
-                      </span>
-                    </div>
+                      <div className="flex items-start justify-between gap-2">
+                        <Link
+                          to="/leads/$id"
+                          params={{ id: lead.lead_id }}
+                          className="text-sm font-semibold text-foreground line-clamp-2 hover:text-primary transition-colors"
+                        >
+                          {lead.title}
+                        </Link>
+                        <span className="shrink-0 rounded-full bg-surface-muted px-2 py-0.5 text-[10px] font-medium uppercase text-muted-foreground">
+                          {SOURCE_LABELS[lead.source] || lead.source}
+                        </span>
+                      </div>
 
                       {lead.budget_range && (
-                        <p className="mt-1 text-xs font-medium text-accent">
-                          {lead.budget_range}
-                        </p>
+                        <p className="mt-1 text-xs font-medium text-accent">{lead.budget_range}</p>
                       )}
 
                       <p className="mt-2 line-clamp-2 text-xs text-muted-foreground">
@@ -585,7 +643,10 @@ function LeadBoardPage() {
                           ) : (
                             <>
                               <button
-                                onClick={(e) => { e.stopPropagation(); handleResend(lead); }}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleResend(lead);
+                                }}
                                 className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-[10px] font-medium text-muted-foreground hover:bg-surface-muted hover:text-foreground transition-colors"
                                 title="Re-send estimate"
                               >
@@ -594,7 +655,10 @@ function LeadBoardPage() {
                               </button>
 
                               <button
-                                onClick={(e) => { e.stopPropagation(); setOpenMenuId(menuOpen ? null : lead.lead_id); }}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setOpenMenuId(menuOpen ? null : lead.lead_id);
+                                }}
                                 className="ml-auto inline-flex items-center gap-1 rounded-md px-2 py-1 text-[10px] font-medium text-muted-foreground hover:bg-surface-muted hover:text-foreground transition-colors"
                                 title="More actions"
                               >
@@ -654,7 +718,9 @@ function LeadBoardPage() {
                   <th className="px-4 py-3 text-xs font-semibold text-muted-foreground">Time</th>
                   <th className="px-4 py-3 text-xs font-semibold text-muted-foreground">Sources</th>
                   <th className="px-4 py-3 text-xs font-semibold text-muted-foreground">Leads</th>
-                  <th className="px-4 py-3 text-xs font-semibold text-muted-foreground">Estimates</th>
+                  <th className="px-4 py-3 text-xs font-semibold text-muted-foreground">
+                    Estimates
+                  </th>
                   <th className="px-4 py-3 text-xs font-semibold text-muted-foreground">Emails</th>
                   <th className="px-4 py-3 text-xs font-semibold text-muted-foreground">Status</th>
                 </tr>

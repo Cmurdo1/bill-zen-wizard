@@ -14,7 +14,7 @@ import { useSendDocument, useMyEmail } from "@/hooks/useInvoices";
 
 type Client = { id: string; name: string; email: string | null };
 
-export const Route = createFileRoute("/_authenticated/invoices")({
+export const Route = createFileRoute("/_authenticated/invoices/")({
   head: () => ({
     meta: [{ title: "Invoices — Honest Invoice" }, { name: "robots", content: "noindex" }],
   }),
@@ -97,7 +97,6 @@ function InvoicesPage() {
         <Stat label="Collected" value={formatCurrency(totals.paid)} tone="success" />
         <Stat label="Drafts" value={totals.draft.toString()} />
       </div>
-
       {sub.plan === "free" && !sub.loading && (
         <div className="mb-4">
           <UsageMeter
@@ -107,7 +106,6 @@ function InvoicesPage() {
           />
         </div>
       )}
-
       <div className="mb-4 flex flex-wrap items-center gap-3">
         <div className="relative flex-1 min-w-48">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -149,7 +147,6 @@ function InvoicesPage() {
           New invoice
         </button>
       </div>
-
       <div className="rounded-2xl border border-border bg-surface shadow-soft">
         {loading ? (
           <div className="grid place-items-center py-16 text-muted-foreground">
@@ -176,51 +173,56 @@ function InvoicesPage() {
               {filtered.map((inv) => {
                 const client = clients.find((c) => c.id === inv.client_id);
                 return (
-                <tr
-                  key={inv.id}
-                  className="cursor-pointer border-b border-border/60 last:border-0 hover:bg-surface-muted/50"
-                >
-                  <td className="px-6 py-4 font-semibold">
-                    <Link to="/invoices/$id" params={{ id: inv.id }} className="hover:text-primary">
-                      {inv.invoice_number}
-                    </Link>
-                  </td>
-                  <td className="px-6 py-4 text-muted-foreground">
-                    {clients.find((c) => c.id === inv.client_id)?.name ?? "—"}
-                  </td>
-                  <td className="px-6 py-4 text-muted-foreground">{formatDate(inv.issue_date)}</td>
-                  <td className="px-6 py-4 text-muted-foreground">{formatDate(inv.due_date)}</td>
-                  <td className="px-6 py-4">
-                    <StatusPill status={inv.status} />
-                  </td>
-                  <td className="px-6 py-4 text-right font-semibold tabular-nums">
-                    {formatCurrency(inv.total_cents, inv.currency)}
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <button
-                      onClick={() => setSending(inv)}
-                      title="Email this invoice — pick a recipient or type any address"
-                      className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-border px-2.5 text-xs font-semibold text-muted-foreground transition-colors hover:border-primary hover:text-primary"
-                    >
-                      <Mail className="h-3.5 w-3.5" />
-                      Send
-                    </button>
-                  </td>
-                </tr>
+                  <tr
+                    key={inv.id}
+                    className="cursor-pointer border-b border-border/60 last:border-0 hover:bg-surface-muted/50"
+                  >
+                    <td className="px-6 py-4 font-semibold">
+                      <Link
+                        to="/invoices/$id"
+                        params={{ id: inv.id }}
+                        className="hover:text-primary"
+                      >
+                        {inv.invoice_number}
+                      </Link>
+                    </td>
+                    <td className="px-6 py-4 text-muted-foreground">
+                      {clients.find((c) => c.id === inv.client_id)?.name ?? "—"}
+                    </td>
+                    <td className="px-6 py-4 text-muted-foreground">
+                      {formatDate(inv.issue_date)}
+                    </td>
+                    <td className="px-6 py-4 text-muted-foreground">{formatDate(inv.due_date)}</td>
+                    <td className="px-6 py-4">
+                      <StatusPill status={inv.status} />
+                    </td>
+                    <td className="px-6 py-4 text-right font-semibold tabular-nums">
+                      {formatCurrency(inv.total_cents, inv.currency)}
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <button
+                        onClick={() => setSending(inv)}
+                        title="Email this invoice — pick a recipient or type any address"
+                        className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-border px-2.5 text-xs font-semibold text-muted-foreground transition-colors hover:border-primary hover:text-primary"
+                      >
+                        <Mail className="h-3.5 w-3.5" />
+                        Send
+                      </button>
+                    </td>
+                  </tr>
                 );
               })}
             </tbody>
           </table>
         )}
-      </div>        <SendDocumentModal
-          open={!!sending}
-          onClose={() => setSending(null)}
-          title={`Send ${sending?.invoice_number ?? "invoice"}`}
-          defaultTo={
-            sending ? clients.find((c) => c.id === sending.client_id)?.email ?? "" : ""
-          }
-          clients={clients}
-          myEmail={myEmail ?? ""}
+      </div>{" "}
+      <SendDocumentModal
+        open={!!sending}
+        onClose={() => setSending(null)}
+        title={`Send ${sending?.invoice_number ?? "invoice"}`}
+        defaultTo={sending ? (clients.find((c) => c.id === sending.client_id)?.email ?? "") : ""}
+        clients={clients}
+        myEmail={myEmail ?? ""}
         onSend={async (to, message) => {
           if (!sending) return;
           const client = clients.find((c) => c.id === sending.client_id);

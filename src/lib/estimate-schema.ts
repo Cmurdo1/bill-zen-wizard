@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { LineItem } from "@/lib/documents";
+import { hasBrandingPresetColumn } from "@/lib/branding-presets";
 
 /**
  * On the legacy live database there is no `estimates` table — estimates are
@@ -15,12 +16,14 @@ let legacyCache: boolean | null = null;
 
 export async function isLegacyEstimateSchema(): Promise<boolean> {
   if (legacyCache !== null) return legacyCache;
-  const { error } = (await supabase
-    .from("estimates")
-    .select("id")
-    .limit(1)) as unknown as { error: { code?: string } | null };
-  // PGRST116 is "no rows" (table exists); 42P01 is "undefined table".
-  legacyCache = !!(error && error.code === "42P01");
+  const { error } = (await supabase.from("estimates").select("id").limit(1)) as unknown as {
+    error: { code?: string } | null;
+  };
+  // PGRST116 is "no rows" (table exists). A missing table surfaces as
+  // "42P01" (Postgres undefined_table) on some PostgREST versions and as
+  // "PGRST205" (schema cache miss) on others — accept both.
+  const code = error?.code;
+  legacyCache = code === "42P01" || code === "PGRST205";
   return legacyCache;
 }
 
@@ -47,14 +50,11 @@ export type UnifiedEstimate = {
   approved_at: string | null;
   sent_at: string | null;
   sent_to_email: string | null;
+  branding_preset_id: string | null;
 };
 
 type RawList = {
   data: Record<string, unknown>[] | null;
-  error: { message: string } | null;
-};
-type RawSingle = {
-  data: Record<string, unknown> | null;
   error: { message: string } | null;
 };
 
@@ -77,11 +77,7 @@ export function mapEstimateRow(row: Record<string, unknown>): UnifiedEstimate {
     expiry_date: (row.expiry_date as string | null) ?? (row.due_date as string | null) ?? null,
     notes: (row.notes as string | null) ?? null,
     job_description: (row.job_description as string | null) ?? null,
-    tax_rate: legacy
-      ? totalCents > 0
-        ? taxCents / totalCents
-        : 0
-      : Number(row.tax_rate ?? 0),
+    tax_rate: legacy ? (totalCents > 0 ? taxCents / totalCents : 0) : Number(row.tax_rate ?? 0),
     subtotal_cents: legacy ? totalCents - taxCents : Number(row.subtotal_cents ?? 0),
     tax_cents: taxCents,
     total_cents: totalCents,
@@ -90,6 +86,7 @@ export function mapEstimateRow(row: Record<string, unknown>): UnifiedEstimate {
     approved_at: (row.approved_at as string | null) ?? null,
     sent_at: (row.sent_at as string | null) ?? null,
     sent_to_email: (row.sent_to_email as string | null) ?? null,
+    branding_preset_id: (row.branding_preset_id as string | null) ?? null,
   };
 }
 
@@ -98,18 +95,24 @@ const LIST_COLUMNS =
 const LIST_COLUMNS_LEGACY =
   "id,invoice_number,status,client_id,due_date,notes,created_at,total_amount,tax_amount,job_description";
 
+/** Only include branding_preset_id once the migration has added it. */
+async function estimateColumns(legacy: boolean): Promise<string> {
+  const base = legacy ? LIST_COLUMNS_LEGACY : LIST_COLUMNS;
+  const hasPreset = await hasBrandingPresetColumn();
+  return hasPreset ? `${base},branding_preset_id` : base;
+}
+
 export async function fetchEstimateList(): Promise<UnifiedEstimate[]> {
   const legacy = await isLegacyEstimateSchema();
-  const { data, error } = (await (legacy
-    ? supabase
-        .from("invoices")
-        .select(LIST_COLUMNS_LEGACY)
-        .eq("type", "estimate")
-        .order("created_at", { ascending: false })
-    : supabase
-        .from("estimates")
-        .select(LIST_COLUMNS)
-        .order("created_at", { ascending: false })
+  const columns = await estimateColumns(legacy);
+  const { data, error } = (await (
+    legacy
+      ? supabase
+          .from("invoices")
+          .select(columns)
+          .eq("type", "estimate")
+          .order("created_at", { ascending: false })
+      : supabase.from("estimates").select(columns).order("created_at", { ascending: false })
   ).then((r) => r as RawList)) as unknown as RawList;
   if (error) throw error;
   return (data ?? []).map(mapEstimateRow);
@@ -117,35 +120,44 @@ export async function fetchEstimateList(): Promise<UnifiedEstimate[]> {
 
 export async function fetchEstimate(id: string): Promise<UnifiedEstimate | null> {
   const legacy = await isLegacyEstimateSchema();
-  const { data, error } = (await (legacy
-    ? supabase.from("invoices").select(LIST_COLUMNS_LEGACY).eq("id", id).eq("type", "estimate")
-    : supabase.from("estimates").select(LIST_COLUMNS).eq("id", id)
-  ).then((r) => r as RawSingle)) as unknown as RawSingle;
+  const columns = await estimateColumns(legacy);
+  let query = (legacy ? supabase.from("invoices") : supabase.from("estimates"))
+    .select(columns)
+    .eq("id", id) as unknown as {
+    eq: (c: string, v: string) => unknown;
+    maybeSingle: () => PromiseLike<{
+      data: Record<string, unknown> | null;
+      error: { message: string } | null;
+    }>;
+  };
+  if (legacy) {
+    query = query.eq("type", "estimate") as typeof query;
+  }
+  const { data, error } = await query.maybeSingle();
   if (error) throw error;
   return data ? mapEstimateRow(data) : null;
 }
 
 export async function fetchEstimateItems(estimateId: string): Promise<LineItem[]> {
   const legacy = await isLegacyEstimateSchema();
-  const { data, error } = (await (legacy
-    ? supabase
-        .from("invoice_items")
-        .select("description,quantity,unit_price,sort_order")
-        .eq("invoice_id", estimateId)
-        .order("sort_order")
-    : supabase
-        .from("estimate_items")
-        .select("description,quantity,rate_cents,sort_order")
-        .eq("estimate_id", estimateId)
-        .order("sort_order")
+  const { data, error } = (await (
+    legacy
+      ? supabase
+          .from("invoice_items")
+          .select("description,quantity,unit_price,sort_order")
+          .eq("invoice_id", estimateId)
+          .order("sort_order")
+      : supabase
+          .from("estimate_items")
+          .select("description,quantity,rate_cents,sort_order")
+          .eq("estimate_id", estimateId)
+          .order("sort_order")
   ).then((r) => r as RawList)) as unknown as RawList;
   if (error) throw error;
   return (data ?? []).map((r) => ({
     description: String(r.description ?? ""),
     quantity: Number(r.quantity ?? 1),
-    rate_cents: legacy
-      ? Math.round(Number(r.unit_price ?? 0) * 100)
-      : Number(r.rate_cents ?? 0),
+    rate_cents: legacy ? Math.round(Number(r.unit_price ?? 0) * 100) : Number(r.rate_cents ?? 0),
   }));
 }
 
@@ -170,18 +182,20 @@ export async function insertEstimateItems(estimateId: string, items: LineItem[])
           sort_order: i,
         },
   );
-  const { error } = (await (legacy
-    ? supabase.from("invoice_items").insert(rows as never)
-    : supabase.from("estimate_items").insert(rows as never)
+  const { error } = (await (
+    legacy
+      ? supabase.from("invoice_items").insert(rows as never)
+      : supabase.from("estimate_items").insert(rows as never)
   ).then((r) => r)) as unknown as { error: { message: string } | null };
   if (error) throw error;
 }
 
 export async function replaceEstimateItems(estimateId: string, items: LineItem[]): Promise<void> {
   const legacy = await isLegacyEstimateSchema();
-  const { error: dErr } = (await (legacy
-    ? supabase.from("invoice_items").delete().eq("invoice_id", estimateId)
-    : supabase.from("estimate_items").delete().eq("estimate_id", estimateId)
+  const { error: dErr } = (await (
+    legacy
+      ? supabase.from("invoice_items").delete().eq("invoice_id", estimateId)
+      : supabase.from("estimate_items").delete().eq("estimate_id", estimateId)
   ).then((r) => r)) as unknown as { error: { message: string } | null };
   if (dErr) throw dErr;
   await insertEstimateItems(estimateId, items);
@@ -202,9 +216,16 @@ export async function updateEstimateTotals(estimateId: string, taxRate: number):
         tax_amount: Number((taxCents / 100).toFixed(2)),
       }
     : { subtotal_cents: subtotalCents, tax_cents: taxCents, total_cents: totalCents };
-  const { error } = (await (legacy
-    ? supabase.from("invoices").update(patch as never)
-    : supabase.from("estimates").update(patch as never)
+  const { error } = (await (
+    legacy
+      ? supabase
+          .from("invoices")
+          .update(patch as never)
+          .eq("id", estimateId)
+      : supabase
+          .from("estimates")
+          .update(patch as never)
+          .eq("id", estimateId)
   ).then((r) => r)) as unknown as { error: { message: string } | null };
   if (error) throw error;
 }
@@ -252,6 +273,7 @@ export async function createEstimateRecord(input: {
   job_description?: string | null;
   notes?: string | null;
   expiry_date?: string | null;
+  branding_preset_id?: string | null;
 }): Promise<{ id: string; estimate_number: string }> {
   const {
     data: { user },
@@ -265,13 +287,17 @@ export async function createEstimateRecord(input: {
   const due = new Date();
   due.setDate(due.getDate() + 30);
 
-  const common = {
+  const common: Record<string, unknown> = {
     user_id: user.id,
     client_id: input.client_id || null,
     job_description: input.job_description || null,
     notes: input.notes || null,
     status: "draft",
   };
+  // Only persist the preset once the migration has added the column.
+  if (await hasBrandingPresetColumn()) {
+    common.branding_preset_id = input.branding_preset_id || null;
+  }
   const insert = legacy
     ? {
         ...common,
@@ -294,10 +320,7 @@ export async function createEstimateRecord(input: {
         total_cents: 0,
       };
 
-  const table = (legacy
-    ? supabase.from("invoices")
-    : supabase.from("estimates")
-  ) as unknown as {
+  const table = (legacy ? supabase.from("invoices") : supabase.from("estimates")) as unknown as {
     insert: (r: unknown) => {
       select: (c: string) => {
         single: () => PromiseLike<{
@@ -334,6 +357,9 @@ export async function updateEstimateRecord(
   if (patch.notes !== undefined) common.notes = patch.notes ?? null;
   if (patch.job_description !== undefined) common.job_description = patch.job_description ?? null;
   if (patch.status !== undefined) common.status = patch.status;
+  if (patch.branding_preset_id !== undefined && (await hasBrandingPresetColumn())) {
+    common.branding_preset_id = patch.branding_preset_id ?? null;
+  }
   const dbPatch = legacy
     ? {
         ...common,
@@ -356,20 +382,26 @@ export async function updateEstimateRecord(
         total_cents: patch.total_cents,
       };
   const clean = Object.fromEntries(Object.entries(dbPatch).filter(([, v]) => v !== undefined));
-  const { error } = (await (legacy
-    ? supabase.from("invoices").update(clean as never)
-    : supabase.from("estimates").update(clean as never)
+  const { error } = (await (
+    legacy
+      ? supabase
+          .from("invoices")
+          .update(clean as never)
+          .eq("id", id)
+      : supabase
+          .from("estimates")
+          .update(clean as never)
+          .eq("id", id)
   ).then((r) => r)) as unknown as { error: { message: string } | null };
   if (error) throw error;
 }
 
 export async function deleteEstimateRecord(id: string): Promise<void> {
   const legacy = await isLegacyEstimateSchema();
-  const { error } = (await (legacy
-    ? supabase.from("invoices").delete().eq("id", id)
-    : supabase.from("estimates").delete().eq("id", id)
+  const { error } = (await (
+    legacy
+      ? supabase.from("invoices").delete().eq("id", id)
+      : supabase.from("estimates").delete().eq("id", id)
   ).then((r) => r)) as unknown as { error: { message: string } | null };
   if (error) throw error;
 }
-
-

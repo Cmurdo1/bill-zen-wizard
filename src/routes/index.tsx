@@ -12,6 +12,8 @@ import {
   ShieldCheck,
   Wand2,
   Bot,
+  Code2,
+  Terminal,
 } from "lucide-react";
 
 export const Route = createFileRoute("/")({
@@ -30,7 +32,7 @@ const FEATURES = [
   },
   {
     icon: Wand2,
-    title: "AI line-item extraction",
+    title: "AI line item extraction",
     body: "Paste a job description. Get labor and materials broken out, priced, and ready to send.",
   },
   {
@@ -40,23 +42,23 @@ const FEATURES = [
   },
   {
     icon: Repeat,
-    title: "Recurring & automated",
-    body: "Set it once. Get paid every month. Automated payment reminders included.",
+    title: "Payment reminders",
+    body: "Follow up in one click — no awkward phone calls. Professional reminders keep cash flowing.",
   },
   {
     icon: Globe2,
-    title: "Multi-currency",
+    title: "Multi currency",
     body: "Send in USD, EUR, GBP, and 150+ more. Your client sees their currency.",
   },
   {
     icon: Smartphone,
-    title: "Mobile-first",
+    title: "Mobile first",
     body: "Invoice from the truck, the jobsite, or the couch. Works everywhere.",
   },
   {
     icon: ShieldCheck,
     title: "Secure by default",
-    body: "Bank-grade encryption. PCI-compliant payments via Stripe. Your data stays yours.",
+    body: "Bank grade encryption. PCI compliant payments via Stripe. Your data stays yours.",
   },
 ];
 
@@ -64,7 +66,7 @@ const STEPS = [
   {
     n: "01",
     title: "Add a client",
-    body: "Or import from your contacts. One-time setup, forever reusable.",
+    body: "Add them in seconds, right from the invoice screen. One-time setup, forever reusable.",
   },
   {
     n: "02",
@@ -74,7 +76,7 @@ const STEPS = [
   {
     n: "03",
     title: "Send and get paid",
-    body: "One-click send. Payment link included. Cash lands in your bank.",
+    body: "One click send. Payment link included. Cash lands in your bank.",
   },
 ];
 
@@ -101,12 +103,12 @@ const FAQS = [
     a: "We use Stripe under the hood. Your client clicks the payment link on the invoice, pays by card or ACH, and money lands in your bank on the standard Stripe schedule. We never touch your money.",
   },
   {
-    q: "What is AI line-item extraction?",
-    a: 'Paste a plain-English job description — "replaced 3-ton condenser, 4 hrs labor, refrigerant charge" — and we generate itemized labor and materials with realistic pricing. You review, edit, and send.',
+    q: "What is AI line item extraction?",
+    a: 'Paste a plain English job description "replaced 3 ton condenser, 4 hrs labor, refrigerant charge" and we generate itemized labor and materials with realistic pricing. You review, edit, and send.',
   },
   {
     q: "Can I use my own logo and colors?",
-    a: "Yes. Every plan supports custom branding on invoices, estimates, and payment pages.",
+    a: "Yes. Pro and Business plans include a full Design section — your own logo, brand colors, and saved brand presets so you can invoice under multiple business names.",
   },
   {
     q: "Do you handle taxes?",
@@ -132,8 +134,8 @@ function HomePage() {
             </h1>
             <p className="mt-5 max-w-xl text-pretty text-lg text-muted-foreground">
               Honest Invoice is the modern invoicing platform for contractors, freelancers, and
-              service businesses. Create professional invoices, send estimates, and get paid online
-              — while AI handles the busywork.
+              service businesses. Create professional invoices, send estimates, and get paid online,
+              while AI handles the busywork.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link
@@ -168,9 +170,9 @@ function HomePage() {
               </div>
               <div className="mt-4 grid gap-2 text-sm">
                 <Row label="Site inspection & diagnosis" qty="2h" amount="$180.00" />
-                <Row label="3-ton condenser (Lennox)" qty="1" amount="$1,840.00" />
+                <Row label="3 ton condenser (Lennox)" qty="1" amount="$1,840.00" />
                 <Row label="Refrigerant charge (R-410A)" qty="4 lb" amount="$96.00" />
-                <Row label="Labor — installation" qty="6h" amount="$540.00" />
+                <Row label="Labor & installation" qty="6h" amount="$540.00" />
               </div>
               <div className="mt-4 border-t border-border pt-4 text-sm">
                 <div className="flex justify-between text-muted-foreground">
@@ -221,6 +223,79 @@ function HomePage() {
                 <p className="mt-2 text-sm text-muted-foreground">{f.body}</p>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* MCP + API */}
+      <section className="border-t border-border bg-primary-gradient py-20 text-primary-foreground">
+        <div className="container-page grid gap-12 lg:grid-cols-2">
+          <div>
+            <span className="inline-flex items-center gap-2 rounded-full border border-primary-foreground/25 bg-primary-foreground/10 px-3 py-1 text-xs font-medium">
+              <Bot className="h-3.5 w-3.5" /> AI-native from day one
+            </span>
+            <h2 className="mt-5 font-display text-4xl leading-tight tracking-tight sm:text-5xl">
+              Your AI agent can do the billing.
+            </h2>
+            <p className="mt-5 max-w-xl text-pretty text-lg text-primary-foreground/80">
+              Honest Invoice speaks the language of modern AI. Our Model Context Protocol (MCP)
+              server and REST API let Claude, Cursor, or any agent you run — create estimates, email
+              clients, track leads, and pull your books — all scoped to your account with a
+              dedicated key.
+            </p>
+            <p className="mt-3 max-w-xl text-primary-foreground/70">
+              A lead posts on Craigslist at 9pm? Your agent drafts a professional estimate and
+              emails it before you finish dinner. That's invoicing that keeps up with the times.
+            </p>
+            <div className="mt-8 flex flex-wrap gap-3">
+              <Link
+                to="/mcp"
+                className="inline-flex h-12 items-center gap-2 rounded-xl bg-accent px-6 text-sm font-semibold text-accent-foreground shadow-lifted transition-transform hover:-translate-y-0.5"
+              >
+                See how MCP works <ArrowRight className="h-4 w-4" />
+              </Link>
+              <Link
+                to="/pricing"
+                className="inline-flex h-12 items-center rounded-xl border border-primary-foreground/25 bg-primary-foreground/10 px-6 text-sm font-semibold text-primary-foreground hover:bg-primary-foreground/20"
+              >
+                Plans & pricing
+              </Link>
+            </div>
+          </div>
+          <div className="grid content-center gap-4">
+            <div className="rounded-2xl border border-primary-foreground/15 bg-background/95 p-5 shadow-lifted">
+              <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground">
+                <Terminal className="h-3.5 w-3.5" /> Your AI agent, connected
+              </div>
+              <pre className="mt-3 overflow-x-auto rounded-xl bg-surface-muted p-4 font-mono text-xs text-foreground/80">
+                <code>{`curl -X POST /api/mcp/documents \\
+  -H "Authorization: Bearer hi_mcp_YOUR_KEY" \\
+  -d '{ "type": "estimate", "client_name": "Jane", "items": [...] }'`}</code>
+              </pre>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              {[
+                {
+                  icon: Bot,
+                  title: "MCP for agents",
+                  body: "Claude, Cursor, and any MCP client can create and send documents for you.",
+                },
+                {
+                  icon: Code2,
+                  title: "REST API included",
+                  body: "Full document, client, and lead API for cron jobs and custom integrations.",
+                },
+              ].map((f) => (
+                <div
+                  key={f.title}
+                  className="rounded-2xl border border-primary-foreground/15 bg-background/95 p-5 shadow-lifted"
+                >
+                  <f.icon className="h-5 w-5 text-primary" />
+                  <h3 className="mt-3 font-semibold text-foreground">{f.title}</h3>
+                  <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{f.body}</p>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </section>

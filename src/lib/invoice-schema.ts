@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { LineItem } from "@/lib/documents";
+import { brandingPresetsClient, hasBrandingPresetColumn } from "@/lib/branding-presets";
 
 /**
  * The deployed live database uses a legacy invoices schema (dollar amounts:
@@ -16,10 +17,9 @@ let legacyCache: boolean | null = null;
 
 export async function isLegacyInvoiceSchema(): Promise<boolean> {
   if (legacyCache !== null) return legacyCache;
-  const { error } = (await supabase
-    .from("invoices")
-    .select("total_cents")
-    .limit(1)) as unknown as { error: { code?: string } | null };
+  const { error } = (await supabase.from("invoices").select("total_cents").limit(1)) as unknown as {
+    error: { code?: string } | null;
+  };
   legacyCache = !!(error && error.code === "42703");
   return legacyCache;
 }
@@ -39,6 +39,7 @@ export type UnifiedInvoice = {
   total_cents: number;
   currency: string;
   paid_at: string | null;
+  branding_preset_id: string | null;
 };
 
 /** Map a raw invoices row (either schema) to the unified shape used by the UI. */
@@ -59,29 +60,36 @@ export function mapInvoiceRow(row: Record<string, unknown>): UnifiedInvoice {
     ),
     due_date: (row.due_date as string | null) ?? null,
     notes: (row.notes as string | null) ?? null,
-    tax_rate: legacy
-      ? totalCents > 0
-        ? taxCents / totalCents
-        : 0
-      : Number(row.tax_rate ?? 0),
+    tax_rate: legacy ? (totalCents > 0 ? taxCents / totalCents : 0) : Number(row.tax_rate ?? 0),
     subtotal_cents: legacy ? totalCents - taxCents : Number(row.subtotal_cents ?? 0),
     tax_cents: taxCents,
     total_cents: totalCents,
     currency: String(row.currency ?? "USD"),
     paid_at: (row.paid_at as string | null) ?? null,
+    branding_preset_id: (row.branding_preset_id as string | null) ?? null,
   };
+}
+
+/** Columns that only exist once the branding-presets migration is applied. */
+async function invoiceColumns(legacy: boolean): Promise<string> {
+  const base = legacy
+    ? "id,invoice_number,status,client_id,due_date,notes,created_at,total_amount,tax_amount,job_description"
+    : "id,invoice_number,status,client_id,issue_date,due_date,notes,tax_rate,subtotal_cents,tax_cents,total_cents,currency,paid_at,job_description";
+  const hasPreset = await hasBrandingPresetColumn();
+  return hasPreset ? `${base},branding_preset_id` : base;
 }
 
 export async function fetchInvoiceList(): Promise<UnifiedInvoice[]> {
   const legacy = await isLegacyInvoiceSchema();
-  const columns = legacy
-    ? "id,invoice_number,status,client_id,due_date,notes,created_at,total_amount,tax_amount,job_description"
-    : "id,invoice_number,status,client_id,issue_date,due_date,notes,tax_rate,subtotal_cents,tax_cents,total_cents,currency,paid_at,job_description";
+  const columns = await invoiceColumns(legacy);
   // Legacy deployments keep estimates in the same table (type='estimate');
   // the new schema has a dedicated estimates table.
   let query = supabase.from("invoices").select(columns) as unknown as {
     eq: (c: string, v: string) => unknown;
-    order: (c: string, o: { ascending: boolean }) => PromiseLike<{
+    order: (
+      c: string,
+      o: { ascending: boolean },
+    ) => PromiseLike<{
       data: Record<string, unknown>[] | null;
       error: { message: string } | null;
     }>;
@@ -96,9 +104,7 @@ export async function fetchInvoiceList(): Promise<UnifiedInvoice[]> {
 
 export async function fetchInvoice(id: string): Promise<UnifiedInvoice | null> {
   const legacy = await isLegacyInvoiceSchema();
-  const columns = legacy
-    ? "id,invoice_number,status,client_id,due_date,notes,created_at,total_amount,tax_amount,job_description"
-    : "id,invoice_number,status,client_id,issue_date,due_date,notes,tax_rate,subtotal_cents,tax_cents,total_cents,currency,paid_at,job_description";
+  const columns = await invoiceColumns(legacy);
   let query = supabase.from("invoices").select(columns).eq("id", id) as unknown as {
     eq: (c: string, v: string) => unknown;
     maybeSingle: () => PromiseLike<{
@@ -131,9 +137,7 @@ export async function fetchInvoiceItems(invoiceId: string): Promise<LineItem[]> 
   return (data ?? []).map((r) => ({
     description: String(r.description ?? ""),
     quantity: Number(r.quantity ?? 1),
-    rate_cents: legacy
-      ? Math.round(Number(r.unit_price ?? 0) * 100)
-      : Number(r.rate_cents ?? 0),
+    rate_cents: legacy ? Math.round(Number(r.unit_price ?? 0) * 100) : Number(r.rate_cents ?? 0),
   }));
 }
 
@@ -158,9 +162,7 @@ export async function insertInvoiceItems(invoiceId: string, items: LineItem[]): 
           sort_order: i,
         },
   );
-  const { error } = (await supabase
-    .from("invoice_items")
-    .insert(rows as never)) as unknown as {
+  const { error } = (await supabase.from("invoice_items").insert(rows as never)) as unknown as {
     error: { message: string } | null;
   };
   if (error) throw error;
@@ -175,10 +177,7 @@ export async function replaceInvoiceItems(invoiceId: string, items: LineItem[]):
   await insertInvoiceItems(invoiceId, items);
 }
 
-export async function updateInvoiceTotals(
-  invoiceId: string,
-  taxRate: number,
-): Promise<void> {
+export async function updateInvoiceTotals(invoiceId: string, taxRate: number): Promise<void> {
   const legacy = await isLegacyInvoiceSchema();
   const items = await fetchInvoiceItems(invoiceId);
   const subtotalCents = items.reduce(
@@ -253,6 +252,7 @@ export async function createInvoiceRecord(input: {
   due_date?: string | null;
   issue_date?: string | null;
   currency?: string | null;
+  branding_preset_id?: string | null;
 }): Promise<{ id: string; invoice_number: string }> {
   const {
     data: { user },
@@ -266,7 +266,7 @@ export async function createInvoiceRecord(input: {
   const due = new Date();
   due.setDate(due.getDate() + 30);
 
-  const common = {
+  const common: Record<string, unknown> = {
     user_id: user.id,
     client_id: input.client_id || null,
     job_description: input.job_description || null,
@@ -275,6 +275,10 @@ export async function createInvoiceRecord(input: {
     invoice_number: documentNumber,
     due_date: input.due_date || due.toISOString().slice(0, 10),
   };
+  // Only persist the preset once the migration has added the column.
+  if (await hasBrandingPresetColumn()) {
+    common.branding_preset_id = input.branding_preset_id || null;
+  }
   const insert = legacy
     ? {
         ...common,
@@ -333,6 +337,9 @@ export async function updateInvoiceRecord(
   if (patch.due_date !== undefined) common.due_date = patch.due_date ?? null;
   if (patch.notes !== undefined) common.notes = patch.notes ?? null;
   if (patch.status !== undefined) common.status = patch.status;
+  if (patch.branding_preset_id !== undefined && (await hasBrandingPresetColumn())) {
+    common.branding_preset_id = patch.branding_preset_id ?? null;
+  }
   const dbPatch = legacy
     ? {
         ...common,
@@ -400,12 +407,28 @@ export async function isLegacyProfileSchema(): Promise<boolean> {
   return profileSchemaLegacy;
 }
 
-/** Business name for email subjects: legacy profiles use `business_name`. */
-export async function fetchBusinessName(): Promise<string> {
+/**
+ * Business name for email subjects: a document's branding preset wins, then
+ * legacy profiles use `business_name`, then company/full name.
+ */
+export async function fetchBusinessName(presetId?: string | null): Promise<string> {
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return "";
+
+  // A document created under a branding preset is sent with that brand name.
+  if (presetId) {
+    const { data: preset } = (await brandingPresetsClient()
+      .select("business_name")
+      .eq("id", presetId)
+      .maybeSingle()) as unknown as {
+      data: { business_name: string | null } | null;
+      error: { message: string } | null;
+    };
+    if (preset?.business_name) return preset.business_name;
+  }
+
   const legacy = await isLegacyProfileSchema();
   const columns = legacy ? "business_name" : "business_name,company_name,full_name";
   const { data: profile } = (await supabase

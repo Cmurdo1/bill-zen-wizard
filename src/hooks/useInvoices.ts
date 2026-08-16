@@ -67,6 +67,7 @@ export function useCreateInvoice() {
       due_date?: string | null;
       expiry_date?: string | null;
       type?: "invoice" | "estimate";
+      branding_preset_id?: string | null;
     }) => {
       const isEstimate = invoice.type === "estimate";
 
@@ -78,6 +79,7 @@ export function useCreateInvoice() {
           job_description: invoice.job_description,
           notes: invoice.notes,
           expiry_date: invoice.expiry_date,
+          branding_preset_id: invoice.branding_preset_id,
         });
       }
 
@@ -86,6 +88,7 @@ export function useCreateInvoice() {
         job_description: invoice.job_description,
         notes: invoice.notes,
         due_date: invoice.due_date,
+        branding_preset_id: invoice.branding_preset_id,
       });
     },
     onSuccess: () => {
@@ -335,6 +338,7 @@ export function useSendDocument() {
       total_amount: number; // dollars
       due_date: string | null;
       job_description: string | null;
+      branding_preset_id?: string | null;
       message?: string;
     }) => {
       if (input.type === "estimate") {
@@ -343,11 +347,12 @@ export function useSendDocument() {
             estimateId: input.id,
             to: input.client_email,
             message: input.message?.trim() || undefined,
+            business_name: await fetchBusinessName(input.branding_preset_id),
           },
         });
       }
 
-      const businessName = await fetchBusinessName();
+      const businessName = await fetchBusinessName(input.branding_preset_id);
       await sendInvoice({
         data: {
           invoice_id: input.id,

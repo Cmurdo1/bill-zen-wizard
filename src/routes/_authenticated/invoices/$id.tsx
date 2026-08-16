@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { AppShell } from "@/components/app/shell";
 import { supabase } from "@/integrations/supabase/client";
+import { brandingPresetsClient } from "@/lib/branding-presets";
 import { formatCurrency } from "@/lib/format";
 import { LineItemsEditor } from "@/components/app/line-items-editor";
 import { InvoicePreviewModal } from "@/components/app/invoice-preview-modal";
@@ -67,6 +68,7 @@ function InvoiceDetailPage() {
   const [invoice, setInvoice] = useState<Invoice | null>(null);
   const [items, setItems] = useState<LineItem[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
+  const [presets, setPresets] = useState<{ id: string; name: string }[]>([]);
   const [legacy, setLegacy] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -90,10 +92,17 @@ function InvoiceDetailPage() {
     setLoading(true);
     try {
       setLegacy(await isLegacyInvoiceSchema());
-      const [inv, invItems, cliRes] = await Promise.all([
+      const [inv, invItems, cliRes, presetRows] = await Promise.all([
         fetchInvoice(id),
         fetchInvoiceItems(id),
-        supabase.from("clients").select("id,name").order("name"),
+        supabase.from("clients").select("id,name,email").order("name"),
+        brandingPresetsClient()
+          .select("id,name")
+          .order("name", { ascending: true })
+          .then(
+            (r) => r as { data: { id: string; name: string }[] | null },
+            () => ({ data: [] as { id: string; name: string }[] }),
+          ),
       ]);
       if (!inv) {
         setError("Invoice not found");
@@ -102,6 +111,7 @@ function InvoiceDetailPage() {
       setInvoice(inv);
       setItems(invItems.length ? invItems : [{ description: "", quantity: 1, rate_cents: 0 }]);
       setClients((cliRes.data as Client[]) ?? []);
+      setPresets((presetRows.data as { id: string; name: string }[]) ?? []);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Could not load invoice");
     } finally {
@@ -128,6 +138,7 @@ function InvoiceDetailPage() {
         total_cents: total,
         currency: invoice.currency,
         status: invoice.status,
+        branding_preset_id: invoice.branding_preset_id,
         ...overrides,
       });
       await replaceInvoiceItems(invoice.id, validItems);
@@ -177,7 +188,7 @@ function InvoiceDetailPage() {
     if (!invoice) return;
 
     try {
-      const branding = await fetchDocumentBranding(invoice.client_id);
+      const branding = await fetchDocumentBranding(invoice.client_id, invoice.branding_preset_id);
       await downloadBrandedInvoicePdf({
         ...invoice,
         items: items.filter((i) => i.description.trim()),
@@ -204,7 +215,7 @@ function InvoiceDetailPage() {
     setIsSendingEmail(true);
     try {
       const client = clients.find((c) => c.id === invoice.client_id)!;
-      const businessName = await fetchBusinessName();
+      const businessName = await fetchBusinessName(invoice.branding_preset_id);
       await sendEmail({
         data: {
           invoice_id: invoice.id,
@@ -224,7 +235,9 @@ function InvoiceDetailPage() {
       toast.success(`${docType} emailed to ${client.email}!`);
     } catch (error) {
       console.error("Email sending error:", error);
-      toast.error(error instanceof Error ? error.message : "Failed to send email. Please try again.");
+      toast.error(
+        error instanceof Error ? error.message : "Failed to send email. Please try again.",
+      );
     } finally {
       setIsSendingEmail(false);
     }
@@ -247,7 +260,7 @@ function InvoiceDetailPage() {
 
   async function openPreview() {
     if (!invoice) return;
-    const branding = await fetchDocumentBranding(invoice.client_id);
+    const branding = await fetchDocumentBranding(invoice.client_id, invoice.branding_preset_id);
     setPreviewData({
       ...invoice,
       items: items.filter((i) => i.description.trim()),
@@ -401,9 +414,7 @@ function InvoiceDetailPage() {
           {!legacy && (
             <p className="mt-1 text-xs text-muted-foreground">
               Payment link token:{" "}
-              <code className="rounded bg-surface-muted px-1.5 py-0.5">
-                {invoice.id}
-              </code>
+              <code className="rounded bg-surface-muted px-1.5 py-0.5">{invoice.id}</code>
             </p>
           )}
         </div>
@@ -470,6 +481,22 @@ function InvoiceDetailPage() {
                   onChange={(e) => setInvoice({ ...invoice, due_date: e.target.value || null })}
                   className="h-10 w-full rounded-lg border border-border bg-background px-3 text-sm"
                 />
+              </Field>
+              <Field label="Brand">
+                <select
+                  value={invoice.branding_preset_id ?? ""}
+                  onChange={(e) =>
+                    setInvoice({ ...invoice, branding_preset_id: e.target.value || null })
+                  }
+                  className="h-10 w-full rounded-lg border border-border bg-background px-3 text-sm"
+                >
+                  <option value="">Account default</option>
+                  {presets.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.name}
+                    </option>
+                  ))}
+                </select>
               </Field>
             </div>
           </section>

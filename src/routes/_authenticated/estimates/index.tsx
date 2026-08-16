@@ -12,7 +12,7 @@ import { useSendDocument, useMyEmail } from "@/hooks/useInvoices";
 
 type Client = { id: string; name: string; email: string | null };
 
-export const Route = createFileRoute("/_authenticated/estimates")({
+export const Route = createFileRoute("/_authenticated/estimates/")({
   head: () => ({
     meta: [{ title: "Estimates — Honest Invoice" }, { name: "robots", content: "noindex" }],
   }),
@@ -97,7 +97,6 @@ function EstimatesPage() {
         <Stat label="Accepted" value={formatCurrency(totals.accepted)} tone="success" />
         <Stat label="Open" value={totals.open.toString()} />
       </div>
-
       <div className="mb-4 flex flex-wrap items-center gap-3">
         <div className="relative flex-1 min-w-48">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -128,7 +127,6 @@ function EstimatesPage() {
           New estimate
         </button>
       </div>
-
       <div className="rounded-2xl border border-border bg-surface shadow-soft">
         {loading ? (
           <div className="grid place-items-center py-16 text-muted-foreground">
@@ -155,55 +153,58 @@ function EstimatesPage() {
               {filtered.map((est) => {
                 const client = clients.find((c) => c.id === est.client_id);
                 return (
-                <tr
-                  key={est.id}
-                  className="cursor-pointer border-b border-border/60 last:border-0 hover:bg-surface-muted/50"
-                >
-                  <td className="px-6 py-4 font-semibold">
-                    <Link
-                      to="/estimates/$id"
-                      params={{ id: est.id }}
-                      className="hover:text-primary"
-                    >
-                      {est.estimate_number}
-                    </Link>
-                  </td>
-                  <td className="px-6 py-4 text-muted-foreground">
-                    {clients.find((c) => c.id === est.client_id)?.name ?? "—"}
-                  </td>
-                  <td className="px-6 py-4 text-muted-foreground">{formatDate(est.issue_date)}</td>
-                  <td className="px-6 py-4 text-muted-foreground">{formatDate(est.expiry_date)}</td>
-                  <td className="px-6 py-4">
-                    <StatusPill status={est.status} />
-                  </td>
-                  <td className="px-6 py-4 text-right font-semibold tabular-nums">
-                    {formatCurrency(est.total_cents, est.currency)}
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <button
-                      onClick={() => setSending(est)}
-                      title="Email this estimate — pick a recipient or type any address"
-                      className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-border px-2.5 text-xs font-semibold text-muted-foreground transition-colors hover:border-primary hover:text-primary"
-                    >
-                      <Mail className="h-3.5 w-3.5" />
-                      Send
-                    </button>
-                  </td>
-                </tr>
+                  <tr
+                    key={est.id}
+                    className="cursor-pointer border-b border-border/60 last:border-0 hover:bg-surface-muted/50"
+                  >
+                    <td className="px-6 py-4 font-semibold">
+                      <Link
+                        to="/estimates/$id"
+                        params={{ id: est.id }}
+                        className="hover:text-primary"
+                      >
+                        {est.estimate_number}
+                      </Link>
+                    </td>
+                    <td className="px-6 py-4 text-muted-foreground">
+                      {clients.find((c) => c.id === est.client_id)?.name ?? "—"}
+                    </td>
+                    <td className="px-6 py-4 text-muted-foreground">
+                      {formatDate(est.issue_date)}
+                    </td>
+                    <td className="px-6 py-4 text-muted-foreground">
+                      {formatDate(est.expiry_date)}
+                    </td>
+                    <td className="px-6 py-4">
+                      <StatusPill status={est.status} />
+                    </td>
+                    <td className="px-6 py-4 text-right font-semibold tabular-nums">
+                      {formatCurrency(est.total_cents, est.currency)}
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <button
+                        onClick={() => setSending(est)}
+                        title="Email this estimate — pick a recipient or type any address"
+                        className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-border px-2.5 text-xs font-semibold text-muted-foreground transition-colors hover:border-primary hover:text-primary"
+                      >
+                        <Mail className="h-3.5 w-3.5" />
+                        Send
+                      </button>
+                    </td>
+                  </tr>
                 );
               })}
             </tbody>
           </table>
         )}
-      </div>        <SendDocumentModal
-          open={!!sending}
-          onClose={() => setSending(null)}
-          title={`Send ${sending?.estimate_number ?? "estimate"}`}
-          defaultTo={
-            sending ? clients.find((c) => c.id === sending.client_id)?.email ?? "" : ""
-          }
-          clients={clients}
-          myEmail={myEmail ?? ""}
+      </div>{" "}
+      <SendDocumentModal
+        open={!!sending}
+        onClose={() => setSending(null)}
+        title={`Send ${sending?.estimate_number ?? "estimate"}`}
+        defaultTo={sending ? (clients.find((c) => c.id === sending.client_id)?.email ?? "") : ""}
+        clients={clients}
+        myEmail={myEmail ?? ""}
         onSend={async (to, message) => {
           if (!sending) return;
           const client = clients.find((c) => c.id === sending.client_id);

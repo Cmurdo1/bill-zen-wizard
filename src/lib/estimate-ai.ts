@@ -10,6 +10,9 @@ export const SendInput = z.object({
   estimateId: z.string().uuid(),
   to: z.string().trim().email().max(255),
   message: z.string().trim().max(2000).optional(),
+  // Business name from the document's branding preset (overrides the
+  // profile default for this send).
+  business_name: z.string().trim().max(255).optional(),
 });
 
 export const EstimateSchema = {

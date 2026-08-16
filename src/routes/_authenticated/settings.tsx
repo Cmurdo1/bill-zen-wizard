@@ -5,6 +5,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
 import { RateBookEditor } from "@/components/app/rate-book";
 import { ApiKeyManager } from "@/components/app/api-key-manager";
+import { BrandingSection } from "@/components/app/branding-section";
+import { useSubscription } from "@/lib/subscription";
+import { UpgradeCallout } from "@/components/app/plan-badge";
 
 type Profile = {
   id: string;
@@ -27,6 +30,7 @@ function SettingsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
+  const { isActive: subscribed } = useSubscription();
 
   useEffect(() => {
     void (async () => {
@@ -109,19 +113,38 @@ function SettingsPage() {
           />
         </Section>
 
-        <Section
-          title="Rate book"
-          desc="Your standard prices. AI estimates must use these exact rates, which keeps pricing consistent across every job."
-        >
-          <RateBookEditor currency={profile.default_currency ?? "USD"} />
-        </Section>
+        {subscribed ? (
+          <Section
+            title="Design & Branding"
+            desc="Brand your invoices and estimates: set your default business identity, then save extra brands (like Brothers Lane Builders and Corin Murdoch) to switch between them per document."
+          >
+            <BrandingSection />
+          </Section>
+        ) : (
+          <UpgradeCallout feature="Design & Branding" />
+        )}
 
-        <Section
-          title="AI agent API keys"
-          desc="Connect Claude, Cursor, cron jobs, and other agents without exposing your browser session. Available on active Pro and Business plans."
-        >
-          <ApiKeyManager />
-        </Section>
+        {subscribed ? (
+          <Section
+            title="Rate book"
+            desc="Your standard prices. AI estimates must use these exact rates, which keeps pricing consistent across every job."
+          >
+            <RateBookEditor currency={profile.default_currency ?? "USD"} />
+          </Section>
+        ) : (
+          <UpgradeCallout feature="Rate book" />
+        )}
+
+        {subscribed ? (
+          <Section
+            title="AI agent API keys"
+            desc="Connect Claude, Cursor, cron jobs, and other agents without exposing your browser session. Available on active Pro and Business plans."
+          >
+            <ApiKeyManager />
+          </Section>
+        ) : (
+          <UpgradeCallout feature="AI agent API keys" />
+        )}
 
         <div className="flex items-center gap-3">
           <button

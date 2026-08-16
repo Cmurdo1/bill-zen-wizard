@@ -12,9 +12,9 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { supabase } from "@/integrations/supabase/client";
 
-const SITE_TITLE = "Honest Invoice — Get paid faster with AI-powered invoicing";
+const SITE_TITLE = "Honest Invoice - Get paid faster with AI-powered invoicing";
 const SITE_DESCRIPTION =
-  "AI-powered invoicing for contractors and freelancers. Send invoices and estimates, and get paid online faster.";
+  "AI-powered estimates & invoies for contractors and freelancers. Send estimates first, so you get to send the invoice.";
 
 function NotFoundComponent() {
   return (

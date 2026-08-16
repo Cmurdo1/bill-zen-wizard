@@ -7,6 +7,7 @@ import {
   enforceMcpActionRateLimit,
   isLegacyInvoiceSchema,
   mcpErrorResponse,
+  McpHttpError,
   releaseMcpIdempotencyKey,
   reserveMcpIdempotencyKey,
   assertMcpScope,
@@ -82,6 +83,26 @@ export const Route = createFileRoute("/api/mcp/leads/webhook")({
           const parsed = LeadWebhookInput.parse(body);
 
           const db = supabase as any; // eslint-disable-line @typescript-eslint/no-explicit-any
+
+          // Pro plans include 2 leads/month (as advertised on /pricing);
+          // Business plans get unlimited lead generation.
+          if (context.plan === "pro") {
+            const monthStart = new Date();
+            monthStart.setDate(1);
+            monthStart.setHours(0, 0, 0, 0);
+            const { count, error: countError } = await db
+              .from("job_leads")
+              .select("id", { count: "exact", head: true })
+              .eq("user_id", userId)
+              .gte("created_at", monthStart.toISOString());
+            if (countError) throw countError;
+            if ((count ?? 0) >= 2) {
+              throw new McpHttpError(
+                403,
+                "The Pro plan includes 2 leads per month. Upgrade to Business for unlimited leads.",
+              );
+            }
+          }
 
           // Read the authenticated account's branding once and use it for the
           // estimate email. The MCP token never gets to choose another account.
@@ -333,7 +354,10 @@ export const Route = createFileRoute("/api/mcp/leads/webhook")({
                   sentResult = { sent: true };
                 }
               } else {
-                sentResult = { sent: false, error: "No email provider configured (set RESEND_API_KEY)" };
+                sentResult = {
+                  sent: false,
+                  error: "No email provider configured (set RESEND_API_KEY)",
+                };
               }
             } catch (e) {
               sentResult = { sent: false, error: e instanceof Error ? e.message : String(e) };

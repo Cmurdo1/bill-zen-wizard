@@ -27,22 +27,22 @@ import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
 import { Route as AuthenticatedMagicCreateRouteImport } from './routes/_authenticated/magic-create'
-import { Route as AuthenticatedLeadsRouteImport } from './routes/_authenticated/leads'
-import { Route as AuthenticatedInvoicesRouteImport } from './routes/_authenticated/invoices'
 import { Route as AuthenticatedImportDataRouteImport } from './routes/_authenticated/import-data'
-import { Route as AuthenticatedEstimatesRouteImport } from './routes/_authenticated/estimates'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedClientsRouteImport } from './routes/_authenticated/clients'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/_admin'
+import { Route as AuthenticatedLeadsIndexRouteImport } from './routes/_authenticated/leads/index'
+import { Route as AuthenticatedInvoicesIndexRouteImport } from './routes/_authenticated/invoices/index'
+import { Route as AuthenticatedEstimatesIndexRouteImport } from './routes/_authenticated/estimates/index'
 import { Route as ApiMcpRateBookRouteImport } from './routes/api/mcp/rate-book'
 import { Route as ApiMcpProfileRouteImport } from './routes/api/mcp/profile'
 import { Route as ApiMcpLeadsRouteImport } from './routes/api/mcp/leads'
 import { Route as ApiMcpKeysRouteImport } from './routes/api/mcp/keys'
 import { Route as ApiMcpDocumentsRouteImport } from './routes/api/mcp/documents'
 import { Route as ApiMcpClientsRouteImport } from './routes/api/mcp/clients'
-import { Route as AuthenticatedLeadsIdRouteImport } from './routes/_authenticated/leads.$id'
-import { Route as AuthenticatedInvoicesIdRouteImport } from './routes/_authenticated/invoices.$id'
-import { Route as AuthenticatedEstimatesIdRouteImport } from './routes/_authenticated/estimates.$id'
+import { Route as AuthenticatedLeadsIdRouteImport } from './routes/_authenticated/leads/$id'
+import { Route as AuthenticatedInvoicesIdRouteImport } from './routes/_authenticated/invoices/$id'
+import { Route as AuthenticatedEstimatesIdRouteImport } from './routes/_authenticated/estimates/$id'
 import { Route as AuthenticatedAdminAdminRouteImport } from './routes/_authenticated/_admin/admin'
 import { Route as ApiPublicWebhooksStripeRouteImport } from './routes/api/public/webhooks.stripe'
 import { Route as ApiMcpLeadsWebhookRouteImport } from './routes/api/mcp/leads.webhook'
@@ -142,24 +142,9 @@ const AuthenticatedMagicCreateRoute =
     path: '/magic-create',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedLeadsRoute = AuthenticatedLeadsRouteImport.update({
-  id: '/leads',
-  path: '/leads',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedInvoicesRoute = AuthenticatedInvoicesRouteImport.update({
-  id: '/invoices',
-  path: '/invoices',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
 const AuthenticatedImportDataRoute = AuthenticatedImportDataRouteImport.update({
   id: '/import-data',
   path: '/import-data',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedEstimatesRoute = AuthenticatedEstimatesRouteImport.update({
-  id: '/estimates',
-  path: '/estimates',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
@@ -176,6 +161,23 @@ const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   id: '/_admin',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedLeadsIndexRoute = AuthenticatedLeadsIndexRouteImport.update({
+  id: '/leads/',
+  path: '/leads/',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedInvoicesIndexRoute =
+  AuthenticatedInvoicesIndexRouteImport.update({
+    id: '/invoices/',
+    path: '/invoices/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedEstimatesIndexRoute =
+  AuthenticatedEstimatesIndexRouteImport.update({
+    id: '/estimates/',
+    path: '/estimates/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const ApiMcpRateBookRoute = ApiMcpRateBookRouteImport.update({
   id: '/api/mcp/rate-book',
   path: '/api/mcp/rate-book',
@@ -207,20 +209,20 @@ const ApiMcpClientsRoute = ApiMcpClientsRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedLeadsIdRoute = AuthenticatedLeadsIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => AuthenticatedLeadsRoute,
+  id: '/leads/$id',
+  path: '/leads/$id',
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedInvoicesIdRoute = AuthenticatedInvoicesIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => AuthenticatedInvoicesRoute,
+  id: '/invoices/$id',
+  path: '/invoices/$id',
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedEstimatesIdRoute =
   AuthenticatedEstimatesIdRouteImport.update({
-    id: '/$id',
-    path: '/$id',
-    getParentRoute: () => AuthenticatedEstimatesRoute,
+    id: '/estimates/$id',
+    path: '/estimates/$id',
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedAdminAdminRoute = AuthenticatedAdminAdminRouteImport.update({
   id: '/admin',
@@ -277,10 +279,7 @@ export interface FileRoutesByFullPath {
   '/terms': typeof TermsRoute
   '/clients': typeof AuthenticatedClientsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
-  '/estimates': typeof AuthenticatedEstimatesRouteWithChildren
   '/import-data': typeof AuthenticatedImportDataRoute
-  '/invoices': typeof AuthenticatedInvoicesRouteWithChildren
-  '/leads': typeof AuthenticatedLeadsRouteWithChildren
   '/magic-create': typeof AuthenticatedMagicCreateRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/settings': typeof AuthenticatedSettingsRoute
@@ -297,6 +296,9 @@ export interface FileRoutesByFullPath {
   '/api/mcp/leads': typeof ApiMcpLeadsRouteWithChildren
   '/api/mcp/profile': typeof ApiMcpProfileRoute
   '/api/mcp/rate-book': typeof ApiMcpRateBookRoute
+  '/estimates/': typeof AuthenticatedEstimatesIndexRoute
+  '/invoices/': typeof AuthenticatedInvoicesIndexRoute
+  '/leads/': typeof AuthenticatedLeadsIndexRoute
   '/api/mcp/documents/activity': typeof ApiMcpDocumentsActivityRoute
   '/api/mcp/documents/extract': typeof ApiMcpDocumentsExtractRoute
   '/api/mcp/documents/send': typeof ApiMcpDocumentsSendRoute
@@ -319,10 +321,7 @@ export interface FileRoutesByTo {
   '/terms': typeof TermsRoute
   '/clients': typeof AuthenticatedClientsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
-  '/estimates': typeof AuthenticatedEstimatesRouteWithChildren
   '/import-data': typeof AuthenticatedImportDataRoute
-  '/invoices': typeof AuthenticatedInvoicesRouteWithChildren
-  '/leads': typeof AuthenticatedLeadsRouteWithChildren
   '/magic-create': typeof AuthenticatedMagicCreateRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/settings': typeof AuthenticatedSettingsRoute
@@ -339,6 +338,9 @@ export interface FileRoutesByTo {
   '/api/mcp/leads': typeof ApiMcpLeadsRouteWithChildren
   '/api/mcp/profile': typeof ApiMcpProfileRoute
   '/api/mcp/rate-book': typeof ApiMcpRateBookRoute
+  '/estimates': typeof AuthenticatedEstimatesIndexRoute
+  '/invoices': typeof AuthenticatedInvoicesIndexRoute
+  '/leads': typeof AuthenticatedLeadsIndexRoute
   '/api/mcp/documents/activity': typeof ApiMcpDocumentsActivityRoute
   '/api/mcp/documents/extract': typeof ApiMcpDocumentsExtractRoute
   '/api/mcp/documents/send': typeof ApiMcpDocumentsSendRoute
@@ -364,10 +366,7 @@ export interface FileRoutesById {
   '/_authenticated/_admin': typeof AuthenticatedAdminRouteWithChildren
   '/_authenticated/clients': typeof AuthenticatedClientsRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
-  '/_authenticated/estimates': typeof AuthenticatedEstimatesRouteWithChildren
   '/_authenticated/import-data': typeof AuthenticatedImportDataRoute
-  '/_authenticated/invoices': typeof AuthenticatedInvoicesRouteWithChildren
-  '/_authenticated/leads': typeof AuthenticatedLeadsRouteWithChildren
   '/_authenticated/magic-create': typeof AuthenticatedMagicCreateRoute
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
@@ -384,6 +383,9 @@ export interface FileRoutesById {
   '/api/mcp/leads': typeof ApiMcpLeadsRouteWithChildren
   '/api/mcp/profile': typeof ApiMcpProfileRoute
   '/api/mcp/rate-book': typeof ApiMcpRateBookRoute
+  '/_authenticated/estimates/': typeof AuthenticatedEstimatesIndexRoute
+  '/_authenticated/invoices/': typeof AuthenticatedInvoicesIndexRoute
+  '/_authenticated/leads/': typeof AuthenticatedLeadsIndexRoute
   '/api/mcp/documents/activity': typeof ApiMcpDocumentsActivityRoute
   '/api/mcp/documents/extract': typeof ApiMcpDocumentsExtractRoute
   '/api/mcp/documents/send': typeof ApiMcpDocumentsSendRoute
@@ -408,10 +410,7 @@ export interface FileRouteTypes {
     | '/terms'
     | '/clients'
     | '/dashboard'
-    | '/estimates'
     | '/import-data'
-    | '/invoices'
-    | '/leads'
     | '/magic-create'
     | '/onboarding'
     | '/settings'
@@ -428,6 +427,9 @@ export interface FileRouteTypes {
     | '/api/mcp/leads'
     | '/api/mcp/profile'
     | '/api/mcp/rate-book'
+    | '/estimates/'
+    | '/invoices/'
+    | '/leads/'
     | '/api/mcp/documents/activity'
     | '/api/mcp/documents/extract'
     | '/api/mcp/documents/send'
@@ -450,10 +452,7 @@ export interface FileRouteTypes {
     | '/terms'
     | '/clients'
     | '/dashboard'
-    | '/estimates'
     | '/import-data'
-    | '/invoices'
-    | '/leads'
     | '/magic-create'
     | '/onboarding'
     | '/settings'
@@ -470,6 +469,9 @@ export interface FileRouteTypes {
     | '/api/mcp/leads'
     | '/api/mcp/profile'
     | '/api/mcp/rate-book'
+    | '/estimates'
+    | '/invoices'
+    | '/leads'
     | '/api/mcp/documents/activity'
     | '/api/mcp/documents/extract'
     | '/api/mcp/documents/send'
@@ -494,10 +496,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_admin'
     | '/_authenticated/clients'
     | '/_authenticated/dashboard'
-    | '/_authenticated/estimates'
     | '/_authenticated/import-data'
-    | '/_authenticated/invoices'
-    | '/_authenticated/leads'
     | '/_authenticated/magic-create'
     | '/_authenticated/onboarding'
     | '/_authenticated/settings'
@@ -514,6 +513,9 @@ export interface FileRouteTypes {
     | '/api/mcp/leads'
     | '/api/mcp/profile'
     | '/api/mcp/rate-book'
+    | '/_authenticated/estimates/'
+    | '/_authenticated/invoices/'
+    | '/_authenticated/leads/'
     | '/api/mcp/documents/activity'
     | '/api/mcp/documents/extract'
     | '/api/mcp/documents/send'
@@ -675,32 +677,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedMagicCreateRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/leads': {
-      id: '/_authenticated/leads'
-      path: '/leads'
-      fullPath: '/leads'
-      preLoaderRoute: typeof AuthenticatedLeadsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/invoices': {
-      id: '/_authenticated/invoices'
-      path: '/invoices'
-      fullPath: '/invoices'
-      preLoaderRoute: typeof AuthenticatedInvoicesRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
     '/_authenticated/import-data': {
       id: '/_authenticated/import-data'
       path: '/import-data'
       fullPath: '/import-data'
       preLoaderRoute: typeof AuthenticatedImportDataRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/estimates': {
-      id: '/_authenticated/estimates'
-      path: '/estimates'
-      fullPath: '/estimates'
-      preLoaderRoute: typeof AuthenticatedEstimatesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/dashboard': {
@@ -722,6 +703,27 @@ declare module '@tanstack/react-router' {
       path: ''
       fullPath: '/'
       preLoaderRoute: typeof AuthenticatedAdminRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/leads/': {
+      id: '/_authenticated/leads/'
+      path: '/leads'
+      fullPath: '/leads/'
+      preLoaderRoute: typeof AuthenticatedLeadsIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/invoices/': {
+      id: '/_authenticated/invoices/'
+      path: '/invoices'
+      fullPath: '/invoices/'
+      preLoaderRoute: typeof AuthenticatedInvoicesIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/estimates/': {
+      id: '/_authenticated/estimates/'
+      path: '/estimates'
+      fullPath: '/estimates/'
+      preLoaderRoute: typeof AuthenticatedEstimatesIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/api/mcp/rate-book': {
@@ -768,24 +770,24 @@ declare module '@tanstack/react-router' {
     }
     '/_authenticated/leads/$id': {
       id: '/_authenticated/leads/$id'
-      path: '/$id'
+      path: '/leads/$id'
       fullPath: '/leads/$id'
       preLoaderRoute: typeof AuthenticatedLeadsIdRouteImport
-      parentRoute: typeof AuthenticatedLeadsRoute
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/invoices/$id': {
       id: '/_authenticated/invoices/$id'
-      path: '/$id'
+      path: '/invoices/$id'
       fullPath: '/invoices/$id'
       preLoaderRoute: typeof AuthenticatedInvoicesIdRouteImport
-      parentRoute: typeof AuthenticatedInvoicesRoute
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/estimates/$id': {
       id: '/_authenticated/estimates/$id'
-      path: '/$id'
+      path: '/estimates/$id'
       fullPath: '/estimates/$id'
       preLoaderRoute: typeof AuthenticatedEstimatesIdRouteImport
-      parentRoute: typeof AuthenticatedEstimatesRoute
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/_admin/admin': {
       id: '/_authenticated/_admin/admin'
@@ -857,68 +859,36 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
 const AuthenticatedAdminRouteWithChildren =
   AuthenticatedAdminRoute._addFileChildren(AuthenticatedAdminRouteChildren)
 
-interface AuthenticatedEstimatesRouteChildren {
-  AuthenticatedEstimatesIdRoute: typeof AuthenticatedEstimatesIdRoute
-}
-
-const AuthenticatedEstimatesRouteChildren: AuthenticatedEstimatesRouteChildren =
-  {
-    AuthenticatedEstimatesIdRoute: AuthenticatedEstimatesIdRoute,
-  }
-
-const AuthenticatedEstimatesRouteWithChildren =
-  AuthenticatedEstimatesRoute._addFileChildren(
-    AuthenticatedEstimatesRouteChildren,
-  )
-
-interface AuthenticatedInvoicesRouteChildren {
-  AuthenticatedInvoicesIdRoute: typeof AuthenticatedInvoicesIdRoute
-}
-
-const AuthenticatedInvoicesRouteChildren: AuthenticatedInvoicesRouteChildren = {
-  AuthenticatedInvoicesIdRoute: AuthenticatedInvoicesIdRoute,
-}
-
-const AuthenticatedInvoicesRouteWithChildren =
-  AuthenticatedInvoicesRoute._addFileChildren(
-    AuthenticatedInvoicesRouteChildren,
-  )
-
-interface AuthenticatedLeadsRouteChildren {
-  AuthenticatedLeadsIdRoute: typeof AuthenticatedLeadsIdRoute
-}
-
-const AuthenticatedLeadsRouteChildren: AuthenticatedLeadsRouteChildren = {
-  AuthenticatedLeadsIdRoute: AuthenticatedLeadsIdRoute,
-}
-
-const AuthenticatedLeadsRouteWithChildren =
-  AuthenticatedLeadsRoute._addFileChildren(AuthenticatedLeadsRouteChildren)
-
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRouteWithChildren
   AuthenticatedClientsRoute: typeof AuthenticatedClientsRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
-  AuthenticatedEstimatesRoute: typeof AuthenticatedEstimatesRouteWithChildren
   AuthenticatedImportDataRoute: typeof AuthenticatedImportDataRoute
-  AuthenticatedInvoicesRoute: typeof AuthenticatedInvoicesRouteWithChildren
-  AuthenticatedLeadsRoute: typeof AuthenticatedLeadsRouteWithChildren
   AuthenticatedMagicCreateRoute: typeof AuthenticatedMagicCreateRoute
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
+  AuthenticatedEstimatesIdRoute: typeof AuthenticatedEstimatesIdRoute
+  AuthenticatedInvoicesIdRoute: typeof AuthenticatedInvoicesIdRoute
+  AuthenticatedLeadsIdRoute: typeof AuthenticatedLeadsIdRoute
+  AuthenticatedEstimatesIndexRoute: typeof AuthenticatedEstimatesIndexRoute
+  AuthenticatedInvoicesIndexRoute: typeof AuthenticatedInvoicesIndexRoute
+  AuthenticatedLeadsIndexRoute: typeof AuthenticatedLeadsIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminRoute: AuthenticatedAdminRouteWithChildren,
   AuthenticatedClientsRoute: AuthenticatedClientsRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
-  AuthenticatedEstimatesRoute: AuthenticatedEstimatesRouteWithChildren,
   AuthenticatedImportDataRoute: AuthenticatedImportDataRoute,
-  AuthenticatedInvoicesRoute: AuthenticatedInvoicesRouteWithChildren,
-  AuthenticatedLeadsRoute: AuthenticatedLeadsRouteWithChildren,
   AuthenticatedMagicCreateRoute: AuthenticatedMagicCreateRoute,
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
+  AuthenticatedEstimatesIdRoute: AuthenticatedEstimatesIdRoute,
+  AuthenticatedInvoicesIdRoute: AuthenticatedInvoicesIdRoute,
+  AuthenticatedLeadsIdRoute: AuthenticatedLeadsIdRoute,
+  AuthenticatedEstimatesIndexRoute: AuthenticatedEstimatesIndexRoute,
+  AuthenticatedInvoicesIndexRoute: AuthenticatedInvoicesIndexRoute,
+  AuthenticatedLeadsIndexRoute: AuthenticatedLeadsIndexRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =

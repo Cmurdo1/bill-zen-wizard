@@ -12,10 +12,16 @@ import { extractLineItemsWithAI } from "@/lib/ai-extract";
 /** Legacy deployments store estimates in `invoices` with type='estimate'. */
 async function isLegacy(supabase: unknown): Promise<boolean> {
   const client = supabase as {
-    from: (t: string) => { select: (c: string) => { limit: (n: number) => PromiseLike<{ error: { code?: string } | null }> } };
+    from: (t: string) => {
+      select: (c: string) => {
+        limit: (n: number) => PromiseLike<{ error: { code?: string } | null }>;
+      };
+    };
   };
   const { error } = await client.from("estimates").select("id").limit(1);
-  return !!(error && error.code === "42P01");
+  // Missing table surfaces as 42P01 (Postgres) or PGRST205 (PostgREST).
+  const code = error?.code;
+  return code === "42P01" || code === "PGRST205";
 }
 
 /** Legacy profiles store the display name in `business_name` only. */
@@ -23,7 +29,11 @@ let profileLegacyCache: boolean | null = null;
 async function isLegacyProfile(supabase: unknown): Promise<boolean> {
   if (profileLegacyCache !== null) return profileLegacyCache;
   const client = supabase as {
-    from: (t: string) => { select: (c: string) => { limit: (n: number) => PromiseLike<{ error: { code?: string } | null }> } };
+    from: (t: string) => {
+      select: (c: string) => {
+        limit: (n: number) => PromiseLike<{ error: { code?: string } | null }>;
+      };
+    };
   };
   const { error } = await client.from("profiles").select("company_name").limit(1);
   profileLegacyCache = !!(error && error.code === "42703");
@@ -55,8 +65,7 @@ function normalizeForEmail(
     currency: String(row.currency ?? "USD"),
     job_description: (row.job_description as string | null) ?? null,
     notes: (row.notes as string | null) ?? null,
-    expiry_date:
-      (row.expiry_date as string | null) ?? (row.due_date as string | null) ?? null,
+    expiry_date: (row.expiry_date as string | null) ?? (row.due_date as string | null) ?? null,
     subtotal_cents: legacy ? totalCents - taxCents : Number(row.subtotal_cents ?? 0),
     tax_cents: taxCents,
     total_cents: totalCents,
@@ -81,7 +90,12 @@ export const analyzeEstimatePhotos = createServerFn({ method: "POST" })
     const legacy = await isLegacy(supabase);
 
     const estimateQuery = legacy
-      ? supabase.from("invoices").select("id").eq("id", data.estimateId).eq("user_id", userId).eq("type", "estimate")
+      ? supabase
+          .from("invoices")
+          .select("id")
+          .eq("id", data.estimateId)
+          .eq("user_id", userId)
+          .eq("type", "estimate")
       : supabase.from("estimates").select("id").eq("id", data.estimateId).eq("user_id", userId);
     const { data: estimate } = await estimateQuery.maybeSingle();
     if (!estimate) throw new Error("Estimate not found");
@@ -142,7 +156,12 @@ export const sendEstimateEmail = createServerFn({ method: "POST" })
     const legacy = await isLegacy(supabase);
 
     const estQuery = legacy
-      ? supabase.from("invoices").select("*").eq("id", data.estimateId).eq("user_id", userId).eq("type", "estimate")
+      ? supabase
+          .from("invoices")
+          .select("*")
+          .eq("id", data.estimateId)
+          .eq("user_id", userId)
+          .eq("type", "estimate")
       : supabase.from("estimates").select("*").eq("id", data.estimateId).eq("user_id", userId);
     const { data: rawEstimate } = await estQuery.maybeSingle();
     if (!rawEstimate) throw new Error("Estimate not found");
@@ -173,7 +192,7 @@ export const sendEstimateEmail = createServerFn({ method: "POST" })
         : Number(it.rate_cents ?? 0),
       amount_cents: legacy
         ? Math.round(Number(it.quantity ?? 0) * Number(it.unit_price ?? 0) * 100)
-        : (it.amount_cents as number | null) ?? null,
+        : ((it.amount_cents as number | null) ?? null),
     }));
 
     const legacyProfile = await isLegacyProfile(supabase);
@@ -194,7 +213,11 @@ export const sendEstimateEmail = createServerFn({ method: "POST" })
     };
 
     const businessName =
-      profile?.business_name || profile?.company_name || profile?.full_name || "Your contractor";
+      data.business_name ||
+      profile?.business_name ||
+      profile?.company_name ||
+      profile?.full_name ||
+      "Your contractor";
 
     const html = buildEstimateEmailHtml(
       normalizeForEmail(estimate, legacy),

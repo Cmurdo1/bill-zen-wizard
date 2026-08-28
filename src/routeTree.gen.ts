@@ -18,6 +18,7 @@ import { Route as PitchRouteImport } from './routes/pitch'
 import { Route as PayInvoiceRouteImport } from './routes/pay-invoice'
 import { Route as McpRouteImport } from './routes/mcp'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as InvestorsRouteImport } from './routes/investors'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
@@ -95,6 +96,11 @@ const McpRoute = McpRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InvestorsRoute = InvestorsRouteImport.update({
+  id: '/investors',
+  path: '/investors',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -268,6 +274,7 @@ const ApiMcpDocumentsActivityRoute = ApiMcpDocumentsActivityRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRouteWithChildren
+  '/investors': typeof InvestorsRoute
   '/login': typeof LoginRoute
   '/mcp': typeof McpRoute
   '/pay-invoice': typeof PayInvoiceRoute
@@ -310,6 +317,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRouteWithChildren
+  '/investors': typeof InvestorsRoute
   '/login': typeof LoginRoute
   '/mcp': typeof McpRoute
   '/pay-invoice': typeof PayInvoiceRoute
@@ -354,6 +362,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRouteWithChildren
+  '/investors': typeof InvestorsRoute
   '/login': typeof LoginRoute
   '/mcp': typeof McpRoute
   '/pay-invoice': typeof PayInvoiceRoute
@@ -399,6 +408,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/investors'
     | '/login'
     | '/mcp'
     | '/pay-invoice'
@@ -441,6 +451,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/investors'
     | '/login'
     | '/mcp'
     | '/pay-invoice'
@@ -484,6 +495,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/investors'
     | '/login'
     | '/mcp'
     | '/pay-invoice'
@@ -529,6 +541,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRouteWithChildren
+  InvestorsRoute: typeof InvestorsRoute
   LoginRoute: typeof LoginRoute
   McpRoute: typeof McpRoute
   PayInvoiceRoute: typeof PayInvoiceRoute
@@ -612,6 +625,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/investors': {
+      id: '/investors'
+      path: '/investors'
+      fullPath: '/investors'
+      preLoaderRoute: typeof InvestorsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -940,6 +960,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRouteWithChildren,
+  InvestorsRoute: InvestorsRoute,
   LoginRoute: LoginRoute,
   McpRoute: McpRoute,
   PayInvoiceRoute: PayInvoiceRoute,

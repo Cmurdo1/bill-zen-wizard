@@ -67,6 +67,7 @@ export const Route = createFileRoute("/api/mcp/leads/track")({
         // Record the event in the background (fire-and-forget to not slow response)
         const recordPromise = (async () => {
           try {
+            const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
             const db = supabaseAdmin as any; // eslint-disable-line
 
             // Find the lead_response by tracking_id

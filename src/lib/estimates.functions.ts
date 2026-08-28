@@ -74,7 +74,7 @@ function normalizeForEmail(
 
 export const analyzeEstimatePhotos = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => AnalyzeInput.parse(input))
+  .validator((input: unknown) => AnalyzeInput.parse(input))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
 
@@ -149,7 +149,7 @@ export const analyzeEstimatePhotos = createServerFn({ method: "POST" })
 
 export const sendEstimateEmail = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => SendInput.parse(input))
+  .validator((input: unknown) => SendInput.parse(input))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
 

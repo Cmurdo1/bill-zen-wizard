@@ -12,7 +12,7 @@ const ExtractInput = z.object({
 
 export const extractLineItems = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => ExtractInput.parse(input))
+  .validator((input: unknown) => ExtractInput.parse(input))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
 
@@ -84,7 +84,7 @@ const SendEmailInput = z.object({
 
 export const sendInvoiceEmail = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => SendEmailInput.parse(input))
+  .validator((input: unknown) => SendEmailInput.parse(input))
   .handler(async ({ data, context }) => {
     const subject = `${data.document_type === "estimate" ? "Estimate" : "Invoice"} ${data.invoice_number} from ${data.business_name || "your business"}`;
     const docLabel = data.document_type === "estimate" ? "estimate" : "invoice";

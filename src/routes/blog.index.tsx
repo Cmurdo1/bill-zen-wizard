@@ -62,7 +62,8 @@ function BlogIndex() {
               <p className="mt-3 text-sm text-muted-foreground">{p.description}</p>
               <div className="mt-6 flex items-center justify-between text-xs text-muted-foreground">
                 <span>
-                  {new Date(p.date).toLocaleDateString("en-US", {
+                  {new Date(p.date + "T00:00:00Z").toLocaleDateString("en-US", {
+                    timeZone: "UTC",
                     month: "long",
                     day: "numeric",
                     year: "numeric",

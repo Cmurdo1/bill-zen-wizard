@@ -34,12 +34,18 @@ function createSupabaseFetch(supabaseKey: string): typeof fetch {
 
 function createSupabaseAdminClient() {
   const SUPABASE_URL = process.env.SUPABASE_URL;
-  const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  // Supabase renamed the service-role key env var in newer projects
+  // (sb_secret_… keys ship as SUPABASE_SECRET_API_KEY). Accept both so the
+  // server-side admin client works on projects that only set the new name.
+  const SUPABASE_SERVICE_ROLE_KEY =
+    process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_API_KEY;
 
   if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
     const missing = [
       ...(!SUPABASE_URL ? ["SUPABASE_URL"] : []),
-      ...(!SUPABASE_SERVICE_ROLE_KEY ? ["SUPABASE_SERVICE_ROLE_KEY"] : []),
+      ...(!SUPABASE_SERVICE_ROLE_KEY
+        ? ["SUPABASE_SERVICE_ROLE_KEY (or SUPABASE_SECRET_API_KEY)"]
+        : []),
     ];
     const message = `Missing Supabase environment variable(s): ${missing.join(", ")}. check your Supabase project settings.`;
     console.error(`[Supabase] ${message}`);

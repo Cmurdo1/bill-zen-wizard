@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate, useSearch } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, useSearch } from "@tanstack/react-router";
 import { z } from "zod";
 import { useEffect, useState, useRef } from "react";
 import { AppShell } from "@/components/app/shell";
@@ -77,6 +77,9 @@ function MagicCreatePage() {
   const { type } = useSearch({ from: "/_authenticated/magic-create" });
   const isEstimate = type === "estimate";
   const label = isEstimate ? "Estimate" : "Invoice";
+  const setType = (nextType: "invoice" | "estimate") => {
+    void navigate({ to: "/magic-create", search: { type: nextType } });
+  };
 
   const { data: clients } = useClients();
   const { data: profile } = useProfile();
@@ -319,21 +322,23 @@ function MagicCreatePage() {
         });
       }
 
-      toast.success(`${label} created!`);
       if (emailAfter) {
         // Open the send modal; navigate after it closes or sends.
         setPendingSend({
           type: isEstimate ? "estimate" : "invoice",
           id: invoice.id,
           invoice_number: invoice.invoice_number,
+          // Read the persisted total after recalculation so email matches the document.
           total_cents: Math.round(estimatedTotal * 100),
           due_date: new Date(Date.now() + 30 * 864e5).toISOString().slice(0, 10),
           branding_preset_id: selectedPresetId || null,
         });
       } else {
-        navigate({
-          to: isEstimate ? "/estimates/$id" : "/invoices/$id",
+        toast.success(`${label} created!`);
+        await navigate({
+          to: "/documents/$id",
           params: { id: invoice.id },
+          search: { type: isEstimate ? "estimate" : "invoice" },
         });
       }
     } catch (error) {
@@ -351,9 +356,23 @@ function MagicCreatePage() {
     <AppShell>
       <div className="mx-auto max-w-3xl space-y-6">
         <div>
-          <h1 className="font-display text-3xl tracking-tight text-foreground">
-            {label} Generator
-          </h1>
+          <h1 className="font-display text-3xl tracking-tight text-foreground">Create</h1>
+          <div className="mt-4 inline-flex rounded-lg border bg-muted p-1" role="tablist" aria-label="Document type">
+            {(["estimate", "invoice"] as const).map((documentType) => (
+              <Button
+                key={documentType}
+                type="button"
+                variant={type === documentType ? "default" : "ghost"}
+                size="sm"
+                role="tab"
+                aria-selected={type === documentType}
+                onClick={() => setType(documentType)}
+                className="capitalize"
+              >
+                {documentType}
+              </Button>
+            ))}
+          </div>
           <p className="text-muted-foreground">
             Describe the job, upload job-site photos, or both — the AI will estimate line items for
             you
@@ -705,10 +724,12 @@ function MagicCreatePage() {
           open={!!pendingSend}
           onClose={() => {
             const doc = pendingSend;
+            if (!doc) return;
             setPendingSend(null);
-            navigate({
-              to: doc.type === "estimate" ? "/estimates/$id" : "/invoices/$id",
+            void navigate({
+              to: "/documents/$id",
               params: { id: doc.id },
+              search: { type: doc.type },
             });
           }}
           title={`Send ${pendingSend.invoice_number}`}
@@ -734,9 +755,10 @@ function MagicCreatePage() {
               `${doc.type === "estimate" ? "Estimate" : "Invoice"} ${doc.invoice_number} emailed to ${to}`,
             );
             setPendingSend(null);
-            navigate({
-              to: doc.type === "estimate" ? "/estimates/$id" : "/invoices/$id",
+            await navigate({
+              to: "/documents/$id",
               params: { id: doc.id },
+              search: { type: doc.type },
             });
           }}
         />

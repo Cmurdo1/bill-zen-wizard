@@ -20,10 +20,8 @@ import {
 const NAV = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/clients", label: "Clients", icon: Users },
-  { to: "/estimates", label: "Estimates", icon: ClipboardList },
-  { to: "/invoices", label: "Invoices", icon: FileText },
-  { to: "/magic-create", search: { type: "estimate" }, label: "Create Estimate", icon: Target },
-  { to: "/magic-create", search: { type: "invoice" }, label: "Create Invoice", icon: FileText },
+  { to: "/documents", label: "Documents", icon: ClipboardList },
+  { to: "/magic-create", label: "Create", icon: FileText },
   { to: "/leads", label: "Lead Board", icon: Target },
   { to: "/import-data", label: "Import Data", icon: Upload },
   { to: "/settings", label: "Settings", icon: SettingsIcon },

@@ -248,7 +248,7 @@ function DashboardPage() {
           onClose={() => {
             const doc = pendingSend;
             setPendingSend(null);
-            navigate({ to: "/invoices/$id", params: { id: doc.id } });
+            navigate({ to: "/documents/$id", params: { id: doc.id }, search: { type: "invoice" } });
           }}
           title={`Send ${pendingSend.invoice_number}`}
           defaultTo={clients.find((c) => c.id === pendingSend.client_id)?.email ?? ""}
@@ -270,7 +270,7 @@ function DashboardPage() {
             });
             toast.success(`Invoice ${doc.invoice_number} emailed to ${to}`);
             setPendingSend(null);
-            navigate({ to: "/invoices/$id", params: { id: doc.id } });
+            navigate({ to: "/documents/$id", params: { id: doc.id }, search: { type: "invoice" } });
           }}
         />
       )}
@@ -590,7 +590,7 @@ function NewInvoiceDialog({
         });
       } else {
         // Take the user straight to the new invoice so they can review and email it.
-        navigate({ to: "/invoices/$id", params: { id: doc.id } });
+        navigate({ to: "/documents/$id", params: { id: doc.id }, search: { type: "invoice" } });
       }
     } catch (e) {
       // Roll back the header row so a failed create doesn't pollute the list.

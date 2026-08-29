@@ -29,6 +29,7 @@ import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
 import { Route as AuthenticatedMagicCreateRouteImport } from './routes/_authenticated/magic-create'
 import { Route as AuthenticatedImportDataRouteImport } from './routes/_authenticated/import-data'
+import { Route as AuthenticatedDocumentsRouteImport } from './routes/_authenticated/documents'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedClientsRouteImport } from './routes/_authenticated/clients'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/_admin'
@@ -44,6 +45,7 @@ import { Route as ApiMcpClientsRouteImport } from './routes/api/mcp/clients'
 import { Route as AuthenticatedLeadsIdRouteImport } from './routes/_authenticated/leads/$id'
 import { Route as AuthenticatedInvoicesIdRouteImport } from './routes/_authenticated/invoices/$id'
 import { Route as AuthenticatedEstimatesIdRouteImport } from './routes/_authenticated/estimates/$id'
+import { Route as AuthenticatedDocumentsIdRouteImport } from './routes/_authenticated/documents/$id'
 import { Route as AuthenticatedAdminAdminRouteImport } from './routes/_authenticated/_admin/admin'
 import { Route as ApiPublicWebhooksStripeRouteImport } from './routes/api/public/webhooks.stripe'
 import { Route as ApiMcpLeadsWebhookRouteImport } from './routes/api/mcp/leads.webhook'
@@ -153,6 +155,11 @@ const AuthenticatedImportDataRoute = AuthenticatedImportDataRouteImport.update({
   path: '/import-data',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedDocumentsRoute = AuthenticatedDocumentsRouteImport.update({
+  id: '/documents',
+  path: '/documents',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -230,6 +237,12 @@ const AuthenticatedEstimatesIdRoute =
     path: '/estimates/$id',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedDocumentsIdRoute =
+  AuthenticatedDocumentsIdRouteImport.update({
+    id: '/$id',
+    path: '/$id',
+    getParentRoute: () => AuthenticatedDocumentsRoute,
+  } as any)
 const AuthenticatedAdminAdminRoute = AuthenticatedAdminAdminRouteImport.update({
   id: '/admin',
   path: '/admin',
@@ -286,6 +299,7 @@ export interface FileRoutesByFullPath {
   '/terms': typeof TermsRoute
   '/clients': typeof AuthenticatedClientsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/documents': typeof AuthenticatedDocumentsRouteWithChildren
   '/import-data': typeof AuthenticatedImportDataRoute
   '/magic-create': typeof AuthenticatedMagicCreateRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
@@ -294,6 +308,7 @@ export interface FileRoutesByFullPath {
   '/blog/$slug': typeof BlogSlugRoute
   '/blog/': typeof BlogIndexRoute
   '/admin': typeof AuthenticatedAdminAdminRoute
+  '/documents/$id': typeof AuthenticatedDocumentsIdRoute
   '/estimates/$id': typeof AuthenticatedEstimatesIdRoute
   '/invoices/$id': typeof AuthenticatedInvoicesIdRoute
   '/leads/$id': typeof AuthenticatedLeadsIdRoute
@@ -329,6 +344,7 @@ export interface FileRoutesByTo {
   '/terms': typeof TermsRoute
   '/clients': typeof AuthenticatedClientsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/documents': typeof AuthenticatedDocumentsRouteWithChildren
   '/import-data': typeof AuthenticatedImportDataRoute
   '/magic-create': typeof AuthenticatedMagicCreateRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
@@ -337,6 +353,7 @@ export interface FileRoutesByTo {
   '/blog/$slug': typeof BlogSlugRoute
   '/blog': typeof BlogIndexRoute
   '/admin': typeof AuthenticatedAdminAdminRoute
+  '/documents/$id': typeof AuthenticatedDocumentsIdRoute
   '/estimates/$id': typeof AuthenticatedEstimatesIdRoute
   '/invoices/$id': typeof AuthenticatedInvoicesIdRoute
   '/leads/$id': typeof AuthenticatedLeadsIdRoute
@@ -375,6 +392,7 @@ export interface FileRoutesById {
   '/_authenticated/_admin': typeof AuthenticatedAdminRouteWithChildren
   '/_authenticated/clients': typeof AuthenticatedClientsRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/documents': typeof AuthenticatedDocumentsRouteWithChildren
   '/_authenticated/import-data': typeof AuthenticatedImportDataRoute
   '/_authenticated/magic-create': typeof AuthenticatedMagicCreateRoute
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
@@ -383,6 +401,7 @@ export interface FileRoutesById {
   '/blog/$slug': typeof BlogSlugRoute
   '/blog/': typeof BlogIndexRoute
   '/_authenticated/_admin/admin': typeof AuthenticatedAdminAdminRoute
+  '/_authenticated/documents/$id': typeof AuthenticatedDocumentsIdRoute
   '/_authenticated/estimates/$id': typeof AuthenticatedEstimatesIdRoute
   '/_authenticated/invoices/$id': typeof AuthenticatedInvoicesIdRoute
   '/_authenticated/leads/$id': typeof AuthenticatedLeadsIdRoute
@@ -420,6 +439,7 @@ export interface FileRouteTypes {
     | '/terms'
     | '/clients'
     | '/dashboard'
+    | '/documents'
     | '/import-data'
     | '/magic-create'
     | '/onboarding'
@@ -428,6 +448,7 @@ export interface FileRouteTypes {
     | '/blog/$slug'
     | '/blog/'
     | '/admin'
+    | '/documents/$id'
     | '/estimates/$id'
     | '/invoices/$id'
     | '/leads/$id'
@@ -463,6 +484,7 @@ export interface FileRouteTypes {
     | '/terms'
     | '/clients'
     | '/dashboard'
+    | '/documents'
     | '/import-data'
     | '/magic-create'
     | '/onboarding'
@@ -471,6 +493,7 @@ export interface FileRouteTypes {
     | '/blog/$slug'
     | '/blog'
     | '/admin'
+    | '/documents/$id'
     | '/estimates/$id'
     | '/invoices/$id'
     | '/leads/$id'
@@ -508,6 +531,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_admin'
     | '/_authenticated/clients'
     | '/_authenticated/dashboard'
+    | '/_authenticated/documents'
     | '/_authenticated/import-data'
     | '/_authenticated/magic-create'
     | '/_authenticated/onboarding'
@@ -516,6 +540,7 @@ export interface FileRouteTypes {
     | '/blog/$slug'
     | '/blog/'
     | '/_authenticated/_admin/admin'
+    | '/_authenticated/documents/$id'
     | '/_authenticated/estimates/$id'
     | '/_authenticated/invoices/$id'
     | '/_authenticated/leads/$id'
@@ -704,6 +729,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedImportDataRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/documents': {
+      id: '/_authenticated/documents'
+      path: '/documents'
+      fullPath: '/documents'
+      preLoaderRoute: typeof AuthenticatedDocumentsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/dashboard': {
       id: '/_authenticated/dashboard'
       path: '/dashboard'
@@ -809,6 +841,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedEstimatesIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/documents/$id': {
+      id: '/_authenticated/documents/$id'
+      path: '/$id'
+      fullPath: '/documents/$id'
+      preLoaderRoute: typeof AuthenticatedDocumentsIdRouteImport
+      parentRoute: typeof AuthenticatedDocumentsRoute
+    }
     '/_authenticated/_admin/admin': {
       id: '/_authenticated/_admin/admin'
       path: '/admin'
@@ -879,10 +918,25 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
 const AuthenticatedAdminRouteWithChildren =
   AuthenticatedAdminRoute._addFileChildren(AuthenticatedAdminRouteChildren)
 
+interface AuthenticatedDocumentsRouteChildren {
+  AuthenticatedDocumentsIdRoute: typeof AuthenticatedDocumentsIdRoute
+}
+
+const AuthenticatedDocumentsRouteChildren: AuthenticatedDocumentsRouteChildren =
+  {
+    AuthenticatedDocumentsIdRoute: AuthenticatedDocumentsIdRoute,
+  }
+
+const AuthenticatedDocumentsRouteWithChildren =
+  AuthenticatedDocumentsRoute._addFileChildren(
+    AuthenticatedDocumentsRouteChildren,
+  )
+
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRouteWithChildren
   AuthenticatedClientsRoute: typeof AuthenticatedClientsRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedDocumentsRoute: typeof AuthenticatedDocumentsRouteWithChildren
   AuthenticatedImportDataRoute: typeof AuthenticatedImportDataRoute
   AuthenticatedMagicCreateRoute: typeof AuthenticatedMagicCreateRoute
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
@@ -899,6 +953,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminRoute: AuthenticatedAdminRouteWithChildren,
   AuthenticatedClientsRoute: AuthenticatedClientsRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedDocumentsRoute: AuthenticatedDocumentsRouteWithChildren,
   AuthenticatedImportDataRoute: AuthenticatedImportDataRoute,
   AuthenticatedMagicCreateRoute: AuthenticatedMagicCreateRoute,
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,

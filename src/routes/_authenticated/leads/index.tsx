@@ -576,8 +576,9 @@ function LeadBoardPage() {
                           </span>
                           {lead.estimate_id && (
                             <Link
-                              to="/estimates/$id"
+                              to="/documents/$id"
                               params={{ id: lead.estimate_id }}
+                              search={{ type: "estimate" }}
                               className="ml-auto inline-flex items-center gap-1 text-[11px] text-primary hover:underline"
                             >
                               View <ChevronRight className="h-3 w-3" />

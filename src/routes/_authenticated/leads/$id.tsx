@@ -474,8 +474,9 @@ function LeadDetailPage() {
                   Auto-Generated Estimate
                 </h2>
                 <Link
-                  to="/estimates/$id"
+                  to="/documents/$id"
                   params={{ id: estimate.id }}
+                  search={{ type: "estimate" }}
                   className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
                 >
                   Open in editor <ChevronRight className="h-3 w-3" />

@@ -667,6 +667,69 @@ export type Database = {
         };
         Relationships: [];
       };
+      promo_codes: {
+        Row: {
+          active: boolean;
+          code: string;
+          created_at: string;
+          duration_days: number;
+          expires_at: string | null;
+          id: string;
+          max_uses: number | null;
+          plan: string;
+          used_count: number;
+        };
+        Insert: {
+          active?: boolean;
+          code: string;
+          created_at?: string;
+          duration_days: number;
+          expires_at?: string | null;
+          id?: string;
+          max_uses?: number | null;
+          plan?: string;
+          used_count?: number;
+        };
+        Update: {
+          active?: boolean;
+          code?: string;
+          created_at?: string;
+          duration_days?: number;
+          expires_at?: string | null;
+          id?: string;
+          max_uses?: number | null;
+          plan?: string;
+          used_count?: number;
+        };
+        Relationships: [];
+      };
+      promo_redemptions: {
+        Row: {
+          created_at: string;
+          granted_plan: string;
+          granted_until: string;
+          id: string;
+          promo_code_id: string;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          granted_plan: string;
+          granted_until: string;
+          id?: string;
+          promo_code_id: string;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          granted_plan?: string;
+          granted_until?: string;
+          id?: string;
+          promo_code_id?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       usage_tracking: {
         Row: {
           billing_period_end: string | null;

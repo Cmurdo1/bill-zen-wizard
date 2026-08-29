@@ -92,7 +92,8 @@ function BlogPostPage() {
         <p className="mt-3 text-lg text-muted-foreground">{post.description}</p>
         <p className="mt-4 text-xs text-muted-foreground">
           {post.author} ·{" "}
-          {new Date(post.date).toLocaleDateString("en-US", {
+          {new Date(post.date + "T00:00:00Z").toLocaleDateString("en-US", {
+            timeZone: "UTC",
             month: "long",
             day: "numeric",
             year: "numeric",

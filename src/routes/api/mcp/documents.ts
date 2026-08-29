@@ -142,13 +142,15 @@ export const Route = createFileRoute("/api/mcp/documents")({
                 new Date(String(a.created_at ?? 0)).getTime(),
             );
           const total = documents.length;
+          const page = documents.slice(offset, offset + limit);
 
           return new Response(
             JSON.stringify({
-              documents: documents.slice(offset, offset + limit),
+              documents: page,
               total,
               limit,
               offset,
+              has_more: offset + page.length < total,
             }),
             {
               status: 200,

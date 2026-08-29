@@ -1,144 +1,114 @@
-# Honest Invoice - MCP (Model Context Protocol) Server
+# Honest Invoice — MCP (Model Context Protocol) Server
 
 This document provides full context for AI agents to interact with the Honest Invoice API via the Model Context Protocol.
 
 ## Overview
 
-Honest Invoice (honestinvoice.com) is an invoicing and estimates platform for contractors and freelancers. The MCP server exposes tools for AI agents to create, manage, and send invoices and estimates on behalf of users.
+Honest Invoice (honestinvoice.com) is an invoicing and estimates platform for contractors and freelancers. The MCP server (`src/mcp-server.ts`) exposes tools for AI agents to create, manage, and send invoices and estimates on behalf of users. It runs over **stdio (JSON-RPC 2.0)** and forwards every tool call to the app's REST API (`/api/mcp/*`) with the account's API key.
 
 ## Authentication
 
-All MCP tools require the user to be authenticated via Supabase. The MCP server runs with the user's credentials and respects their plan limits.
+MCP transports like stdio do **not** carry HTTP headers, so authentication is passed through **environment variables**, not `Authorization` headers.
+
+1. Generate a dedicated, revocable API key in the app: **Settings → AI agent API keys** (Pro or Business plan required). Keys look like `hi_mcp_…` and can be revoked at any time.
+2. Put that key in the `env` block of your `mcpServers` config:
+
+```json
+{
+  "mcpServers": {
+    "honest-invoice": {
+      "command": "npx",
+      "args": ["tsx", "src/mcp-server.ts"],
+      "env": {
+        "APP_BASE_URL": "https://honestinvoice.com",
+        "HONEST_INVOICE_API_KEY": "hi_mcp_YOUR_KEY_HERE"
+      }
+    }
+  }
+}
+```
+
+The key identifies exactly one account, and the server enforces that account's plan limits (Free accounts cannot use MCP at all). Never share a key across users, and revoke it from Settings if a device is lost.
 
 ## Available Tools
 
-### 1. `create_invoice`
+Every tool below is gated to the authenticated account's **Pro or Business** plan. Records are **never deleted** — to cancel a document, set its status to `void` via `update_document` or `mark_document_status`.
 
-Create a new invoice with line items.
+| Tool | Purpose | Key parameters |
+| --- | --- | --- |
+| `create_invoice` | Create an invoice with line items | `client_id` \| `client_name`/`client_email`, `job_description`, `due_date`, `tax_rate`, `currency`, `items[]` (`description`, `quantity`, `rate_cents` int) |
+| `create_estimate` | Create an estimate with line items | Same as invoice, plus `expiry_date` |
+| `list_documents` | List invoices/estimates with filtering + pagination | `type` (`invoice`\|`estimate`\|`all`), `status`, `limit`, `offset` — returns `total` and `has_more` |
+| `update_document` | Update fields, line items, or status of an existing document | `document_id`, `document_type`, any editable field, `status`, `items[]` |
+| `mark_document_status` | Change a document's status only (e.g. mark paid, void a mistake) | `document_id`, `document_type`, `status` (`draft`\|`sent`\|`paid`\|`overdue`\|`void`\|`accepted`\|`rejected`\|`expired`) |
+| `list_clients` | Find existing clients (by name/email) to reuse their `client_id` | `search`, `limit` |
+| `list_leads` | List account leads with response status | `status`, `limit` |
+| `update_lead_status` | Mark a lead response won or lost | `lead_id`, `status` (`won`\|`lost`) |
+| `get_document_activity` | Read audit/activity history for a document | `document_type`, `document_id`, `limit` |
+| `send_document` | Email an invoice or estimate | `document_id`, `document_type`, `to_email`, `custom_message` |
+| `extract_line_items` | AI line-item extraction from a job description (Pro/Business) | `description` (4–4000 chars), `currency` |
+| `process_lead` | Create an estimate for a scraped lead and email it | `title`, `description`, `location`, `contact_email`, `source`, `auto_send` |
+| `scrape_leads` | Scrape Craigslist/Nextdoor/Facebook for leads (Business only) | `sources[]`, `cl_city`, `cl_category`, `keywords`, `max_per_source`, `auto_send` |
 
-**Parameters:**
+### Document lifecycle guidance
 
-- `client_id` (string, optional): Existing client UUID
-- `client_name` (string, optional): Client name if creating new
-- `client_email` (string, optional): Client email if creating new
-- `job_description` (string, optional): Plain English job description for AI extraction
-- `notes` (string, optional): Notes/terms
-- `due_date` (string, optional): Due date in YYYY-MM-DD format
-- `tax_rate` (number, default: 0): Tax rate percentage
-- `currency` (string, default: "USD"): 3-letter currency code
-- `items` (array, required): Array of line items
-  - `description` (string, required): Item description
-  - `quantity` (number, required): Quantity
-  - `rate_cents` (number, required): Unit price in cents
+Agents are iterative: always look up the client first with `list_clients` so you reuse the existing `client_id` instead of duplicating records, and use `update_document` / `mark_document_status` to correct drafts. There is intentionally **no delete tool** — destructive deletes are not exposed to agents; `status = "void"` is the supported way to remove a document from active workflows.
 
-**Plan Limits:**
+### App URLs
 
-- Free: 5 invoices/month, no AI extraction
-- Pro: Unlimited invoices, AI extraction enabled
-- Business: Unlimited invoices, AI extraction enabled
+Estimates and invoices share one editor in the web app. When a user asks to open or review a document, give them:
 
-**Returns:** Created invoice with document number (e.g., "INV-1001") and items.
+- `{APP_BASE_URL}/documents` — combined list (Estimates/Invoices dropdown)
+- `{APP_BASE_URL}/documents/{id}?type=estimate` — estimate editor
+- `{APP_BASE_URL}/documents/{id}?type=invoice` — invoice editor
 
-### 2. `create_estimate`
+The legacy `/estimates/{id}` and `/invoices/{id}` routes redirect to the corresponding editor above, so any links you may already have issued still work.
 
-Create a new estimate with line items.
+### Plan Limits
 
-**Parameters:** Same as `create_invoice` but with:
-
-- `expiry_date` (string, optional): Expiry date in YYYY-MM-DD format (instead of due_date)
-- Document number format: "EST-1001"
-
-### 3. `list_documents`
-
-List invoices and estimates with filtering.
-
-**Parameters:**
-
-- `type` (string, enum: "invoice" | "estimate" | "all", default: "all")
-- `status` (string, optional): Filter by status (draft, sent, paid, overdue, etc.)
-- `limit` (number, default: 20, max: 100)
-- `offset` (number, default: 0)
-
-**Returns:** Paginated list of documents with client and item details.
-
-### 4. `send_document`
-
-Send an invoice or estimate via email.
-
-**Parameters:**
-
-- `document_id` (string, required): UUID of the document
-- `document_type` (string, required): "invoice" or "estimate"
-- `to_email` (string, required): Recipient email
-- `custom_message` (string, optional): Custom message to include
-
-**Returns:** Success confirmation, document status updated to "sent".
-
-### 5. `extract_line_items`
-
-Use AI to extract line items from a job description (Pro/Business only).
-
-**Parameters:**
-
-- `description` (string, required): Plain English job description (4-4000 chars)
-- `currency` (string, default: "USD"): 3-letter currency code
-
-**Plan Limits:**
-
-- Free: Not available
-- Pro: Available
-- Business: Available
-
-**Returns:** Array of extracted line items with descriptions, quantities, and rates in cents.
-
-### 6. `process_lead`
-
-Process a scraped lead from Craigslist, Nextdoor, or Facebook — auto-creates an AI-extracted estimate and emails it to the lead. Be the first response and win the job.
-
-**Parameters:**
-
-- `title` (string, required): Lead title (e.g., "Need HVAC condenser replaced")
-- `description` (string, required): Full job description from the lead post
-- `location` (string, required): Location of the job
-- `contact_email` (string, required): Lead contact email
-- `contact_phone` (string, optional): Optional phone number
-- `budget_range` (string, optional): Budget range (e.g., "2000-4000")
-- `source` (string, default: "manual"): One of "craigslist", "nextdoor", "facebook", "manual"
-- `client_name` (string, optional): Client name (falls back to email prefix)
-- `tax_rate` (number, default: 0): Tax rate percentage
-- `auto_send` (boolean, default: true): Auto-email the estimate to the lead
-
-**Plan Limits:**
-
-- Free: Creates estimate with a single placeholder item (no AI extraction)
-- Pro: Full AI line-item extraction, estimate auto-sent via email
-- Business: Full AI extraction, auto-send, plus lead response tracking
-
-**Returns:** Created estimate with document number, items, and email send status.
-
-**Webhook API:** Also available as a REST endpoint at `POST /api/mcp/leads/webhook` with the same payload. Use this to connect external scraping services or cron jobs.
-
-## Plan Features
-
-| Feature                 | Free      | Pro       | Business  |
-| ----------------------- | --------- | --------- | --------- |
-| Invoices/month          | 5         | Unlimited | Unlimited |
-| Estimates/month         | Unlimited | Unlimited | Unlimited |
-| AI line-item extraction | ❌        | ✅        | ✅        |
-| PDF export              | ❌        | ✅        | ✅        |
-| Email sending           | ❌        | ✅        | ✅        |
-| Payment links           | ❌        | ✅        | ✅        |
-| Lead gen                | ❌        | ✅        | ✅        |
-| Regional pricing        | ❌        | ✅        | ✅        |
+- **Free**: no MCP access.
+- **Pro**: unlimited invoices/estimates, AI extraction, email sending, 2 leads/month.
+- **Business**: everything in Pro plus unlimited lead generation and automated lead scraping.
 
 ## Error Handling
 
-All tools return structured errors:
+Per the MCP specification, tool-execution failures are returned as **tool results with `isError: true`** (never as JSON-RPC errors), so the calling model can read the message and correct itself. Each failure message carries a machine-readable `[MCP-<code>]` prefix so clients can still distinguish failure classes programmatically. JSON-RPC errors are reserved for protocol-level failures (e.g. `-32601` for an unknown tool name).
 
-- `401`: Unauthorized (invalid/missing auth)
-- `403`: Plan limit exceeded
-- `400`: Invalid input (Zod validation errors)
-- `500`: Server error
+Example failure result:
+
+```json
+{
+  "content": [{ "type": "text", "text": "[MCP-32003] MCP access requires an active Pro or Business plan." }],
+  "isError": true
+}
+```
+
+| Code | Meaning |
+| --- | --- |
+| `-32602` | Invalid params — arguments failed strict validation (mirrors the API's Zod schemas; e.g. `rate_cents` must be an integer). |
+| `-32601` | Method not found — unknown tool name (JSON-RPC error). |
+| `-32603` | Internal server error. |
+| `-32001` | Unauthorized — missing/invalid/expired API key. |
+| `-32003` | Forbidden / plan limit — e.g. MCP requires an active Pro or Business plan, or a Business-only tool on Pro. |
+| `-32004` | Not found — document, client, or lead does not exist for this account. |
+| `-32009` | Conflict — e.g. an idempotency-key replay with different input. |
+| `-32029` | Rate limited — slow down and retry. |
+
+## Pagination
+
+`list_documents` accepts `limit` (default 20, max 100) and `offset` (default 0), and its response includes:
+
+```json
+{
+  "documents": [ … ],
+  "total": 137,
+  "limit": 20,
+  "offset": 0,
+  "has_more": true
+}
+```
+
+Keep fetching with increasing `offset` until `has_more` is `false` (e.g. to find an unpaid invoice from last year).
 
 ## Usage Example (AI Agent)
 
@@ -149,7 +119,7 @@ All tools return structured errors:
     "client_name": "Acme Corp",
     "client_email": "billing@acme.com",
     "job_description": "Installed new HVAC system - 3 ton condenser, 4 hours labor, R-410A refrigerant charge, warranty registration",
-    "due_date": "2024-02-15",
+    "due_date": "2026-09-15",
     "tax_rate": 8.5,
     "items": [
       { "description": "3-ton Condenser Unit", "quantity": 1, "rate_cents": 250000 },
@@ -160,36 +130,21 @@ All tools return structured errors:
 }
 ```
 
-## MCP Server Configuration
+## REST API (alternative to MCP)
 
-To connect an AI agent (Claude, Cursor, etc.) to this MCP server:
+Prefer the MCP server for agent use; use these endpoints directly from cron jobs or `curl` with the same `hi_mcp_…` key:
 
-```json
-{
-  "mcpServers": {
-    "honest-invoice": {
-      "command": "npx",
-      "args": ["tsx", "src/mcp-server.ts"],
-      "env": {
-        "VITE_SUPABASE_URL": "https://your-project.supabase.co",
-        "VITE_SUPABASE_PUBLISHABLE_KEY": "your-anon-key"
-      }
-    }
-  }
-}
-```
+- `POST /api/mcp/documents` — create invoice/estimate
+- `GET /api/mcp/documents` — list documents (`type`, `status`, `limit`, `offset` → `total`, `has_more`)
+- `PATCH /api/mcp/documents` — update a document (fields, items, status)
+- `POST /api/mcp/documents/send` — send document
+- `POST /api/mcp/documents/extract` — AI extract line items
+- `GET /api/mcp/clients` — list/search clients
+- `GET /api/mcp/leads` / `PATCH /api/mcp/leads` — list leads / update lead status
+- `POST /api/mcp/leads/webhook` — lead webhook (auto-create + send estimate)
+- `POST /api/mcp/leads/scrape` — run lead scrapers (Business)
 
-Or use the HTTP API directly via the `/api/mcp/documents` endpoint.
-
-## API Endpoints
-
-- `POST /api/mcp/documents` - Create invoice/estimate
-- `GET /api/mcp/documents` - List documents
-- `POST /api/mcp/documents/send` - Send document
-- `POST /api/mcp/documents/extract` - AI extract line items
-- `POST /api/mcp/leads/webhook` - Lead scraping webhook (auto-create + send estimate)
-
-All endpoints require `Authorization: Bearer <supabase-jwt>` header.
+All endpoints require `Authorization: Bearer <hi_mcp_… or Supabase JWT>`.
 
 ## Lead Scraping Webhook
 
@@ -197,7 +152,7 @@ To auto-respond to scraped leads from Craigslist, Nextdoor, or Facebook:
 
 ```bash
 curl -X POST https://honestinvoice.com/api/mcp/leads/webhook \
-  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
     "title": "Need HVAC condenser replaced",
@@ -212,20 +167,18 @@ curl -X POST https://honestinvoice.com/api/mcp/leads/webhook \
 
 The webhook:
 1. Records the lead in `job_leads`
-2. Uses AI to extract line items (Pro/Business) or creates a placeholder item (Free)
+2. Uses AI to extract line items (Pro/Business) or creates a placeholder item
 3. Creates a professional estimate
 4. Emails it to the lead's contact email
 5. Records the response in `lead_responses` for tracking
-
-On the Business plan, scraping services can POST leads in real-time for instant auto-response — your AI agent is always first to reply, giving you the best shot at winning the job.
 
 ## Rate Limits
 
 - AI extraction: subject to your AI provider's limits (OpenRouter primary, NVIDIA NIM backup)
 - Email sending: subject to your email provider's limits (Resend)
-- Standard API: No explicit limits (respect Supabase limits)
+- API calls: per-account rate limits (write 60/min, send 10/min, AI 30/min, leads 10/min)
 
-## Webhook Events
+## Stripe Webhook
 
 For payment processing, configure Stripe webhook at:
 `https://your-domain/api/public/webhooks/stripe`
@@ -235,4 +188,4 @@ Events handled:
 - `checkout.session.completed`
 - `payment_intent.succeeded`
 
-Include `invoice_id` or `invoice_token` in metadata to auto-mark invoices as paid.
+Include `invoice_id` or `invoice_token` in metadata to auto-mark invoices as paid. (Agents can also mark invoices paid directly via `mark_document_status`.)

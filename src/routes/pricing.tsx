@@ -17,9 +17,9 @@ export const Route = createFileRoute("/pricing")({
         content:
           "Free plan forever. Pro unlocks unlimited invoices and AI estimating. Business unlocks the Lead Gen Engine.",
       },
-      { property: "og:url", content: "/pricing" },
+      { property: "og:url", content: "https://honestinvoice.com/pricing" },
     ],
-    links: [{ rel: "canonical", href: "/pricing" }],
+    links: [{ rel: "canonical", href: "https://honestinvoice.com/pricing" }],
   }),
   component: PricingPage,
 });

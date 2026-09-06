@@ -12,9 +12,10 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { supabase } from "@/integrations/supabase/client";
 
-const SITE_TITLE = "Honest Invoice - Get paid faster with AI-powered invoicing";
+const SITE_URL = "https://honestinvoice.com";
+const SITE_TITLE = "Honest Invoice — Get paid faster with AI-powered invoicing";
 const SITE_DESCRIPTION =
-  "AI-powered estimates & invoies for contractors and freelancers. Send estimates first, so you get to send the invoice.";
+  "AI-powered estimates & invoices for contractors and freelancers. Send estimates first, so you get to send the invoice.";
 
 function NotFoundComponent() {
   return (
@@ -82,9 +83,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { property: "og:title", content: SITE_TITLE },
       { property: "og:description", content: SITE_DESCRIPTION },
       { property: "og:type", content: "website" },
+      { property: "og:url", content: `${SITE_URL}/` },
+      { property: "og:image", content: `${SITE_URL}/og.png` },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:title", content: SITE_TITLE },
       { name: "twitter:description", content: SITE_DESCRIPTION },
+      { name: "twitter:image", content: `${SITE_URL}/og.png` },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
@@ -110,7 +114,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
           "@context": "https://schema.org",
           "@type": "Organization",
           name: "Honest Invoice",
-          url: "/",
+          url: SITE_URL,
+          logo: `${SITE_URL}/og.png`,
           description: SITE_DESCRIPTION,
         }),
       },

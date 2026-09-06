@@ -18,8 +18,8 @@ import {
 
 export const Route = createFileRoute("/")({
   head: () => ({
-    meta: [{ property: "og:url", content: "/" }],
-    links: [{ rel: "canonical", href: "/" }],
+    meta: [{ property: "og:url", content: "https://honestinvoice.com/" }],
+    links: [{ rel: "canonical", href: "https://honestinvoice.com/" }],
   }),
   component: HomePage,
 });

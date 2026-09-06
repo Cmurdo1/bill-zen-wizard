@@ -10,9 +10,9 @@ export const Route = createFileRoute("/privacy")({
         content: "How Honest Invoice collects, uses, and protects your data.",
       },
       { property: "og:title", content: "Privacy Policy — Honest Invoice" },
-      { property: "og:url", content: "/privacy" },
+      { property: "og:url", content: "https://honestinvoice.com/privacy" },
     ],
-    links: [{ rel: "canonical", href: "/privacy" }],
+    links: [{ rel: "canonical", href: "https://honestinvoice.com/privacy" }],
   }),
   component: PrivacyPage,
 });

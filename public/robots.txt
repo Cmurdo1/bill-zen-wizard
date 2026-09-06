@@ -2,5 +2,10 @@ User-agent: *
 Allow: /
 Disallow: /auth
 Disallow: /dashboard
+Disallow: /clients
+Disallow: /documents
+Disallow: /leads
+Disallow: /settings
+Disallow: /api
 
 Sitemap: https://honestinvoice.com/sitemap.xml

@@ -7,9 +7,9 @@ export const Route = createFileRoute("/terms")({
       { title: "Terms of Service — Honest Invoice" },
       { name: "description", content: "The terms and conditions for using Honest Invoice." },
       { property: "og:title", content: "Terms of Service — Honest Invoice" },
-      { property: "og:url", content: "/terms" },
+      { property: "og:url", content: "https://honestinvoice.com/terms" },
     ],
-    links: [{ rel: "canonical", href: "/terms" }],
+    links: [{ rel: "canonical", href: "https://honestinvoice.com/terms" }],
   }),
   component: TermsPage,
 });

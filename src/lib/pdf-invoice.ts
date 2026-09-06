@@ -155,7 +155,10 @@ export function generateInvoicePdf(inv: PrintInvoiceInput): jsPDF {
   return doc;
 }
 
-function parseHexColor(value: string | null | undefined, fallback: [number, number, number]): [number, number, number] {
+function parseHexColor(
+  value: string | null | undefined,
+  fallback: [number, number, number],
+): [number, number, number] {
   const match = value?.match(/^#?([0-9a-f]{6})$/i);
   if (!match) return fallback;
   return [

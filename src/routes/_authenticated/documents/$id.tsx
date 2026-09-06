@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate, useSearch } from "@tanstack/react-router";
 import { z } from "zod";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { AppShell } from "@/components/app/shell";
 import { supabase } from "@/integrations/supabase/client";
 import { brandingPresetsClient } from "@/lib/branding-presets";
@@ -9,13 +9,8 @@ import { LineItemsEditor } from "@/components/app/line-items-editor";
 import { InvoicePreviewModal } from "@/components/app/invoice-preview-modal";
 import { logActivity, fetchActivity, type ActivityRow } from "@/lib/activity";
 import type { PrintInvoiceInput } from "@/lib/print-invoice";
-import {
-  ESTIMATE_STATUSES,
-  INVOICE_STATUSES,
-  StatusPill,
-  computeTotals,
-  type LineItem,
-} from "@/lib/documents";
+import { ESTIMATE_STATUSES, INVOICE_STATUSES, computeTotals, type LineItem } from "@/lib/documents";
+import { StatusPill } from "@/components/app/status-pill";
 import { useServerFn } from "@tanstack/react-start";
 import { sendInvoiceEmail } from "@/lib/invoices.functions";
 import { sendEstimateEmail } from "@/lib/estimates.functions";
@@ -131,12 +126,7 @@ function DocumentDetailPage() {
   });
   const [convertCurrency, setConvertCurrency] = useState("USD");
 
-  useEffect(() => {
-    void load();
-    void fetchActivity(type, id).then(setActivity);
-  }, [id, type]);
-
-  async function load() {
+  const load = useCallback(async () => {
     setLoading(true);
     try {
       if (isEstimate) {
@@ -185,11 +175,18 @@ function DocumentDetailPage() {
         setPresets((presetRows.data as { id: string; name: string }[]) ?? []);
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : `Could not load ${label()}`);
+      setError(
+        e instanceof Error ? e.message : `Could not load ${isEstimate ? "estimate" : "invoice"}`,
+      );
     } finally {
       setLoading(false);
     }
-  }
+  }, [id, isEstimate]);
+
+  useEffect(() => {
+    void load();
+    void fetchActivity(type, id).then(setActivity);
+  }, [load, id, type]);
 
   function label() {
     return isEstimate ? "estimate" : "invoice";

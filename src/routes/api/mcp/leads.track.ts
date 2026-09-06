@@ -1,6 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-
 /**
  * GET /api/mcp/leads/track
  *

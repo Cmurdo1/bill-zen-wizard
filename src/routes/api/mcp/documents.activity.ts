@@ -31,12 +31,18 @@ export const Route = createFileRoute("/api/mcp/documents/activity")({
 
           const legacy = await isLegacyInvoiceSchema(context.supabase);
           const table = legacy || query.document_type === "invoice" ? "invoices" : "estimates";
-          let documentQuery = context.supabase
+          const documentQuery = context.supabase
             .from(table)
             .select("id")
             .eq("id", query.document_id)
             .eq("user_id", context.userId);
-          if (legacy) (documentQuery as any).eq("type", query.document_type);
+          if (legacy)
+            // Legacy deployments store estimates in the invoices table, so
+            // the type filter is only valid for the invoices-shaped builder.
+            (documentQuery as unknown as { eq: (column: string, value: string) => unknown }).eq(
+              "type",
+              query.document_type,
+            );
           const { data: document, error: documentError } = await documentQuery.maybeSingle();
           if (documentError) throw documentError;
           if (!document) return json({ error: "Document not found" }, 404);

@@ -110,7 +110,7 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
         // Subscription purchase via pricing-page payment link? Activate the plan.
         const paymentLinkId =
           (obj.payment_link as string | undefined) ??
-          ((obj as { payment_link?: { id?: string } }).payment_link?.id) ??
+          (obj as { payment_link?: { id?: string } }).payment_link?.id ??
           undefined;
         const subscribedPlan = SUBSCRIPTION_LINKS.find(
           (l) => l.id && l.id === paymentLinkId,

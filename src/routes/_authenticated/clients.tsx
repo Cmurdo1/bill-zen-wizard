@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { AppShell } from "@/components/app/shell";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, Plus, Trash2 } from "lucide-react";
@@ -83,7 +83,7 @@ function ClientsPage() {
     })();
   }, []);
 
-  async function refresh() {
+  const refresh = useCallback(async () => {
     setLoading(true);
     const columns = legacy
       ? "id,name,email,phone,address"
@@ -108,19 +108,19 @@ function ClientsPage() {
         email: r.email ?? null,
         phone: r.phone ?? null,
         address: legacy
-          ? r.address ?? null
+          ? (r.address ?? null)
           : [r.address_line1, r.address_line2, r.city, r.state, r.postal_code]
               .filter((x) => x && x.trim())
               .join(", ") || null,
       })),
     );
     setLoading(false);
-  }
+  }, [legacy]);
 
   useEffect(() => {
     if (!schemaReady) return;
     void refresh();
-  }, [schemaReady, legacy]);
+  }, [refresh, schemaReady]);
 
   async function add() {
     if (!form.name.trim()) return;

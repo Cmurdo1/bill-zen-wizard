@@ -79,7 +79,11 @@ function CallbackPage() {
               ...(Number.isFinite(expiresIn) ? { expires_in: expiresIn } : {}),
             });
             if (sessionError) throw sessionError;
-            window.history.replaceState(null, "", `${window.location.pathname}${window.location.search}`);
+            window.history.replaceState(
+              null,
+              "",
+              `${window.location.pathname}${window.location.search}`,
+            );
           }
         }
 

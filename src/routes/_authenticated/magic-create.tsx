@@ -360,7 +360,11 @@ function MagicCreatePage() {
       <div className="mx-auto max-w-3xl space-y-6">
         <div>
           <h1 className="font-display text-3xl tracking-tight text-foreground">Create</h1>
-          <div className="mt-4 inline-flex rounded-lg border bg-muted p-1" role="tablist" aria-label="Document type">
+          <div
+            className="mt-4 inline-flex rounded-lg border bg-muted p-1"
+            role="tablist"
+            aria-label="Document type"
+          >
             {(["estimate", "invoice"] as const).map((documentType) => (
               <Button
                 key={documentType}

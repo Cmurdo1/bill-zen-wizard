@@ -1,3 +1,4 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 import {
@@ -139,8 +140,7 @@ export const Route = createFileRoute("/api/mcp/documents/send")({
 
           // Schema-adaptive reads intentionally bypass the generated types so the
           // route works on both the repo (cents) and legacy (dollars) schemas.
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const db = supabase as any;
+          const db = supabase as unknown as SupabaseClient;
           const row = doc as Record<string, unknown>;
 
           const [{ data: items }, { data: profile }] = await Promise.all([

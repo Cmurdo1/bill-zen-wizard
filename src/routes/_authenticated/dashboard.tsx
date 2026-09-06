@@ -10,6 +10,7 @@ import { useSubscription } from "@/lib/subscription";
 import { PlanBadge, UsageMeter, UpgradeCallout } from "@/components/app/plan-badge";
 import { SendDocumentModal } from "@/components/app/send-document-modal";
 import { useSendDocument, useMyEmail } from "@/hooks/useInvoices";
+import { INVOICE_TEMPLATES, type InvoiceTemplateId } from "@/lib/invoice-templates";
 import {
   Plus,
   Sparkles,
@@ -504,6 +505,7 @@ function NewInvoiceDialog({
   const [newClientName, setNewClientName] = useState("");
   const [newClientEmail, setNewClientEmail] = useState("");
   const [description, setDescription] = useState("");
+  const [invoiceTemplate, setInvoiceTemplate] = useState<InvoiceTemplateId>("clean");
   const [items, setItems] = useState<LineItem[]>([{ description: "", quantity: 1, rate_cents: 0 }]);
   const [aiLoading, setAiLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -571,6 +573,7 @@ function NewInvoiceDialog({
         client_id: clientId || null,
         job_description: description.trim() || null,
         due_date: dueDate,
+        invoice_template: invoiceTemplate,
       });
       createdId = doc.id;
       if (validItems.length) {
@@ -664,6 +667,23 @@ function NewInvoiceDialog({
               onChange={(e) => setDueDate(e.target.value)}
               className="h-10 w-full rounded-lg border border-border bg-background px-3 text-sm"
             />
+          </div>
+        </div>
+
+        <div className="mt-6 grid gap-3 sm:grid-cols-2">
+          <div>
+            <label className="mb-1.5 block text-xs font-semibold">Invoice template</label>
+            <select
+              value={invoiceTemplate}
+              onChange={(e) => setInvoiceTemplate(e.target.value as InvoiceTemplateId)}
+              className="h-10 w-full rounded-lg border border-border bg-background px-3 text-sm"
+            >
+              {INVOICE_TEMPLATES.map((template) => (
+                <option key={template.id} value={template.id}>
+                  {template.name} — {template.description}
+                </option>
+              ))}
+            </select>
           </div>
         </div>
 

@@ -1,5 +1,6 @@
 import { formatCurrency, formatDate } from "./format";
 import type { LineItem } from "./documents";
+import { normalizeInvoiceTemplate, type InvoiceTemplateId } from "./invoice-templates";
 
 export type PrintInvoiceInput = {
   invoice_number: string;
@@ -35,6 +36,7 @@ export type PrintInvoiceInput = {
   } | null;
   items: LineItem[];
   documentType?: "invoice" | "estimate";
+  invoice_template?: InvoiceTemplateId;
 };
 
 function esc(s: string | null | undefined): string {
@@ -65,6 +67,12 @@ export function printInvoice(inv: PrintInvoiceInput) {
   const brandColor = /^#[0-9a-f]{6}$/i.test(inv.business?.brand_color ?? "")
     ? inv.business?.brand_color
     : "#0b2654";
+  const template = normalizeInvoiceTemplate(inv.invoice_template);
+  const templateStyles = {
+    clean: { headerBorder: "none", tableHead: "#f6f3ee", tableHeadText: "#575e69", radius: "8px" },
+    classic: { headerBorder: `3px solid ${brandColor}`, tableHead: brandColor, tableHeadText: "#fff", radius: "0" },
+    modern: { headerBorder: `8px solid ${brandColor}`, tableHead: brandColor, tableHeadText: "#fff", radius: "14px" },
+  }[template];
   const logo = inv.business?.logo_url
     ? `<img src="${esc(inv.business.logo_url)}" alt="${esc(bizName)} logo" style="max-width:180px;max-height:64px;object-fit:contain;margin-bottom:10px" />`
     : "";
@@ -73,21 +81,23 @@ export function printInvoice(inv: PrintInvoiceInput) {
 <style>
   * { box-sizing: border-box; }
   body { font: 13px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; color: ${brandColor}; margin: 40px; }
+  .document-header { border-top: ${templateStyles.headerBorder}; padding-top: 12px; }
   h1 { font-size: 28px; margin: 0 0 4px; letter-spacing: -0.02em; color: ${brandColor}; }
   .muted { color: #575e69; }
   .row { display: flex; justify-content: space-between; gap: 24px; }
   .badge { display: inline-block; padding: 3px 10px; border-radius: 999px; background: ${brandColor}; color: #fff; font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; }
   table { width: 100%; border-collapse: collapse; margin-top: 24px; }
   th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid #e4e1da; }
-  th { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: #575e69; }
+  th { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: ${templateStyles.tableHeadText}; background: ${templateStyles.tableHead}; }
   td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
   .totals { margin-top: 16px; margin-left: auto; width: 280px; }
   .totals div { display: flex; justify-content: space-between; padding: 6px 0; }
   .totals .grand { border-top: 2px solid ${brandColor}; margin-top: 6px; padding-top: 10px; font-weight: 700; font-size: 16px; }
+  .notes { border-radius: ${templateStyles.radius}; }
   .notes { margin-top: 32px; padding: 16px; background: #f6f3ee; border-radius: 8px; white-space: pre-wrap; }
   @media print { body { margin: 24mm; } .no-print { display: none; } }
 </style></head><body>
-<div class="row">
+<div class="row document-header">
   <div>
     <h1>${docLabel}</h1>
     <div class="muted">${esc(docNumber)} · <span class="badge">${esc(inv.status)}</span></div>

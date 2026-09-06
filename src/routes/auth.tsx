@@ -26,20 +26,31 @@ function AuthPage() {
   const [mode, setMode] = useState<"login" | "signup">(initialMode ?? "login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [info, setInfo] = useState<string | null>(null);
   const navigate = useNavigate();
 
   const dest = redirect && redirect.startsWith("/") ? redirect : "/dashboard";
 
+  const passwordHint =
+    mode === "signup" ? "At least 8 characters, mixing letters, numbers, and symbols." : "";
+  const passwordMismatch =
+    mode === "signup" && confirmPassword.length > 0 && password !== confirmPassword;
+  const passwordTooShort = mode === "signup" && password.length > 0 && password.length < 8;
+  const submitDisabled = loading || (mode === "signup" && (passwordMismatch || passwordTooShort));
+
   async function handleGoogle() {
     setError(null);
     setLoading(true);
+    const callbackUrl = new URL("/auth/callback", window.location.origin);
+    callbackUrl.searchParams.set("next", dest);
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: window.location.origin + "/auth/callback",
+        redirectTo: callbackUrl.toString(),
       },
     });
     if (error) {
@@ -50,7 +61,28 @@ function AuthPage() {
     // OAuth redirects - we won't reach here
   }
 
-  const [info, setInfo] = useState<string | null>(null);
+  async function handleForgotPassword(e: React.MouseEvent) {
+    e.preventDefault();
+    if (!email) {
+      setError('Enter your email above first, then click "Forgot password?".');
+      return;
+    }
+    setError(null);
+    setInfo(null);
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent("/auth")}`,
+      });
+      if (error) throw error;
+      setInfo("Password reset link sent. Check your inbox.");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Something went wrong";
+      setError(msg);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -63,7 +95,7 @@ function AuthPage() {
           email,
           password,
           options: {
-            emailRedirectTo: window.location.origin + "/dashboard",
+            emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(dest)}`,
             data: { full_name: name },
           },
         });
@@ -184,13 +216,42 @@ function AuthPage() {
               <input
                 required
                 type="password"
-                minLength={8}
+                minLength={mode === "signup" ? 8 : 1}
                 autoComplete={mode === "signup" ? "new-password" : "current-password"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                aria-invalid={passwordTooShort || undefined}
+                aria-describedby={mode === "signup" ? "password-hint" : undefined}
                 className="input"
               />
+              {mode === "signup" && (
+                <p
+                  id="password-hint"
+                  className={`mt-1 text-xs ${
+                    passwordTooShort ? "text-destructive" : "text-muted-foreground"
+                  }`}
+                >
+                  {passwordTooShort ? "Password must be at least 8 characters." : passwordHint}
+                </p>
+              )}
             </Field>
+            {mode === "signup" && (
+              <Field label="Confirm password">
+                <input
+                  required
+                  type="password"
+                  minLength={8}
+                  autoComplete="new-password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  aria-invalid={passwordMismatch || undefined}
+                  className="input"
+                />
+                {passwordMismatch && (
+                  <p className="mt-1 text-xs text-destructive">Passwords don&apos;t match.</p>
+                )}
+              </Field>
+            )}
 
             {info && (
               <p className="rounded-lg bg-success/10 px-3 py-2 text-sm text-success">{info}</p>
@@ -203,11 +264,24 @@ function AuthPage() {
 
             <button
               type="submit"
-              disabled={loading}
+              disabled={submitDisabled}
               className="inline-flex h-11 w-full items-center justify-center rounded-xl bg-primary text-sm font-semibold text-primary-foreground shadow-soft hover:opacity-90 disabled:opacity-60"
             >
               {loading ? "Just a moment…" : mode === "signup" ? "Create account" : "Log in"}
             </button>
+
+            {mode === "login" && (
+              <p className="text-center text-sm text-muted-foreground">
+                <button
+                  type="button"
+                  onClick={handleForgotPassword}
+                  disabled={loading}
+                  className="font-medium text-primary hover:underline disabled:opacity-60"
+                >
+                  Forgot password?
+                </button>
+              </p>
+            )}
           </form>
 
           <p className="mt-6 text-center text-sm text-muted-foreground">

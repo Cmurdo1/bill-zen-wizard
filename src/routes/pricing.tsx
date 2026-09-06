@@ -52,7 +52,7 @@ const PLANS: Plan[] = [
       "Manual payment recording",
       "Community support",
     ],
-    ctaLabel: "Current Plan",
+    ctaLabel: "Start free",
     ctaHref: "/signup",
     variant: "free",
   },

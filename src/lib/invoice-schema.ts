@@ -1,6 +1,11 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { LineItem } from "@/lib/documents";
 import { brandingPresetsClient, hasBrandingPresetColumn } from "@/lib/branding-presets";
+import {
+  hasInvoiceTemplateColumn,
+  normalizeInvoiceTemplate,
+  type InvoiceTemplateId,
+} from "@/lib/invoice-templates";
 
 /**
  * The deployed live database uses a legacy invoices schema (dollar amounts:
@@ -40,6 +45,7 @@ export type UnifiedInvoice = {
   currency: string;
   paid_at: string | null;
   branding_preset_id: string | null;
+  invoice_template: InvoiceTemplateId;
 };
 
 /** Map a raw invoices row (either schema) to the unified shape used by the UI. */
@@ -67,6 +73,7 @@ export function mapInvoiceRow(row: Record<string, unknown>): UnifiedInvoice {
     currency: String(row.currency ?? "USD"),
     paid_at: (row.paid_at as string | null) ?? null,
     branding_preset_id: (row.branding_preset_id as string | null) ?? null,
+    invoice_template: normalizeInvoiceTemplate(row.invoice_template),
   };
 }
 
@@ -76,7 +83,10 @@ async function invoiceColumns(legacy: boolean): Promise<string> {
     ? "id,invoice_number,status,client_id,due_date,notes,created_at,total_amount,tax_amount,job_description"
     : "id,invoice_number,status,client_id,issue_date,due_date,notes,tax_rate,subtotal_cents,tax_cents,total_cents,currency,paid_at,job_description";
   const hasPreset = await hasBrandingPresetColumn();
-  return hasPreset ? `${base},branding_preset_id` : base;
+  const hasTemplate = await hasInvoiceTemplateColumn();
+  return [base, hasPreset ? "branding_preset_id" : "", hasTemplate ? "invoice_template" : ""]
+    .filter(Boolean)
+    .join(",");
 }
 
 export async function fetchInvoiceList(): Promise<UnifiedInvoice[]> {
@@ -253,6 +263,7 @@ export async function createInvoiceRecord(input: {
   issue_date?: string | null;
   currency?: string | null;
   branding_preset_id?: string | null;
+  invoice_template?: InvoiceTemplateId;
 }): Promise<{ id: string; invoice_number: string }> {
   const {
     data: { user },
@@ -278,6 +289,9 @@ export async function createInvoiceRecord(input: {
   // Only persist the preset once the migration has added the column.
   if (await hasBrandingPresetColumn()) {
     common.branding_preset_id = input.branding_preset_id || null;
+  }
+  if (await hasInvoiceTemplateColumn()) {
+    common.invoice_template = normalizeInvoiceTemplate(input.invoice_template);
   }
   const insert = legacy
     ? {
@@ -339,6 +353,9 @@ export async function updateInvoiceRecord(
   if (patch.status !== undefined) common.status = patch.status;
   if (patch.branding_preset_id !== undefined && (await hasBrandingPresetColumn())) {
     common.branding_preset_id = patch.branding_preset_id ?? null;
+  }
+  if (patch.invoice_template !== undefined && (await hasInvoiceTemplateColumn())) {
+    common.invoice_template = normalizeInvoiceTemplate(patch.invoice_template);
   }
   const dbPatch = legacy
     ? {

@@ -21,7 +21,7 @@ export const Route = createFileRoute("/mcp")({
       {
         name: "description",
         content:
-          "Connect Claude, Cursor, or any MCP-compatible AI agent to Honest Invoice with a Pro or Business plan. Your agent creates and sends estimates from your account.",
+          "Connect Claude, Cursor, OpenClaw, Hermes, or any MCP-compatible AI agent to Honest Invoice with a Pro or Business plan. Your agent creates and sends estimates from your account.",
       },
       { property: "og:title", content: "MCP — AI Agent Access — Honest Invoice" },
       {
@@ -124,6 +124,78 @@ const CURSOR_CONFIG = `{
   }
 }`;
 
+const OPENCLAW_CONFIG = `{
+  "mcp": {
+    "servers": {
+      "honest-invoice": {
+        "command": "npx",
+        "args": ["tsx", "src/mcp-server.ts"],
+        "env": {
+          "HONEST_INVOICE_API_KEY": "hi_mcp_your-dedicated-key",
+          "APP_BASE_URL": "https://honestinvoice.com"
+        },
+        "enabled": true
+      }
+    }
+  }
+}`;
+
+const OPENCLAW_HTTP_CONFIG = `{
+  "mcp": {
+    "servers": {
+      "honest-invoice": {
+        "url": "https://honestinvoice.com/api/mcp",
+        "transport": "streamable-http",
+        "headers": {
+          "Authorization": "Bearer hi_mcp_your-dedicated-key"
+        },
+        "enabled": true
+      }
+    }
+  }
+}`;
+
+const HERMES_CONFIG = `mcp_servers:
+  honest-invoice:
+    command: "npx"
+    args: ["tsx", "src/mcp-server.ts"]
+    env:
+      HONEST_INVOICE_API_KEY: "hi_mcp_your-dedicated-key"
+      APP_BASE_URL: "https://honestinvoice.com"
+    enabled: true`;
+
+const HERMES_HTTP_CONFIG = `mcp_servers:
+  honest-invoice:
+    url: "https://honestinvoice.com/api/mcp"
+    headers:
+      Authorization: "Bearer hi_mcp_your-dedicated-key"
+    enabled: true`;
+
+const HOSTED_HTTP_CONFIG = `{
+  "mcpServers": {
+    "honest-invoice": {
+      "url": "https://honestinvoice.com/api/mcp",
+      "headers": {
+        "Authorization": "Bearer hi_mcp_your-dedicated-key"
+      }
+    }
+  }
+}`;
+
+// MCP integration is three flavors today:
+//   1. REST API (works with every MCP-compatible client via its HTTP tools,
+//      and with any cron, webhook, or cloud agent). This is the supported
+//      customer path. The curl examples below call the same endpoints the
+//      stdio server calls, so any agent that can POST JSON can use Honest
+//      Invoice.
+//   2. Hosted Streamable HTTP MCP endpoint at /api/mcp. Use this when the
+//      client can connect to a remote MCP URL but cannot run local stdio.
+//   3. Stdio MCP server (the open-source reference implementation that lives
+//      in our public repo at honestinvoice-live/src/mcp-server.ts). Run it
+//      locally when you want the agent to manage its own JSON-RPC session.
+const REST_DOCS_NOTE =
+  "Claude, Cursor, OpenClaw, Hermes, Windsurf, and every other MCP client can use the hosted Streamable HTTP endpoint or talk to our REST API directly — no source checkout required. The stdio MCP server is a reference implementation in our public repo for customers who want a self-contained process.";
+
 const CURL_EXAMPLE = `curl -X POST https://honestinvoice.com/api/mcp/documents \\
   -H "Authorization: Bearer hi_mcp_YOUR_DEDICATED_KEY" \\
   -H "Content-Type: application/json" \\
@@ -139,19 +211,39 @@ const CURL_EXAMPLE = `curl -X POST https://honestinvoice.com/api/mcp/documents \
     ]
   }'`;
 
-const WEBHOOK_EXAMPLE = `# Scrape a lead and auto-respond with an estimate\ncurl -X POST https://honestinvoice.com/api/mcp/leads/webhook \\
-  -H "Authorization: Bearer hi_mcp_YOUR_DEDICATED_KEY" \\
+const WEBHOOK_EXAMPLE = `# Scrape a lead and create a draft estimate (manual review recommended)
+# Set auto_send: false to keep the estimate in your dashboard until you approve it.
+curl -X POST https://honestinvoice.com/api/mcp/leads/webhook \\
+  -H "Authorization: Bearer hi_mcp..._KEY" \\
   -H "Content-Type: application/json" \\
   -d '{
     "title": "Need HVAC condenser replaced",
     "description": "3-ton Lennox, 6 hours labor, R-410A refrigerant",
     "location": "Atlanta, GA",
     "contact_email": "customer@example.com",
-    "contact_phone": "+15551234567",
+    "contact_phone": "+155****4567",
     "source": "craigslist",
     "tax_rate": 7.25,
-    "auto_send": true
+    "auto_send": false
   }'`;
+
+function ProviderMark({ provider }: { provider: "openclaw" | "hermes" | "hosted" }) {
+  const marks = {
+    openclaw: { label: "OC", className: "bg-orange-100 text-orange-700" },
+    hermes: { label: "H", className: "bg-emerald-100 text-emerald-700" },
+    hosted: { label: "↗", className: "bg-sky-100 text-sky-700" },
+  } as const;
+  const mark = marks[provider];
+
+  return (
+    <span
+      aria-hidden="true"
+      className={`grid h-10 w-10 place-items-center rounded-lg text-xs font-bold tracking-normal ${mark.className}`}
+    >
+      {mark.label}
+    </span>
+  );
+}
 
 function CopyButton({ text }: { text: string }) {
   const [copied, setCopied] = useState(false);
@@ -192,10 +284,10 @@ function McpPage() {
             <span className="italic text-primary">do the billing.</span>
           </h1>
           <p className="mt-5 max-w-2xl text-lg text-muted-foreground">
-            Connect Claude, Cursor, or any MCP-compatible AI agent to Honest Invoice. Your agent
-            creates and sends estimates from your associated Honest Invoice account — while you
-            focus on the work. MCP access is available only on active Pro and Business plans, and
-            every request is scoped to the account behind its dedicated API key.
+            Connect Claude, Cursor, OpenClaw, Hermes, or any MCP-compatible AI agent to Honest
+            Invoice. Your agent creates and sends estimates from your associated Honest Invoice
+            account — while you focus on the work. MCP access is available only on active Pro and
+            Business plans, and every request is scoped to the account behind its dedicated API key.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
             <a
@@ -226,7 +318,7 @@ function McpPage() {
             {
               icon: Globe,
               title: "Works everywhere",
-              body: "Stdio transport for desktop agents like Claude and Cursor. REST API for cloud agents, webhooks, and custom integrations.",
+              body: "Stdio transport for Claude, Cursor, OpenClaw, and Hermes. REST API for cloud agents, webhooks, and custom integrations.",
             },
             {
               icon: Sparkles,
@@ -255,11 +347,65 @@ function McpPage() {
             Setup guide
           </h2>
           <p className="mt-3 max-w-2xl text-lg text-muted-foreground">
-            Connect your AI agent in under ten minutes. You need an active Pro or Business plan,
-            Node.js 18+, and a dedicated API key created in Settings.
+            Connect your AI agent in under ten minutes. You need an active Pro or Business plan, a
+            dedicated API key created in Settings, and either the hosted MCP endpoint, the REST API,
+            or a local checkout of our reference MCP server.
           </p>
 
+          <div className="mt-8 rounded-2xl border border-border bg-surface-muted/60 p-6">
+            <div className="flex items-start gap-3">
+              <Zap className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+              <div>
+                <p className="text-sm font-semibold text-foreground">
+                  Recommended: use hosted MCP or the REST API
+                </p>
+                <p className="mt-1 text-sm text-muted-foreground">{REST_DOCS_NOTE}</p>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  OpenClaw and Hermes are independent third-party products. Honest Invoice is not
+                  affiliated with or endorsed by either provider; follow each provider&apos;s
+                  current security and acceptable-use policies.
+                </p>
+              </div>
+            </div>
+          </div>
+
           <div className="mt-10 grid gap-8 lg:grid-cols-2">
+            {/* Hosted Streamable HTTP */}
+            <div className="rounded-2xl border border-primary/30 bg-primary/[0.03] p-8 shadow-soft lg:col-span-2">
+              <div className="flex items-center gap-3">
+                <ProviderMark provider="hosted" />
+                <div>
+                  <h3 className="font-display text-2xl text-foreground">Hosted Streamable HTTP</h3>
+                  <p className="text-sm text-muted-foreground">
+                    For clients that cannot run a local stdio process
+                  </p>
+                </div>
+              </div>
+              <p className="mt-4 text-sm text-muted-foreground">
+                Point any MCP client that supports remote Streamable HTTP servers at{" "}
+                <code className="rounded bg-surface-muted px-1 text-xs">
+                  https://honestinvoice.com/api/mcp
+                </code>
+                . Send the dedicated API key as a Bearer token. This hosted endpoint is stateless,
+                uses the same account-scoped tools as the local server, and does not require
+                Node.js, a repository checkout, or local process permissions. The endpoint accepts
+                only HTTPS deployments and does not grant CORS access to unapproved browser origins;
+                non-browser clients should use their own secure secret storage.
+              </p>
+              <div className="relative mt-5">
+                <pre className="overflow-x-auto rounded-xl border border-border bg-surface-muted p-4 text-xs text-foreground/80">
+                  <code>{HOSTED_HTTP_CONFIG}</code>
+                </pre>
+                <CopyButton text={HOSTED_HTTP_CONFIG} />
+              </div>
+              <p className="mt-4 text-xs text-muted-foreground">
+                Replace the placeholder key, save the server, and confirm it can list Honest Invoice
+                tools. If your client asks for a transport, choose <strong>Streamable HTTP</strong>.
+                Use a least-privilege key, keep the secret in the client&apos;s secret store, and
+                rotate or revoke it if the host or workspace is no longer trusted.
+              </p>
+            </div>
+
             {/* Claude Desktop */}
             <div className="rounded-2xl border border-border bg-surface p-8 shadow-soft">
               <div className="flex items-center gap-3">
@@ -267,17 +413,29 @@ function McpPage() {
                   <Bot className="h-5 w-5" />
                 </span>
                 <div>
-                  <h3 className="font-display text-2xl text-foreground">Claude Desktop</h3>
-                  <p className="text-sm text-muted-foreground">Anthropic Claude</p>
+                  <h3 className="font-display text-2xl text-foreground">Claude Desktop (stdio)</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Anthropic Claude — local stdio MCP server
+                  </p>
                 </div>
               </div>
+              <p className="mt-4 rounded-lg bg-surface-muted/60 p-3 text-xs text-muted-foreground">
+                This path uses our open-source reference server. It requires cloning the
+                honestinvoice-live repo locally. If you want a no-checkout setup, use the REST API
+                via the curl examples further down.
+              </p>
               <ol className="mt-6 space-y-4 text-sm text-foreground/90">
                 <li className="flex gap-3">
                   <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
                     1
                   </span>
                   <span>
-                    Open <strong>Settings → Developer → MCP Servers</strong> in Claude Desktop.
+                    Clone the{" "}
+                    <code className="rounded bg-surface-muted px-1 text-xs">
+                      honestinvoice-live
+                    </code>{" "}
+                    repo and run{" "}
+                    <code className="rounded bg-surface-muted px-1 text-xs">npm install</code>.
                   </span>
                 </li>
                 <li className="flex gap-3">
@@ -285,7 +443,7 @@ function McpPage() {
                     2
                   </span>
                   <span>
-                    Add a new server named <strong>honest-invoice</strong>.
+                    Open <strong>Settings → Developer → MCP Servers</strong> in Claude Desktop.
                   </span>
                 </li>
                 <li className="flex gap-3">
@@ -293,9 +451,9 @@ function McpPage() {
                     3
                   </span>
                   <span>
-                    Set command to <strong>npx</strong> and args to{" "}
-                    <strong>tsx,src/mcp-server.ts</strong>. Point the working directory to your
-                    Honest Invoice project.
+                    Add a new server named <strong>honest-invoice</strong>. Set command to{" "}
+                    <strong>npx</strong> and args to <strong>tsx,src/mcp-server.ts</strong>. Point
+                    the working directory to the honestinvoice-live checkout.
                   </span>
                 </li>
                 <li className="flex gap-3">
@@ -304,8 +462,11 @@ function McpPage() {
                   </span>
                   <span>
                     Add <strong>HONEST_INVOICE_API_KEY</strong> (your dedicated key) and{" "}
-                    <strong>APP_BASE_URL</strong> (honestinvoice.com). Keep the key private and
-                    never commit it to source control.
+                    <strong>APP_BASE_URL</strong> (
+                    <code className="rounded bg-surface-muted px-1 text-xs">
+                      https://honestinvoice.com
+                    </code>
+                    ). Keep the key private and never commit it to source control.
                   </span>
                 </li>
                 <li className="flex gap-3">
@@ -362,6 +523,122 @@ function McpPage() {
                 <CopyButton text={CURSOR_CONFIG} />
               </div>
             </div>
+
+            {/* OpenClaw */}
+            <div className="rounded-2xl border border-border bg-surface p-8 shadow-soft">
+              <div className="flex items-center gap-3">
+                <ProviderMark provider="openclaw" />
+                <div>
+                  <h3 className="font-display text-2xl text-foreground">OpenClaw</h3>
+                  <p className="text-sm text-muted-foreground">Gateway-hosted MCP client</p>
+                </div>
+              </div>
+              <ol className="mt-6 space-y-4 text-sm text-foreground/90">
+                <li className="flex gap-3">
+                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
+                    1
+                  </span>
+                  <span>
+                    Open <strong>Settings → MCP</strong> in the OpenClaw Control UI, or edit{" "}
+                    <code className="rounded bg-surface-muted px-1 text-xs">
+                      ~/.openclaw/openclaw.json
+                    </code>
+                    .
+                  </span>
+                </li>
+                <li className="flex gap-3">
+                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
+                    2
+                  </span>
+                  <span>
+                    Add the JSON config below under <strong>mcp.servers</strong>. Replace the
+                    placeholder API key and ensure the OpenClaw gateway can run <strong>npx</strong>
+                    . For a remote server, use the Streamable HTTP config below instead.
+                  </span>
+                </li>
+                <li className="flex gap-3">
+                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
+                    3
+                  </span>
+                  <span>
+                    Verify the connection with{" "}
+                    <strong>openclaw mcp doctor honest-invoice --probe</strong>. Reload or restart
+                    the gateway if the tools do not appear. For remote HTTP setup, set the transport
+                    to <strong>streamable-http</strong> and use the hosted endpoint above.
+                  </span>
+                </li>
+              </ol>
+              <div className="relative mt-5">
+                <pre className="overflow-x-auto rounded-xl border border-border bg-surface-muted p-4 text-xs text-foreground/80">
+                  <code>{OPENCLAW_CONFIG}</code>
+                </pre>
+                <CopyButton text={OPENCLAW_CONFIG} />
+              </div>
+              <div className="relative mt-4">
+                <pre className="overflow-x-auto rounded-xl border border-border bg-surface-muted p-4 text-xs text-foreground/80">
+                  <code>{OPENCLAW_HTTP_CONFIG}</code>
+                </pre>
+                <CopyButton text={OPENCLAW_HTTP_CONFIG} />
+              </div>
+            </div>
+
+            {/* Hermes Agent */}
+            <div className="rounded-2xl border border-border bg-surface p-8 shadow-soft">
+              <div className="flex items-center gap-3">
+                <ProviderMark provider="hermes" />
+                <div>
+                  <h3 className="font-display text-2xl text-foreground">Hermes Agent</h3>
+                  <p className="text-sm text-muted-foreground">Nous Research MCP client</p>
+                </div>
+              </div>
+              <ol className="mt-6 space-y-4 text-sm text-foreground/90">
+                <li className="flex gap-3">
+                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
+                    1
+                  </span>
+                  <span>
+                    Edit{" "}
+                    <code className="rounded bg-surface-muted px-1 text-xs">
+                      ~/.hermes/config.yaml
+                    </code>{" "}
+                    or run <strong>hermes mcp</strong> to manage MCP servers interactively. For a
+                    remote setup, use the hosted Streamable HTTP config above with a URL-based
+                    server entry.
+                  </span>
+                </li>
+                <li className="flex gap-3">
+                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
+                    2
+                  </span>
+                  <span>
+                    Add the YAML config below under <strong>mcp_servers</strong>. Replace the
+                    placeholder API key and keep this file private. For a remote server, use the
+                    Streamable HTTP config below instead.
+                  </span>
+                </li>
+                <li className="flex gap-3">
+                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
+                    3
+                  </span>
+                  <span>
+                    Start Hermes with <strong>hermes chat</strong>. After changing the config, use{" "}
+                    <strong>/reload-mcp</strong> to rediscover the Honest Invoice tools.
+                  </span>
+                </li>
+              </ol>
+              <div className="relative mt-5">
+                <pre className="overflow-x-auto rounded-xl border border-border bg-surface-muted p-4 text-xs text-foreground/80">
+                  <code>{HERMES_CONFIG}</code>
+                </pre>
+                <CopyButton text={HERMES_CONFIG} />
+              </div>
+              <div className="relative mt-4">
+                <pre className="overflow-x-auto rounded-xl border border-border bg-surface-muted p-4 text-xs text-foreground/80">
+                  <code>{HERMES_HTTP_CONFIG}</code>
+                </pre>
+                <CopyButton text={HERMES_HTTP_CONFIG} />
+              </div>
+            </div>
           </div>
 
           {/* Getting your token */}
@@ -387,12 +664,15 @@ function McpPage() {
             </h2>
           </div>
           <p className="mt-3 max-w-2xl text-lg text-muted-foreground">
-            All endpoints accept a dedicated API key or a Supabase session JWT via the{" "}
+            The hosted MCP endpoint and API accept dedicated API keys via the{" "}
             <code className="rounded bg-surface-muted px-1.5 py-0.5 text-sm">
               Authorization: Bearer
             </code>{" "}
-            header. Dedicated keys are recommended for agents. An active Pro or Business plan is
-            required, and every request is limited to the account associated with its credential.
+            header. Use HTTPS only, never place a key in a URL, and never expose it in client-side
+            code or logs. Dedicated keys should be limited to the scopes the agent needs, rotated
+            periodically, and revoked immediately after suspected compromise. An active Pro or
+            Business plan is required, and every request is limited to the account associated with
+            its credential.
           </p>
 
           {/* curl example */}
@@ -449,6 +729,19 @@ function McpPage() {
 
           {/* Cron setup */}
           <h3 className="mt-12 font-display text-2xl text-foreground">Cron job setup</h3>
+          <div className="mt-4 rounded-2xl border border-accent/40 bg-accent/10 p-5 text-sm text-foreground/90">
+            <p className="font-semibold">Compliance notice</p>
+            <p className="mt-1 text-muted-foreground">
+              Automated scraping and outbound emailing to scraped contacts can violate the Terms of
+              Service of Craigslist, Nextdoor, Facebook, and applicable anti-spam law (CAN-SPAM,
+              CASL, GDPR). You are responsible for complying with each platform&apos;s rules and
+              with local cold-outreach law before enabling this cron. We strongly recommend keeping{" "}
+              <code className="rounded bg-surface-muted px-1 text-xs">auto_send</code> set to{" "}
+              <code className="rounded bg-surface-muted px-1 text-xs">false</code> so you review
+              every estimate before it goes out. This feature is provided as-is; we&apos;re not your
+              lawyer.
+            </p>
+          </div>
           <p className="mt-3 text-muted-foreground">
             To scrape leads automatically on a schedule, configure an external cron service to call
             the{" "}
@@ -456,7 +749,9 @@ function McpPage() {
               POST /api/mcp/leads/scrape
             </code>{" "}
             endpoint every 5-15 minutes. This runs the scrapers, posts each found lead to the
-            webhook, and auto-creates estimates. Business plan required.
+            webhook, and (with{" "}
+            <code className="rounded bg-surface-muted px-1 text-xs">auto_send: false</code>) creates
+            draft estimates for your review. Business plan required.
           </p>
           <div className="mt-4 rounded-2xl border border-border bg-surface p-6">
             <h4 className="font-semibold text-foreground">cron-job.org setup</h4>
@@ -480,21 +775,27 @@ function McpPage() {
                 cl_category=hva, keywords=HVAC repair
               </li>
               <li>
-                6. Save and enable — leads flow in automatically, estimates go out within seconds
+                6. Save and enable — leads flow into your dashboard as draft estimates for review
+                (set auto_send to true in the request body only if you have confirmed compliance
+                with the target platform's ToS)
               </li>
             </ol>
           </div>
 
           {/* Lead webhook */}
-          <h3 className="mt-12 font-display text-2xl text-foreground">Lead scraping webhook</h3>
+          <h3 className="mt-12 font-display text-2xl text-foreground">Lead intake webhook</h3>
           <p className="mt-3 text-muted-foreground">
             The{" "}
             <code className="rounded bg-surface-muted px-1.5 py-0.5 text-sm">
               /api/mcp/leads/webhook
             </code>{" "}
-            endpoint receives scraped leads and auto-creates an AI-extracted estimate, then emails
-            it to the lead. Use it to build real-time lead response pipelines. When your scraping
-            service finds a lead, POST it here and your AI agent handles the rest.
+            endpoint receives leads (from your own scraping service, marketplace, or CRM) and
+            creates an AI-extracted estimate. With{" "}
+            <code className="rounded bg-surface-muted px-1 text-xs">auto_send: false</code> the
+            estimate lands in your dashboard for review; flip it to{" "}
+            <code className="rounded bg-surface-muted px-1 text-xs">true</code> only after you have
+            verified your scraping and outreach comply with the source platform&apos;s Terms and
+            applicable anti-spam law.
           </p>
           <div className="relative mt-4">
             <pre className="overflow-x-auto rounded-2xl border border-border bg-surface-muted p-6 text-xs text-foreground/80">

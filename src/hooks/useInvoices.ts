@@ -17,6 +17,7 @@ import {
   insertEstimateItems,
   updateEstimateTotals,
 } from "@/lib/estimate-schema";
+import type { InvoiceTemplateId } from "@/lib/invoice-templates";
 
 export function useInvoices() {
   return useQuery({
@@ -68,6 +69,7 @@ export function useCreateInvoice() {
       expiry_date?: string | null;
       type?: "invoice" | "estimate";
       branding_preset_id?: string | null;
+      invoice_template?: InvoiceTemplateId;
     }) => {
       const isEstimate = invoice.type === "estimate";
 
@@ -80,6 +82,7 @@ export function useCreateInvoice() {
           notes: invoice.notes,
           expiry_date: invoice.expiry_date,
           branding_preset_id: invoice.branding_preset_id,
+          invoice_template: invoice.invoice_template,
         });
       }
 
@@ -89,6 +92,7 @@ export function useCreateInvoice() {
         notes: invoice.notes,
         due_date: invoice.due_date,
         branding_preset_id: invoice.branding_preset_id,
+        invoice_template: invoice.invoice_template,
       });
     },
     onSuccess: () => {

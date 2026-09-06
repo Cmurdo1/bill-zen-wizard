@@ -87,13 +87,11 @@ export function AppShell({ children, title }: { children: React.ReactNode; title
         <nav className="flex-1 space-y-1 p-3" aria-label="App navigation">
           {nav.map((item) => {
             const { to, label, icon: Icon } = item;
-            const search = "search" in item ? item.search : undefined;
             const active = pathname === to;
             return (
               <Link
                 key={label}
                 to={to}
-                search={search}
                 className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
                   active
                     ? "bg-primary text-primary-foreground shadow-soft"
@@ -130,13 +128,11 @@ export function AppShell({ children, title }: { children: React.ReactNode; title
         >
           {nav.map((item) => {
             const { to, label, icon: Icon } = item;
-            const search = "search" in item ? item.search : undefined;
             const active = pathname === to;
             return (
               <Link
                 key={label}
                 to={to}
-                search={search}
                 className={`inline-flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium ${
                   active
                     ? "bg-primary text-primary-foreground"

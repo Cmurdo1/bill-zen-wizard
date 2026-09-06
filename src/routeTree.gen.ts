@@ -25,6 +25,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as BlogIndexRouteImport } from './routes/blog.index'
 import { Route as BlogSlugRouteImport } from './routes/blog.$slug'
 import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
+import { Route as ApiMcpRouteImport } from './routes/api/mcp'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
 import { Route as AuthenticatedMagicCreateRouteImport } from './routes/_authenticated/magic-create'
@@ -134,6 +135,11 @@ const AuthCallbackRoute = AuthCallbackRouteImport.update({
   path: '/callback',
   getParentRoute: () => AuthRoute,
 } as any)
+const ApiMcpRoute = ApiMcpRouteImport.update({
+  id: '/api/mcp',
+  path: '/api/mcp',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -192,34 +198,34 @@ const AuthenticatedEstimatesIndexRoute =
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const ApiMcpRateBookRoute = ApiMcpRateBookRouteImport.update({
-  id: '/api/mcp/rate-book',
-  path: '/api/mcp/rate-book',
-  getParentRoute: () => rootRouteImport,
+  id: '/rate-book',
+  path: '/rate-book',
+  getParentRoute: () => ApiMcpRoute,
 } as any)
 const ApiMcpProfileRoute = ApiMcpProfileRouteImport.update({
-  id: '/api/mcp/profile',
-  path: '/api/mcp/profile',
-  getParentRoute: () => rootRouteImport,
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => ApiMcpRoute,
 } as any)
 const ApiMcpLeadsRoute = ApiMcpLeadsRouteImport.update({
-  id: '/api/mcp/leads',
-  path: '/api/mcp/leads',
-  getParentRoute: () => rootRouteImport,
+  id: '/leads',
+  path: '/leads',
+  getParentRoute: () => ApiMcpRoute,
 } as any)
 const ApiMcpKeysRoute = ApiMcpKeysRouteImport.update({
-  id: '/api/mcp/keys',
-  path: '/api/mcp/keys',
-  getParentRoute: () => rootRouteImport,
+  id: '/keys',
+  path: '/keys',
+  getParentRoute: () => ApiMcpRoute,
 } as any)
 const ApiMcpDocumentsRoute = ApiMcpDocumentsRouteImport.update({
-  id: '/api/mcp/documents',
-  path: '/api/mcp/documents',
-  getParentRoute: () => rootRouteImport,
+  id: '/documents',
+  path: '/documents',
+  getParentRoute: () => ApiMcpRoute,
 } as any)
 const ApiMcpClientsRoute = ApiMcpClientsRouteImport.update({
-  id: '/api/mcp/clients',
-  path: '/api/mcp/clients',
-  getParentRoute: () => rootRouteImport,
+  id: '/clients',
+  path: '/clients',
+  getParentRoute: () => ApiMcpRoute,
 } as any)
 const AuthenticatedLeadsIdRoute = AuthenticatedLeadsIdRouteImport.update({
   id: '/leads/$id',
@@ -304,6 +310,7 @@ export interface FileRoutesByFullPath {
   '/magic-create': typeof AuthenticatedMagicCreateRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/settings': typeof AuthenticatedSettingsRoute
+  '/api/mcp': typeof ApiMcpRouteWithChildren
   '/auth/callback': typeof AuthCallbackRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/blog/': typeof BlogIndexRoute
@@ -349,6 +356,7 @@ export interface FileRoutesByTo {
   '/magic-create': typeof AuthenticatedMagicCreateRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/settings': typeof AuthenticatedSettingsRoute
+  '/api/mcp': typeof ApiMcpRouteWithChildren
   '/auth/callback': typeof AuthCallbackRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/blog': typeof BlogIndexRoute
@@ -397,6 +405,7 @@ export interface FileRoutesById {
   '/_authenticated/magic-create': typeof AuthenticatedMagicCreateRoute
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
+  '/api/mcp': typeof ApiMcpRouteWithChildren
   '/auth/callback': typeof AuthCallbackRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/blog/': typeof BlogIndexRoute
@@ -444,6 +453,7 @@ export interface FileRouteTypes {
     | '/magic-create'
     | '/onboarding'
     | '/settings'
+    | '/api/mcp'
     | '/auth/callback'
     | '/blog/$slug'
     | '/blog/'
@@ -489,6 +499,7 @@ export interface FileRouteTypes {
     | '/magic-create'
     | '/onboarding'
     | '/settings'
+    | '/api/mcp'
     | '/auth/callback'
     | '/blog/$slug'
     | '/blog'
@@ -536,6 +547,7 @@ export interface FileRouteTypes {
     | '/_authenticated/magic-create'
     | '/_authenticated/onboarding'
     | '/_authenticated/settings'
+    | '/api/mcp'
     | '/auth/callback'
     | '/blog/$slug'
     | '/blog/'
@@ -576,14 +588,9 @@ export interface RootRouteChildren {
   SignupRoute: typeof SignupRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   TermsRoute: typeof TermsRoute
+  ApiMcpRoute: typeof ApiMcpRouteWithChildren
   BlogSlugRoute: typeof BlogSlugRoute
   BlogIndexRoute: typeof BlogIndexRoute
-  ApiMcpClientsRoute: typeof ApiMcpClientsRoute
-  ApiMcpDocumentsRoute: typeof ApiMcpDocumentsRouteWithChildren
-  ApiMcpKeysRoute: typeof ApiMcpKeysRoute
-  ApiMcpLeadsRoute: typeof ApiMcpLeadsRouteWithChildren
-  ApiMcpProfileRoute: typeof ApiMcpProfileRoute
-  ApiMcpRateBookRoute: typeof ApiMcpRateBookRoute
   ApiPublicWebhooksStripeRoute: typeof ApiPublicWebhooksStripeRoute
 }
 
@@ -701,6 +708,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthCallbackRouteImport
       parentRoute: typeof AuthRoute
     }
+    '/api/mcp': {
+      id: '/api/mcp'
+      path: '/api/mcp'
+      fullPath: '/api/mcp'
+      preLoaderRoute: typeof ApiMcpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/settings': {
       id: '/_authenticated/settings'
       path: '/settings'
@@ -780,45 +794,45 @@ declare module '@tanstack/react-router' {
     }
     '/api/mcp/rate-book': {
       id: '/api/mcp/rate-book'
-      path: '/api/mcp/rate-book'
+      path: '/rate-book'
       fullPath: '/api/mcp/rate-book'
       preLoaderRoute: typeof ApiMcpRateBookRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof ApiMcpRoute
     }
     '/api/mcp/profile': {
       id: '/api/mcp/profile'
-      path: '/api/mcp/profile'
+      path: '/profile'
       fullPath: '/api/mcp/profile'
       preLoaderRoute: typeof ApiMcpProfileRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof ApiMcpRoute
     }
     '/api/mcp/leads': {
       id: '/api/mcp/leads'
-      path: '/api/mcp/leads'
+      path: '/leads'
       fullPath: '/api/mcp/leads'
       preLoaderRoute: typeof ApiMcpLeadsRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof ApiMcpRoute
     }
     '/api/mcp/keys': {
       id: '/api/mcp/keys'
-      path: '/api/mcp/keys'
+      path: '/keys'
       fullPath: '/api/mcp/keys'
       preLoaderRoute: typeof ApiMcpKeysRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof ApiMcpRoute
     }
     '/api/mcp/documents': {
       id: '/api/mcp/documents'
-      path: '/api/mcp/documents'
+      path: '/documents'
       fullPath: '/api/mcp/documents'
       preLoaderRoute: typeof ApiMcpDocumentsRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof ApiMcpRoute
     }
     '/api/mcp/clients': {
       id: '/api/mcp/clients'
-      path: '/api/mcp/clients'
+      path: '/clients'
       fullPath: '/api/mcp/clients'
       preLoaderRoute: typeof ApiMcpClientsRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof ApiMcpRoute
     }
     '/_authenticated/leads/$id': {
       id: '/_authenticated/leads/$id'
@@ -1011,6 +1025,27 @@ const ApiMcpLeadsRouteWithChildren = ApiMcpLeadsRoute._addFileChildren(
   ApiMcpLeadsRouteChildren,
 )
 
+interface ApiMcpRouteChildren {
+  ApiMcpClientsRoute: typeof ApiMcpClientsRoute
+  ApiMcpDocumentsRoute: typeof ApiMcpDocumentsRouteWithChildren
+  ApiMcpKeysRoute: typeof ApiMcpKeysRoute
+  ApiMcpLeadsRoute: typeof ApiMcpLeadsRouteWithChildren
+  ApiMcpProfileRoute: typeof ApiMcpProfileRoute
+  ApiMcpRateBookRoute: typeof ApiMcpRateBookRoute
+}
+
+const ApiMcpRouteChildren: ApiMcpRouteChildren = {
+  ApiMcpClientsRoute: ApiMcpClientsRoute,
+  ApiMcpDocumentsRoute: ApiMcpDocumentsRouteWithChildren,
+  ApiMcpKeysRoute: ApiMcpKeysRoute,
+  ApiMcpLeadsRoute: ApiMcpLeadsRouteWithChildren,
+  ApiMcpProfileRoute: ApiMcpProfileRoute,
+  ApiMcpRateBookRoute: ApiMcpRateBookRoute,
+}
+
+const ApiMcpRouteWithChildren =
+  ApiMcpRoute._addFileChildren(ApiMcpRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
@@ -1025,14 +1060,9 @@ const rootRouteChildren: RootRouteChildren = {
   SignupRoute: SignupRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   TermsRoute: TermsRoute,
+  ApiMcpRoute: ApiMcpRouteWithChildren,
   BlogSlugRoute: BlogSlugRoute,
   BlogIndexRoute: BlogIndexRoute,
-  ApiMcpClientsRoute: ApiMcpClientsRoute,
-  ApiMcpDocumentsRoute: ApiMcpDocumentsRouteWithChildren,
-  ApiMcpKeysRoute: ApiMcpKeysRoute,
-  ApiMcpLeadsRoute: ApiMcpLeadsRouteWithChildren,
-  ApiMcpProfileRoute: ApiMcpProfileRoute,
-  ApiMcpRateBookRoute: ApiMcpRateBookRoute,
   ApiPublicWebhooksStripeRoute: ApiPublicWebhooksStripeRoute,
 }
 export const routeTree = rootRouteImport

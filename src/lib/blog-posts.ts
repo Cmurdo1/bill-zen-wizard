@@ -12,36 +12,44 @@ export type BlogPost = {
 export const BLOG_POSTS: BlogPost[] = [
   {
     slug: "connect-claude-cursor-to-honest-invoice-mcp",
-    title: "Connect Claude & Cursor to Honest Invoice: MCP Setup Guide",
+    title: "Connect Claude, Cursor, OpenClaw & Hermes to Honest Invoice: MCP Setup Guide",
     description:
-      "Step-by-step guide to connecting your AI agents to Honest Invoice via MCP. Let Claude or Cursor create and send estimates automatically — and be the first response your customer sees.",
+      "Step-by-step guide to connecting Claude, Cursor, OpenClaw, Hermes, or another MCP client to Honest Invoice using a secure hosted or local setup.",
     author: "The Honest Invoice Team",
     date: "2026-08-08",
     readingMinutes: 8,
     tags: ["MCP", "AI Agents", "Setup"],
     content: [
       {
-        body: "On an active Pro or Business plan, your AI assistant can create estimates, send invoices, and manage billing from Claude Desktop, Cursor, or any MCP-compatible agent. This guide walks you through setup in under ten minutes. Use a dedicated API key created in Honest Invoice Settings; every request acts only on the account associated with that key.",
+        body: "On an active Pro or Business plan, your AI assistant can create estimates, send invoices, and manage billing from Claude Desktop, Cursor, OpenClaw, Hermes, or another MCP-compatible client. This guide covers a hosted Streamable HTTP connection and a local stdio reference server. Use a dedicated, least-privilege API key created in Honest Invoice Settings; every request acts only on the account associated with that key.",
       },
       {
         heading: "What is MCP?",
-        body: "Model Context Protocol (MCP) is an open standard that lets AI tools like Claude and Cursor connect to external services. Think of it as a USB port for AI — plug in Honest Invoice, and your AI agent can read your client list, create invoices and estimates, send them via email, and even extract line items from a job description. No manual copy-paste. No switching tabs. Just describe what you need and the agent does it.",
+        body: "Model Context Protocol (MCP) is an open standard that lets AI clients such as Claude, Cursor, OpenClaw, and Hermes connect to external services. Honest Invoice supports a hosted Streamable HTTP endpoint for clients that can connect to a remote server, plus a local stdio reference server for clients that launch subprocesses. The available tools are account-scoped, and tool access remains subject to your plan, API-key scopes, rate limits, and your review of any action that sends email or changes records.",
       },
       {
         heading: "Prerequisites",
-        body: "You need a Honest Invoice Pro or Business account, Node.js version 18 or later, and a dedicated API key created in Settings. Free accounts do not have MCP access. Pro and Business accounts can use MCP to create and send estimates on their associated account, with unlimited document volume and AI line-item extraction.",
+        body: "You need a Honest Invoice Pro or Business account and a dedicated API key created in Settings. Node.js 18 or later is required only for the local stdio reference server; the hosted Streamable HTTP option does not require a local checkout or Node.js. Free accounts do not have MCP access. OpenClaw and Hermes are independent third-party products, not affiliated with or endorsed by Honest Invoice, so use their current official documentation and security controls as well.",
       },
       {
         heading: "Step 1: Create a dedicated API key",
         body: "Open Honest Invoice Settings, create a named API key for this agent, and copy the secret when it is shown. The secret is stored as a hash, scoped to your account, and shown only once. Never put a Supabase service-role key or browser session token in an agent configuration.",
       },
       {
-        heading: "Step 2: Configure Claude Desktop",
-        body: "In Claude Desktop, navigate to Settings, then Developer, then MCP Servers. Add a new server named honest-invoice. Set the command to npx and the arguments to tsx,src/mcp-server.ts. Point the working directory to your Honest Invoice project folder. Add HONEST_INVOICE_API_KEY (your dedicated key) and APP_BASE_URL (https://honestinvoice.com). Click Save and confirm the server shows a green connected status. If it shows red, create a replacement key and revoke the old one.",
+        heading: "Step 2: Configure the hosted Streamable HTTP option",
+        body: "For a client that supports remote MCP servers, add a Streamable HTTP server with the URL https://honestinvoice.com/api/mcp and the header Authorization: Bearer <your-dedicated-key>. Use HTTPS only; never put the key in a URL, browser code, screenshots, or logs. The endpoint is stateless and exposes the same account-scoped tools as the local server. Confirm the client can initialize and list tools before allowing it to create, update, or send anything.",
       },
       {
-        heading: "Step 3: Configure Cursor",
-        body: "Open Cursor, go to Settings, then Features, then MCP. Add a new MCP server in JSON format with the name honest-invoice. Use the command npx and the argument tsx with the value src/mcp-server.ts. Under env, set HONEST_INVOICE_API_KEY and APP_BASE_URL. Restart Cursor and check the MCP panel — the Honest Invoice tools should appear and be ready to use.",
+        heading: "Step 3: Configure Claude Desktop and Cursor",
+        body: "Claude Desktop: open Settings → Developer → MCP Servers and add a remote server using the hosted URL and Authorization header above, or use the local stdio reference server with command npx, args tsx and src/mcp-server.ts, APP_BASE_URL=https://honestinvoice.com, and HONEST_INVOICE_API_KEY in the environment. Cursor: open Settings → Features → MCP, add the same URL-based configuration, or use the local JSON config from the MCP setup page. Restart the client and verify the Honest Invoice tools appear. Store secrets in the client or operating system secret store when available.",
+      },
+      {
+        heading: "Step 4: Configure OpenClaw",
+        body: "In the OpenClaw Control UI, open Settings → MCP → Add server and choose Streamable HTTP. Use https://honestinvoice.com/api/mcp, add Authorization: Bearer <your-dedicated-key>, and keep the server enabled only for the agents or sessions that need it. If you prefer config, add the server under mcp.servers in ~/.openclaw/openclaw.json. Run openclaw mcp doctor honest-invoice --probe after saving, then reload or restart the gateway. OpenClaw is a third-party product; review its tool-policy and approval settings before enabling write or send tools.",
+      },
+      {
+        heading: "Step 5: Configure Hermes Agent",
+        body: "Hermes can connect to the hosted endpoint from ~/.hermes/config.yaml. Add an mcp_servers.honest-invoice entry with url: https://honestinvoice.com/api/mcp, headers.Authorization: Bearer <your-dedicated-key>, and enabled: true. Alternatively, use the local stdio entry with command npx, args [tsx, src/mcp-server.ts], APP_BASE_URL, and HONEST_INVOICE_API_KEY. Start with hermes chat and use /reload-mcp after changes. Keep the key in ~/.hermes/.env or another secret store, and use Hermes tool include/exclude controls to limit exposure.",
       },
       {
         heading: "What your AI agent can do",
@@ -64,8 +72,8 @@ export const BLOG_POSTS: BlogPost[] = [
         body: "The process_lead tool and its REST endpoint at /api/mcp/leads/webhook handle the entire pipeline: receive a scraped lead, extract line items with AI, create an estimate, record the response, and email it to the lead. Connect an external scraping service or cron job to POST leads in real-time. On the Business plan, this runs fully automated — your AI agent responds to every lead the moment it appears, with zero human latency. That is how you win jobs before your competition even sees them.",
       },
       {
-        heading: "Troubleshooting",
-        body: "If your MCP server will not connect, verify APP_BASE_URL and that the dedicated API key has not expired or been revoked. If you get permission errors, create a replacement key with the required scopes and confirm the account has an active Pro or Business plan. If tools return empty results, check that you have clients and invoices created in the app first.",
+        heading: "Security, legal, and troubleshooting notes",
+        body: "Use HTTPS and a dedicated key with only the read, write, send, ai, or leads scopes you actually need. Rotate keys periodically and revoke them immediately if a workstation, gateway, workspace, or log may have exposed one. Review tool calls before sending documents or contacting leads. You are responsible for accurate invoice data, tax treatment, customer consent, privacy obligations, email and anti-spam compliance, and the terms of any source platform used for lead collection. Honest Invoice does not provide legal, tax, or compliance advice, and OpenClaw, Hermes, Claude, and Cursor are independent third-party products. If a connection fails, verify the endpoint URL, HTTPS certificate, Authorization header, plan status, key scope, and the client’s transport selection. For local stdio, also verify Node.js and the working directory. Never paste a real secret into support tickets or documentation.",
       },
     ],
   },

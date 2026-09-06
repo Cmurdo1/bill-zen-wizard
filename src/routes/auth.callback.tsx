@@ -7,8 +7,15 @@ import { Logo } from "@/components/marketing/shell";
 const CallbackSearch = z.object({
   code: z.string().optional(),
   error: z.string().optional(),
+  error_code: z.string().optional(),
   error_description: z.string().optional(),
   next: z.string().optional(),
+  access_token: z.string().optional(),
+  refresh_token: z.string().optional(),
+  expires_at: z.string().optional(),
+  expires_in: z.string().optional(),
+  token_type: z.string().optional(),
+  type: z.string().optional(),
 });
 
 export const Route = createFileRoute("/auth/callback")({
@@ -23,7 +30,17 @@ export const Route = createFileRoute("/auth/callback")({
 });
 
 function CallbackPage() {
-  const { code, error, error_description, next } = useSearch({ from: "/auth/callback" });
+  const {
+    code,
+    error,
+    error_code,
+    error_description,
+    next,
+    access_token,
+    refresh_token,
+    expires_at,
+    expires_in,
+  } = useSearch({ from: "/auth/callback" });
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
   const navigate = useNavigate();
@@ -35,13 +52,41 @@ function CallbackPage() {
       setLoading(true);
       try {
         if (error) {
-          throw new Error(error_description ?? error);
+          throw new Error(error_description ?? error_code ?? error);
         }
+
+        // Supabase normally returns a PKCE `code`, but hosted redirects and
+        // older provider configurations can return the implicit-flow tokens.
+        // Handle both shapes so Google sign-in never lands in a false success.
         if (code) {
           const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
           if (exchangeError) throw exchangeError;
+        } else {
+          // Implicit-flow providers return tokens in the URL hash, which is not
+          // included in TanStack Router's validated search params.
+          const hash = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+          const hashAccessToken = hash.get("access_token");
+          const hashRefreshToken = hash.get("refresh_token");
+          const token = access_token ?? hashAccessToken;
+          const refresh = refresh_token ?? hashRefreshToken;
+          if (token && refresh) {
+            const expiresAt = Number(expires_at ?? hash.get("expires_at"));
+            const expiresIn = Number(expires_in ?? hash.get("expires_in"));
+            const { error: sessionError } = await supabase.auth.setSession({
+              access_token: token,
+              refresh_token: refresh,
+              ...(Number.isFinite(expiresAt) ? { expires_at: expiresAt } : {}),
+              ...(Number.isFinite(expiresIn) ? { expires_in: expiresIn } : {}),
+            });
+            if (sessionError) throw sessionError;
+            window.history.replaceState(null, "", `${window.location.pathname}${window.location.search}`);
+          }
         }
-        navigate({ to: dest });
+
+        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError) throw sessionError;
+        if (!sessionData.session) throw new Error("No session was created. Please try again.");
+        await navigate({ to: dest, replace: true });
       } catch (e) {
         const msg = e instanceof Error ? e.message : "Authentication failed";
         setErr(msg);
@@ -50,7 +95,19 @@ function CallbackPage() {
       }
     }
     handleCallback();
-  }, [code, error, error_description, next, navigate, dest]);
+  }, [
+    code,
+    error,
+    error_code,
+    error_description,
+    next,
+    access_token,
+    refresh_token,
+    expires_at,
+    expires_in,
+    navigate,
+    dest,
+  ]);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-hero p-6">

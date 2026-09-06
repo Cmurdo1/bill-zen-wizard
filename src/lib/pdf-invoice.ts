@@ -3,6 +3,7 @@ import autoTable from "jspdf-autotable";
 import { formatCurrency, formatDate } from "./format";
 import type { PrintInvoiceInput } from "./print-invoice";
 import { resolveLogoDataUrl } from "./document-branding";
+import { normalizeInvoiceTemplate } from "./invoice-templates";
 
 export function generateInvoicePdf(inv: PrintInvoiceInput): jsPDF {
   const doc = new jsPDF({ unit: "pt", format: "letter" });
@@ -16,6 +17,7 @@ export function generateInvoicePdf(inv: PrintInvoiceInput): jsPDF {
   const WHITE: [number, number, number] = [255, 255, 255];
 
   const isEstimate = inv.documentType === "estimate";
+  const template = normalizeInvoiceTemplate(inv.invoice_template);
   const docNumber = isEstimate ? inv.estimate_number : inv.invoice_number;
   const docLabel = isEstimate ? "Estimate" : "Invoice";
   const dateLabel = isEstimate ? "Expiry" : "Due";
@@ -26,10 +28,11 @@ export function generateInvoicePdf(inv: PrintInvoiceInput): jsPDF {
   const pw = doc.internal.pageSize.getWidth();
 
   doc.setFillColor(...brandColor);
-  doc.rect(0, 0, pw, 6, "F");
+  const accentHeight = template === "modern" ? 12 : template === "classic" ? 8 : 6;
+  doc.rect(0, 0, pw, accentHeight, "F");
 
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(26);
+  doc.setFontSize(template === "modern" ? 30 : template === "classic" ? 28 : 26);
   doc.setTextColor(...NAVY);
   doc.text(docLabel, M, y + 8);
 
@@ -103,7 +106,11 @@ export function generateInvoicePdf(inv: PrintInvoiceInput): jsPDF {
       formatCurrency(Math.round(i.quantity * i.rate_cents), inv.currency),
     ]),
     styles: { fontSize: 10, cellPadding: 8 },
-    headStyles: { fillColor: brandColor, textColor: WHITE, fontSize: 9 },
+    headStyles: {
+      fillColor: template === "clean" ? [246, 243, 238] : brandColor,
+      textColor: template === "clean" ? MUTED : WHITE,
+      fontSize: 9,
+    },
     columnStyles: {
       1: { halign: "right" },
       2: { halign: "right" },

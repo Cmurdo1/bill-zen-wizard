@@ -68,6 +68,7 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import { INVOICE_TEMPLATES, type InvoiceTemplateId } from "@/lib/invoice-templates";
 
 type Doc = UnifiedEstimate | UnifiedInvoice;
 type Client = { id: string; name: string; email: string | null };
@@ -217,6 +218,7 @@ function DocumentDetailPage() {
           currency: est.currency,
           status: est.status,
           branding_preset_id: est.branding_preset_id,
+          invoice_template: est.invoice_template,
           ...(overrides as Partial<UnifiedEstimate>),
         });
         await replaceEstimateItems(est.id, validItems);
@@ -241,6 +243,7 @@ function DocumentDetailPage() {
           currency: inv.currency,
           status: inv.status,
           branding_preset_id: inv.branding_preset_id,
+          invoice_template: inv.invoice_template,
           ...(overrides as Partial<UnifiedInvoice>),
         });
         await replaceInvoiceItems(inv.id, validItems);
@@ -471,6 +474,7 @@ function DocumentDetailPage() {
         issue_date: convertIssue,
         currency: cur,
         branding_preset_id: est.branding_preset_id,
+        invoice_template: est.invoice_template,
       });
       createdInvoiceId = inv.id;
       await insertInvoiceItems(inv.id, validItems);
@@ -913,6 +917,24 @@ function DocumentDetailPage() {
                   />
                 </Field>
               )}
+              <Field label="Invoice template">
+                <select
+                  value={doc.invoice_template}
+                  onChange={(e) =>
+                    setDoc({
+                      ...doc,
+                      invoice_template: e.target.value as InvoiceTemplateId,
+                    })
+                  }
+                  className="h-10 w-full rounded-lg border border-border bg-background px-3 text-sm"
+                >
+                  {INVOICE_TEMPLATES.map((template) => (
+                    <option key={template.id} value={template.id}>
+                      {template.name}
+                    </option>
+                  ))}
+                </select>
+              </Field>
               <Field label="Brand">
                 <select
                   value={doc.branding_preset_id ?? ""}

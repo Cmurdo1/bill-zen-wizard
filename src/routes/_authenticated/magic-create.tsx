@@ -46,6 +46,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { INVOICE_TEMPLATES, type InvoiceTemplateId } from "@/lib/invoice-templates";
 
 interface UploadedImage {
   file: File;
@@ -93,6 +94,7 @@ function MagicCreatePage() {
   const [selectedClientId, setSelectedClientId] = useState<string>("");
   const [presets, setPresets] = useState<BrandingPreset[]>([]);
   const [selectedPresetId, setSelectedPresetId] = useState<string>("");
+  const [selectedTemplate, setSelectedTemplate] = useState<InvoiceTemplateId>("clean");
   const [extracting, setExtracting] = useState(false);
   const [extractedItems, setExtractedItems] = useState<ExtractedLineItem[] | null>(null);
   const [creating, setCreating] = useState(false);
@@ -280,6 +282,7 @@ function MagicCreatePage() {
         job_description: jobDescription,
         type: type,
         branding_preset_id: selectedPresetId || null,
+        invoice_template: selectedTemplate,
       });
       // createInvoiceRecord returns {id,invoice_number}, createEstimateRecord
       // returns {id,estimate_number} — normalize to a single shape.
@@ -468,6 +471,26 @@ function MagicCreatePage() {
                 </Select>
               </div>
             )}
+
+            {/* Invoice template */}
+            <div className="space-y-2">
+              <Label htmlFor="invoice-template">Invoice template</Label>
+              <Select
+                value={selectedTemplate}
+                onValueChange={(value) => setSelectedTemplate(value as InvoiceTemplateId)}
+              >
+                <SelectTrigger id="invoice-template">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {INVOICE_TEMPLATES.map((template) => (
+                    <SelectItem key={template.id} value={template.id}>
+                      {template.name} — {template.description}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
             {/* Job Description */}
             <div className="space-y-2">

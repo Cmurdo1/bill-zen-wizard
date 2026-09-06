@@ -28,7 +28,7 @@ const FEATURES = [
   {
     icon: Receipt,
     title: "Professional invoices",
-    body: "Clean, branded invoices in under 2 minutes. Attach a payment link automatically.",
+    body: "Clean, branded invoices in under 2 minutes. Payment links attach automatically on Pro and Business.",
   },
   {
     icon: Wand2,
@@ -76,7 +76,7 @@ const STEPS = [
   {
     n: "03",
     title: "Send and get paid",
-    body: "One click send. Payment link included. Cash lands in your bank.",
+    body: "One click send — manual payment recording on Free, email + payment links on Pro and Business. Cash lands in your bank.",
   },
 ];
 
@@ -188,9 +188,16 @@ function HomePage() {
                   <span className="font-display text-3xl text-primary">$2,848.56</span>
                 </div>
               </div>
-              <button className="mt-4 inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg bg-primary text-sm font-semibold text-primary-foreground">
+              <div
+                role="img"
+                aria-label="Sample paid invoice preview"
+                className="mt-4 inline-flex h-10 w-full cursor-not-allowed items-center justify-center gap-2 rounded-lg bg-primary/70 text-sm font-semibold text-primary-foreground"
+              >
                 <Zap className="h-4 w-4" /> Pay with one click
-              </button>
+              </div>
+              <p className="mt-2 text-center text-[11px] uppercase tracking-widest text-muted-foreground/70">
+                Sample preview — not a live invoice
+              </p>
             </div>
             <div className="absolute -right-4 -top-4 hidden rotate-3 rounded-xl border border-border bg-accent px-3 py-2 text-xs font-semibold text-accent-foreground shadow-soft md:block">
               AI generated in 6s

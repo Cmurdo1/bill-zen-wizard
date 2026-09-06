@@ -27,7 +27,9 @@ export default defineConfig(({ command }) => ({
       server: { entry: "server" },
     }),
     viteReact(),
-    // Bundle the server with Nitro, defaulting to the Cloudflare Workers preset.
+    // Bundle the server with Nitro, defaulting to the Cloudflare Pages preset
+    // (emits .output/_worker.js + wrangler.json with pages_build_output_dir;
+    // deploy with `npx wrangler pages deploy .output`).
     // Security headers applied to every response (OWASP Secure Headers Project,
     // NIST SP 800-53 SC-7/SC-8). CSP is shipped report-only first so violations
     // can be observed in the browser console before it is enforced — verify with
@@ -35,7 +37,7 @@ export default defineConfig(({ command }) => ({
     ...(command === "build"
       ? [
           nitro({
-            defaultPreset: "cloudflare-module",
+            defaultPreset: "cloudflare-pages",
             routeRules: {
               "/**": {
                 headers: {

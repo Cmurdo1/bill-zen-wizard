@@ -95,9 +95,12 @@ function PitchPage() {
 
       <Section title="Traction & plan" icon={Users}>
         <ul className="list-disc pl-5 text-sm">
-          <li>Public launch: Q3 2026</li>
+          <li>
+            Public launch: live now (Q3 2026), open self-serve signup with Free, Pro, and Business
+            tiers
+          </li>
           <li>Wedge: HVAC & electrical contractors in the US Southeast</li>
-          <li>Business model: $19.99 Pro / $49.99 Business SaaS with no per payment take rate</li>
+          <li>Business model: $19.99 Pro / $49.99 Business SaaS with no per-payment take rate</li>
           <li>18-month goal: 10,000 paying customers, $2.5M ARR</li>
         </ul>
       </Section>

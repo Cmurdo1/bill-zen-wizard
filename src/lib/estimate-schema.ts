@@ -1,6 +1,11 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { LineItem } from "@/lib/documents";
 import { hasBrandingPresetColumn } from "@/lib/branding-presets";
+import {
+  hasInvoiceTemplateColumn,
+  normalizeInvoiceTemplate,
+  type InvoiceTemplateId,
+} from "@/lib/invoice-templates";
 
 /**
  * On the legacy live database there is no `estimates` table — estimates are
@@ -51,6 +56,7 @@ export type UnifiedEstimate = {
   sent_at: string | null;
   sent_to_email: string | null;
   branding_preset_id: string | null;
+  invoice_template: InvoiceTemplateId;
 };
 
 type RawList = {
@@ -87,6 +93,7 @@ export function mapEstimateRow(row: Record<string, unknown>): UnifiedEstimate {
     sent_at: (row.sent_at as string | null) ?? null,
     sent_to_email: (row.sent_to_email as string | null) ?? null,
     branding_preset_id: (row.branding_preset_id as string | null) ?? null,
+    invoice_template: normalizeInvoiceTemplate(row.invoice_template),
   };
 }
 
@@ -99,7 +106,10 @@ const LIST_COLUMNS_LEGACY =
 async function estimateColumns(legacy: boolean): Promise<string> {
   const base = legacy ? LIST_COLUMNS_LEGACY : LIST_COLUMNS;
   const hasPreset = await hasBrandingPresetColumn();
-  return hasPreset ? `${base},branding_preset_id` : base;
+  const hasTemplate = await hasInvoiceTemplateColumn();
+  return [base, hasPreset ? "branding_preset_id" : "", hasTemplate ? "invoice_template" : ""]
+    .filter(Boolean)
+    .join(",");
 }
 
 export async function fetchEstimateList(): Promise<UnifiedEstimate[]> {
@@ -274,6 +284,7 @@ export async function createEstimateRecord(input: {
   notes?: string | null;
   expiry_date?: string | null;
   branding_preset_id?: string | null;
+  invoice_template?: InvoiceTemplateId;
 }): Promise<{ id: string; estimate_number: string }> {
   const {
     data: { user },
@@ -297,6 +308,9 @@ export async function createEstimateRecord(input: {
   // Only persist the preset once the migration has added the column.
   if (await hasBrandingPresetColumn()) {
     common.branding_preset_id = input.branding_preset_id || null;
+  }
+  if (await hasInvoiceTemplateColumn()) {
+    common.invoice_template = normalizeInvoiceTemplate(input.invoice_template);
   }
   const insert = legacy
     ? {
@@ -359,6 +373,9 @@ export async function updateEstimateRecord(
   if (patch.status !== undefined) common.status = patch.status;
   if (patch.branding_preset_id !== undefined && (await hasBrandingPresetColumn())) {
     common.branding_preset_id = patch.branding_preset_id ?? null;
+  }
+  if (patch.invoice_template !== undefined && (await hasInvoiceTemplateColumn())) {
+    common.invoice_template = normalizeInvoiceTemplate(patch.invoice_template);
   }
   const dbPatch = legacy
     ? {

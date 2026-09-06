@@ -1,5 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { useState } from "react";
+import { Menu, X } from "lucide-react";
+import { Sheet, SheetContent, SheetTrigger, SheetClose } from "@/components/ui/sheet";
 
 function LogoIcon() {
   const [failed, setFailed] = useState(false);
@@ -41,24 +43,28 @@ export function Logo({ className = "" }: { className?: string }) {
   );
 }
 
+const NAV_LINKS = [
+  { to: "/pricing", label: "Pricing" },
+  { to: "/mcp", label: "MCP" },
+  { to: "/blog", label: "Blog" },
+  { to: "/pitch", label: "Investors" },
+] as const;
+
 export function MarketingHeader() {
   return (
     <header className="sticky top-0 z-40 border-b border-border/60 bg-background/80 backdrop-blur">
       <div className="container-page flex h-16 items-center justify-between">
         <Logo />
         <nav className="hidden items-center gap-8 md:flex" aria-label="Primary">
-          <Link to="/pricing" className="text-sm text-muted-foreground hover:text-foreground">
-            Pricing
-          </Link>
-          <Link to="/mcp" className="text-sm text-muted-foreground hover:text-foreground">
-            MCP
-          </Link>
-          <Link to="/blog" className="text-sm text-muted-foreground hover:text-foreground">
-            Blog
-          </Link>
-          <Link to="/pitch" className="text-sm text-muted-foreground hover:text-foreground">
-            Investors
-          </Link>
+          {NAV_LINKS.map((l) => (
+            <Link
+              key={l.to}
+              to={l.to}
+              className="text-sm text-muted-foreground hover:text-foreground"
+            >
+              {l.label}
+            </Link>
+          ))}
         </nav>
         <div className="flex items-center gap-2">
           <Link
@@ -73,6 +79,57 @@ export function MarketingHeader() {
           >
             Start free
           </Link>
+          <Sheet>
+            <SheetTrigger
+              aria-label="Open menu"
+              className="ml-1 inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-surface text-foreground hover:bg-surface-muted md:hidden"
+            >
+              <Menu className="h-5 w-5" />
+            </SheetTrigger>
+            <SheetContent
+              side="right"
+              className="w-full max-w-xs border-l-border bg-background p-0 sm:max-w-sm"
+            >
+              <div className="flex items-center justify-between border-b border-border px-5 py-4">
+                <Logo />
+                <SheetClose
+                  aria-label="Close menu"
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground hover:bg-surface-muted hover:text-foreground"
+                >
+                  <X className="h-5 w-5" />
+                </SheetClose>
+              </div>
+              <nav className="flex flex-col gap-1 px-3 py-4" aria-label="Mobile">
+                {NAV_LINKS.map((l) => (
+                  <SheetClose asChild key={l.to}>
+                    <Link
+                      to={l.to}
+                      className="rounded-lg px-3 py-3 text-base font-medium text-foreground hover:bg-surface-muted"
+                    >
+                      {l.label}
+                    </Link>
+                  </SheetClose>
+                ))}
+                <div className="my-3 border-t border-border" />
+                <SheetClose asChild>
+                  <Link
+                    to="/login"
+                    className="rounded-lg px-3 py-3 text-base font-medium text-foreground hover:bg-surface-muted"
+                  >
+                    Log in
+                  </Link>
+                </SheetClose>
+                <SheetClose asChild>
+                  <Link
+                    to="/signup"
+                    className="mt-1 inline-flex h-11 items-center justify-center rounded-xl bg-primary text-sm font-semibold text-primary-foreground"
+                  >
+                    Start free
+                  </Link>
+                </SheetClose>
+              </nav>
+            </SheetContent>
+          </Sheet>
         </div>
       </div>
     </header>

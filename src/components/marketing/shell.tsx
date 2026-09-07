@@ -175,11 +175,31 @@ export function MarketingFooter() {
                 Pay an invoice
               </Link>
             </li>
-            <li><Link to="/invoice-software-for-contractors" className="hover:text-foreground">Contractor invoice software</Link></li>
-            <li><Link to="/invoice-software-for-freelancers" className="hover:text-foreground">Freelancer invoice software</Link></li>
-            <li><Link to="/invoice-software-for-small-business" className="hover:text-foreground">Small business invoicing</Link></li>
-            <li><Link to="/free-invoice-generator" className="hover:text-foreground">Free invoice generator</Link></li>
-            <li><Link to="/free-estimate-generator" className="hover:text-foreground">Free estimate generator</Link></li>
+            <li>
+              <Link to="/invoice-software-for-contractors" className="hover:text-foreground">
+                Contractor invoice software
+              </Link>
+            </li>
+            <li>
+              <Link to="/invoice-software-for-freelancers" className="hover:text-foreground">
+                Freelancer invoice software
+              </Link>
+            </li>
+            <li>
+              <Link to="/invoice-software-for-small-business" className="hover:text-foreground">
+                Small business invoicing
+              </Link>
+            </li>
+            <li>
+              <Link to="/free-invoice-generator" className="hover:text-foreground">
+                Free invoice generator
+              </Link>
+            </li>
+            <li>
+              <Link to="/free-estimate-generator" className="hover:text-foreground">
+                Free estimate generator
+              </Link>
+            </li>
           </ul>
         </div>
         <div>

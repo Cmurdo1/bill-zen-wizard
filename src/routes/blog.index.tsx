@@ -12,7 +12,10 @@ export const Route = createFileRoute("/blog/")({
         content:
           "Practical writing on invoicing, cash flow, and getting paid for contractors, freelancers, and service businesses.",
       },
-      { property: "og:title", content: "Honest Invoice Blog | Invoicing Tips for Contractors & Freelancers" },
+      {
+        property: "og:title",
+        content: "Honest Invoice Blog | Invoicing Tips for Contractors & Freelancers",
+      },
       { property: "og:url", content: "https://honestinvoice.com/blog" },
     ],
     links: [{ rel: "canonical", href: "https://honestinvoice.com/blog" }],

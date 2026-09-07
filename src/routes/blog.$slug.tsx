@@ -44,7 +44,11 @@ export const Route = createFileRoute("/blog/$slug")({
             description: post.description,
             datePublished: post.date,
             author: { "@type": "Organization", name: post.author },
-            publisher: { "@type": "Organization", name: "Honest Invoice", url: "https://honestinvoice.com" },
+            publisher: {
+              "@type": "Organization",
+              name: "Honest Invoice",
+              url: "https://honestinvoice.com",
+            },
           }),
         },
       ],

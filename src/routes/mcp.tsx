@@ -33,7 +33,10 @@ export const Route = createFileRoute("/mcp")({
       { name: "robots", content: "index, follow, max-image-preview:large" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:title", content: "MCP — AI Agent Access — Honest Invoice" },
-      { name: "twitter:description", content: "Honest Invoice — simple, transparent invoicing for service businesses." },
+      {
+        name: "twitter:description",
+        content: "Honest Invoice — simple, transparent invoicing for service businesses.",
+      },
     ],
     links: [{ rel: "canonical", href: "https://honestinvoice.com/mcp" }],
   }),

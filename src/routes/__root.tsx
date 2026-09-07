@@ -23,8 +23,15 @@ function NotFoundComponent() {
       <div className="max-w-md text-center">
         <p className="text-sm font-semibold uppercase tracking-widest text-muted-foreground">404</p>
         <h1 className="mt-2 text-3xl font-semibold text-foreground">Page not found</h1>
-        <p className="mt-3 text-sm text-muted-foreground">We couldn't find that page. It may have moved or never existed.</p>
-        <Link to="/" className="mt-6 inline-flex h-10 items-center justify-center rounded-lg bg-primary px-5 text-sm font-medium text-primary-foreground transition-colors hover:opacity-90">Back home</Link>
+        <p className="mt-3 text-sm text-muted-foreground">
+          We couldn't find that page. It may have moved or never existed.
+        </p>
+        <Link
+          to="/"
+          className="mt-6 inline-flex h-10 items-center justify-center rounded-lg bg-primary px-5 text-sm font-medium text-primary-foreground transition-colors hover:opacity-90"
+        >
+          Back home
+        </Link>
       </div>
     </div>
   );
@@ -37,10 +44,25 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
         <h1 className="text-xl font-semibold text-foreground">Something went wrong</h1>
-        <p className="mt-2 text-sm text-muted-foreground">We hit an unexpected error. You can retry or head back home.</p>
+        <p className="mt-2 text-sm text-muted-foreground">
+          We hit an unexpected error. You can retry or head back home.
+        </p>
         <div className="mt-6 flex flex-wrap justify-center gap-2">
-          <button onClick={() => { router.invalidate(); reset(); }} className="inline-flex h-10 items-center justify-center rounded-lg bg-primary px-5 text-sm font-medium text-primary-foreground">Try again</button>
-          <a href="/" className="inline-flex h-10 items-center justify-center rounded-lg border border-border bg-surface px-5 text-sm font-medium text-foreground hover:bg-surface-muted">Go home</a>
+          <button
+            onClick={() => {
+              router.invalidate();
+              reset();
+            }}
+            className="inline-flex h-10 items-center justify-center rounded-lg bg-primary px-5 text-sm font-medium text-primary-foreground"
+          >
+            Try again
+          </button>
+          <a
+            href="/"
+            className="inline-flex h-10 items-center justify-center rounded-lg border border-border bg-surface px-5 text-sm font-medium text-foreground hover:bg-surface-muted"
+          >
+            Go home
+          </a>
         </div>
       </div>
     </div>
@@ -74,15 +96,44 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "apple-touch-icon", href: "/favicon.ico" },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
-      { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap" },
+      {
+        rel: "stylesheet",
+        href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap",
+      },
     ],
     scripts: [
       {
         type: "application/ld+json",
         children: JSON.stringify([
-          { "@context": "https://schema.org", "@type": "Organization", name: "Honest Invoice", url: SITE_URL, description: SITE_DESCRIPTION },
-          { "@context": "https://schema.org", "@type": "WebSite", name: "Honest Invoice", url: SITE_URL, description: SITE_DESCRIPTION },
-          { "@context": "https://schema.org", "@type": "SoftwareApplication", name: "Honest Invoice", url: SITE_URL, applicationCategory: "BusinessApplication", operatingSystem: "Web", description: SITE_DESCRIPTION, offers: { "@type": "Offer", price: "0", priceCurrency: "USD", url: `${SITE_URL}/pricing` } },
+          {
+            "@context": "https://schema.org",
+            "@type": "Organization",
+            name: "Honest Invoice",
+            url: SITE_URL,
+            description: SITE_DESCRIPTION,
+          },
+          {
+            "@context": "https://schema.org",
+            "@type": "WebSite",
+            name: "Honest Invoice",
+            url: SITE_URL,
+            description: SITE_DESCRIPTION,
+          },
+          {
+            "@context": "https://schema.org",
+            "@type": "SoftwareApplication",
+            name: "Honest Invoice",
+            url: SITE_URL,
+            applicationCategory: "BusinessApplication",
+            operatingSystem: "Web",
+            description: SITE_DESCRIPTION,
+            offers: {
+              "@type": "Offer",
+              price: "0",
+              priceCurrency: "USD",
+              url: `${SITE_URL}/pricing`,
+            },
+          },
         ]),
       },
     ],
@@ -94,7 +145,17 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 });
 
 function RootShell({ children }: { children: ReactNode }) {
-  return <html lang="en"><head><HeadContent /></head><body>{children}<Scripts /></body></html>;
+  return (
+    <html lang="en">
+      <head>
+        <HeadContent />
+      </head>
+      <body>
+        {children}
+        <Scripts />
+      </body>
+    </html>
+  );
 }
 
 function RootComponent() {
@@ -108,5 +169,9 @@ function RootComponent() {
     });
     return () => sub.subscription.unsubscribe();
   }, [queryClient, router]);
-  return <QueryClientProvider client={queryClient}><Outlet /></QueryClientProvider>;
+  return (
+    <QueryClientProvider client={queryClient}>
+      <Outlet />
+    </QueryClientProvider>
+  );
 }

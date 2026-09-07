@@ -5,13 +5,13 @@ import { ArrowRight, TrendingUp, Target, Users, Sparkles, Bot } from "lucide-rea
 export const Route = createFileRoute("/pitch")({
   head: () => ({
     meta: [
-      { title: "Investor Pitch — Honest Invoice" },
+      { title: "Investor Pitch | Honest Invoice" },
       {
         name: "description",
         content:
           "Honest Invoice is rebuilding invoicing for the 30 million service businesses that still get paid on paper.",
       },
-      { property: "og:title", content: "Investor Pitch — Honest Invoice" },
+      { property: "og:title", content: "Investor Pitch | Honest Invoice" },
       { property: "og:url", content: "https://honestinvoice.com/pitch" },
     ],
     links: [{ rel: "canonical", href: "https://honestinvoice.com/pitch" }],

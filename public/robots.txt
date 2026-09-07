@@ -1,11 +1,15 @@
 User-agent: *
 Allow: /
 Disallow: /auth
+Disallow: /login
+Disallow: /signup
 Disallow: /dashboard
 Disallow: /clients
 Disallow: /documents
-Disallow: /leads
 Disallow: /settings
-Disallow: /api
+Disallow: /onboarding
+Disallow: /magic-create
+Disallow: /import-data
+Disallow: /api/
 
 Sitemap: https://honestinvoice.com/sitemap.xml

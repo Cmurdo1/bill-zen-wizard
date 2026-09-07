@@ -12,7 +12,6 @@ export const Route = createFileRoute("/pay-invoice")({
       },
       { property: "og:title", content: "Pay an invoice — Honest Invoice" },
       { property: "og:url", content: "https://honestinvoice.com/pay-invoice" },
-      { name: "robots", content: "noindex, nofollow" },
     ],
     links: [{ rel: "canonical", href: "https://honestinvoice.com/pay-invoice" }],
   }),

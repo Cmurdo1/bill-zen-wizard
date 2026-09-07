@@ -27,9 +27,11 @@ export default defineConfig(({ command }) => ({
       server: { entry: "server" },
     }),
     viteReact(),
-    // Bundle the server with Nitro, defaulting to the Cloudflare Pages preset
-    // (emits .output/_worker.js + wrangler.json with pages_build_output_dir;
-    // deploy with `npx wrangler pages deploy .output`).
+    // Bundle the server with Nitro, defaulting to the Cloudflare Workers preset
+    // (emits .output/server/wrangler.json + public assets; deploy with
+    // `npx wrangler deploy`). The honestinvoice.com custom domain is bound to
+    // the Worker script cmurdo1-bill-zen-wizard, so deploys must target the
+    // Workers API rather than a Pages project.
     // Security headers applied to every response (OWASP Secure Headers Project,
     // NIST SP 800-53 SC-7/SC-8). CSP is shipped report-only first so violations
     // can be observed in the browser console before it is enforced — verify with
@@ -37,7 +39,7 @@ export default defineConfig(({ command }) => ({
     ...(command === "build"
       ? [
           nitro({
-            defaultPreset: "cloudflare-pages",
+            defaultPreset: "cloudflare-module",
             routeRules: {
               "/**": {
                 headers: {

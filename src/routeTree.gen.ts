@@ -18,11 +18,22 @@ import { Route as PitchRouteImport } from './routes/pitch'
 import { Route as PayInvoiceRouteImport } from './routes/pay-invoice'
 import { Route as McpRouteImport } from './routes/mcp'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as InvoiceSoftwareForSmallBusinessRouteImport } from './routes/invoice-software-for-small-business'
+import { Route as InvoiceSoftwareForFreelancersRouteImport } from './routes/invoice-software-for-freelancers'
+import { Route as InvoiceSoftwareForContractorsRouteImport } from './routes/invoice-software-for-contractors'
 import { Route as InvestorsRouteImport } from './routes/investors'
+import { Route as FreeInvoiceGeneratorRouteImport } from './routes/free-invoice-generator'
+import { Route as FreeEstimateGeneratorRouteImport } from './routes/free-estimate-generator'
+import { Route as ContractorInvoiceGeneratorRouteImport } from './routes/contractor-invoice-generator'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as BlogIndexRouteImport } from './routes/blog.index'
+import { Route as InvoiceSoftwarePlumbersRouteImport } from './routes/invoice-software/plumbers'
+import { Route as InvoiceSoftwareLandscapersRouteImport } from './routes/invoice-software/landscapers'
+import { Route as InvoiceSoftwareHvacRouteImport } from './routes/invoice-software/hvac'
+import { Route as InvoiceSoftwareElectriciansRouteImport } from './routes/invoice-software/electricians'
+import { Route as InvoiceSoftwareCleanersRouteImport } from './routes/invoice-software/cleaners'
 import { Route as BlogSlugRouteImport } from './routes/blog.$slug'
 import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as ApiMcpRouteImport } from './routes/api/mcp'
@@ -101,11 +112,45 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const InvoiceSoftwareForSmallBusinessRoute =
+  InvoiceSoftwareForSmallBusinessRouteImport.update({
+    id: '/invoice-software-for-small-business',
+    path: '/invoice-software-for-small-business',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const InvoiceSoftwareForFreelancersRoute =
+  InvoiceSoftwareForFreelancersRouteImport.update({
+    id: '/invoice-software-for-freelancers',
+    path: '/invoice-software-for-freelancers',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const InvoiceSoftwareForContractorsRoute =
+  InvoiceSoftwareForContractorsRouteImport.update({
+    id: '/invoice-software-for-contractors',
+    path: '/invoice-software-for-contractors',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const InvestorsRoute = InvestorsRouteImport.update({
   id: '/investors',
   path: '/investors',
   getParentRoute: () => rootRouteImport,
 } as any)
+const FreeInvoiceGeneratorRoute = FreeInvoiceGeneratorRouteImport.update({
+  id: '/free-invoice-generator',
+  path: '/free-invoice-generator',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FreeEstimateGeneratorRoute = FreeEstimateGeneratorRouteImport.update({
+  id: '/free-estimate-generator',
+  path: '/free-estimate-generator',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ContractorInvoiceGeneratorRoute =
+  ContractorInvoiceGeneratorRouteImport.update({
+    id: '/contractor-invoice-generator',
+    path: '/contractor-invoice-generator',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
@@ -123,6 +168,33 @@ const IndexRoute = IndexRouteImport.update({
 const BlogIndexRoute = BlogIndexRouteImport.update({
   id: '/blog/',
   path: '/blog/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InvoiceSoftwarePlumbersRoute = InvoiceSoftwarePlumbersRouteImport.update({
+  id: '/invoice-software/plumbers',
+  path: '/invoice-software/plumbers',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InvoiceSoftwareLandscapersRoute =
+  InvoiceSoftwareLandscapersRouteImport.update({
+    id: '/invoice-software/landscapers',
+    path: '/invoice-software/landscapers',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const InvoiceSoftwareHvacRoute = InvoiceSoftwareHvacRouteImport.update({
+  id: '/invoice-software/hvac',
+  path: '/invoice-software/hvac',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InvoiceSoftwareElectriciansRoute =
+  InvoiceSoftwareElectriciansRouteImport.update({
+    id: '/invoice-software/electricians',
+    path: '/invoice-software/electricians',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const InvoiceSoftwareCleanersRoute = InvoiceSoftwareCleanersRouteImport.update({
+  id: '/invoice-software/cleaners',
+  path: '/invoice-software/cleaners',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BlogSlugRoute = BlogSlugRouteImport.update({
@@ -293,7 +365,13 @@ const ApiMcpDocumentsActivityRoute = ApiMcpDocumentsActivityRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRouteWithChildren
+  '/contractor-invoice-generator': typeof ContractorInvoiceGeneratorRoute
+  '/free-estimate-generator': typeof FreeEstimateGeneratorRoute
+  '/free-invoice-generator': typeof FreeInvoiceGeneratorRoute
   '/investors': typeof InvestorsRoute
+  '/invoice-software-for-contractors': typeof InvoiceSoftwareForContractorsRoute
+  '/invoice-software-for-freelancers': typeof InvoiceSoftwareForFreelancersRoute
+  '/invoice-software-for-small-business': typeof InvoiceSoftwareForSmallBusinessRoute
   '/login': typeof LoginRoute
   '/mcp': typeof McpRoute
   '/pay-invoice': typeof PayInvoiceRoute
@@ -313,6 +391,11 @@ export interface FileRoutesByFullPath {
   '/api/mcp': typeof ApiMcpRouteWithChildren
   '/auth/callback': typeof AuthCallbackRoute
   '/blog/$slug': typeof BlogSlugRoute
+  '/invoice-software/cleaners': typeof InvoiceSoftwareCleanersRoute
+  '/invoice-software/electricians': typeof InvoiceSoftwareElectriciansRoute
+  '/invoice-software/hvac': typeof InvoiceSoftwareHvacRoute
+  '/invoice-software/landscapers': typeof InvoiceSoftwareLandscapersRoute
+  '/invoice-software/plumbers': typeof InvoiceSoftwarePlumbersRoute
   '/blog/': typeof BlogIndexRoute
   '/admin': typeof AuthenticatedAdminAdminRoute
   '/documents/$id': typeof AuthenticatedDocumentsIdRoute
@@ -339,7 +422,13 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRouteWithChildren
+  '/contractor-invoice-generator': typeof ContractorInvoiceGeneratorRoute
+  '/free-estimate-generator': typeof FreeEstimateGeneratorRoute
+  '/free-invoice-generator': typeof FreeInvoiceGeneratorRoute
   '/investors': typeof InvestorsRoute
+  '/invoice-software-for-contractors': typeof InvoiceSoftwareForContractorsRoute
+  '/invoice-software-for-freelancers': typeof InvoiceSoftwareForFreelancersRoute
+  '/invoice-software-for-small-business': typeof InvoiceSoftwareForSmallBusinessRoute
   '/login': typeof LoginRoute
   '/mcp': typeof McpRoute
   '/pay-invoice': typeof PayInvoiceRoute
@@ -359,6 +448,11 @@ export interface FileRoutesByTo {
   '/api/mcp': typeof ApiMcpRouteWithChildren
   '/auth/callback': typeof AuthCallbackRoute
   '/blog/$slug': typeof BlogSlugRoute
+  '/invoice-software/cleaners': typeof InvoiceSoftwareCleanersRoute
+  '/invoice-software/electricians': typeof InvoiceSoftwareElectriciansRoute
+  '/invoice-software/hvac': typeof InvoiceSoftwareHvacRoute
+  '/invoice-software/landscapers': typeof InvoiceSoftwareLandscapersRoute
+  '/invoice-software/plumbers': typeof InvoiceSoftwarePlumbersRoute
   '/blog': typeof BlogIndexRoute
   '/admin': typeof AuthenticatedAdminAdminRoute
   '/documents/$id': typeof AuthenticatedDocumentsIdRoute
@@ -387,7 +481,13 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRouteWithChildren
+  '/contractor-invoice-generator': typeof ContractorInvoiceGeneratorRoute
+  '/free-estimate-generator': typeof FreeEstimateGeneratorRoute
+  '/free-invoice-generator': typeof FreeInvoiceGeneratorRoute
   '/investors': typeof InvestorsRoute
+  '/invoice-software-for-contractors': typeof InvoiceSoftwareForContractorsRoute
+  '/invoice-software-for-freelancers': typeof InvoiceSoftwareForFreelancersRoute
+  '/invoice-software-for-small-business': typeof InvoiceSoftwareForSmallBusinessRoute
   '/login': typeof LoginRoute
   '/mcp': typeof McpRoute
   '/pay-invoice': typeof PayInvoiceRoute
@@ -408,6 +508,11 @@ export interface FileRoutesById {
   '/api/mcp': typeof ApiMcpRouteWithChildren
   '/auth/callback': typeof AuthCallbackRoute
   '/blog/$slug': typeof BlogSlugRoute
+  '/invoice-software/cleaners': typeof InvoiceSoftwareCleanersRoute
+  '/invoice-software/electricians': typeof InvoiceSoftwareElectriciansRoute
+  '/invoice-software/hvac': typeof InvoiceSoftwareHvacRoute
+  '/invoice-software/landscapers': typeof InvoiceSoftwareLandscapersRoute
+  '/invoice-software/plumbers': typeof InvoiceSoftwarePlumbersRoute
   '/blog/': typeof BlogIndexRoute
   '/_authenticated/_admin/admin': typeof AuthenticatedAdminAdminRoute
   '/_authenticated/documents/$id': typeof AuthenticatedDocumentsIdRoute
@@ -436,7 +541,13 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/contractor-invoice-generator'
+    | '/free-estimate-generator'
+    | '/free-invoice-generator'
     | '/investors'
+    | '/invoice-software-for-contractors'
+    | '/invoice-software-for-freelancers'
+    | '/invoice-software-for-small-business'
     | '/login'
     | '/mcp'
     | '/pay-invoice'
@@ -456,6 +567,11 @@ export interface FileRouteTypes {
     | '/api/mcp'
     | '/auth/callback'
     | '/blog/$slug'
+    | '/invoice-software/cleaners'
+    | '/invoice-software/electricians'
+    | '/invoice-software/hvac'
+    | '/invoice-software/landscapers'
+    | '/invoice-software/plumbers'
     | '/blog/'
     | '/admin'
     | '/documents/$id'
@@ -482,7 +598,13 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/contractor-invoice-generator'
+    | '/free-estimate-generator'
+    | '/free-invoice-generator'
     | '/investors'
+    | '/invoice-software-for-contractors'
+    | '/invoice-software-for-freelancers'
+    | '/invoice-software-for-small-business'
     | '/login'
     | '/mcp'
     | '/pay-invoice'
@@ -502,6 +624,11 @@ export interface FileRouteTypes {
     | '/api/mcp'
     | '/auth/callback'
     | '/blog/$slug'
+    | '/invoice-software/cleaners'
+    | '/invoice-software/electricians'
+    | '/invoice-software/hvac'
+    | '/invoice-software/landscapers'
+    | '/invoice-software/plumbers'
     | '/blog'
     | '/admin'
     | '/documents/$id'
@@ -529,7 +656,13 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/contractor-invoice-generator'
+    | '/free-estimate-generator'
+    | '/free-invoice-generator'
     | '/investors'
+    | '/invoice-software-for-contractors'
+    | '/invoice-software-for-freelancers'
+    | '/invoice-software-for-small-business'
     | '/login'
     | '/mcp'
     | '/pay-invoice'
@@ -550,6 +683,11 @@ export interface FileRouteTypes {
     | '/api/mcp'
     | '/auth/callback'
     | '/blog/$slug'
+    | '/invoice-software/cleaners'
+    | '/invoice-software/electricians'
+    | '/invoice-software/hvac'
+    | '/invoice-software/landscapers'
+    | '/invoice-software/plumbers'
     | '/blog/'
     | '/_authenticated/_admin/admin'
     | '/_authenticated/documents/$id'
@@ -578,7 +716,13 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRouteWithChildren
+  ContractorInvoiceGeneratorRoute: typeof ContractorInvoiceGeneratorRoute
+  FreeEstimateGeneratorRoute: typeof FreeEstimateGeneratorRoute
+  FreeInvoiceGeneratorRoute: typeof FreeInvoiceGeneratorRoute
   InvestorsRoute: typeof InvestorsRoute
+  InvoiceSoftwareForContractorsRoute: typeof InvoiceSoftwareForContractorsRoute
+  InvoiceSoftwareForFreelancersRoute: typeof InvoiceSoftwareForFreelancersRoute
+  InvoiceSoftwareForSmallBusinessRoute: typeof InvoiceSoftwareForSmallBusinessRoute
   LoginRoute: typeof LoginRoute
   McpRoute: typeof McpRoute
   PayInvoiceRoute: typeof PayInvoiceRoute
@@ -590,6 +734,11 @@ export interface RootRouteChildren {
   TermsRoute: typeof TermsRoute
   ApiMcpRoute: typeof ApiMcpRouteWithChildren
   BlogSlugRoute: typeof BlogSlugRoute
+  InvoiceSoftwareCleanersRoute: typeof InvoiceSoftwareCleanersRoute
+  InvoiceSoftwareElectriciansRoute: typeof InvoiceSoftwareElectriciansRoute
+  InvoiceSoftwareHvacRoute: typeof InvoiceSoftwareHvacRoute
+  InvoiceSoftwareLandscapersRoute: typeof InvoiceSoftwareLandscapersRoute
+  InvoiceSoftwarePlumbersRoute: typeof InvoiceSoftwarePlumbersRoute
   BlogIndexRoute: typeof BlogIndexRoute
   ApiPublicWebhooksStripeRoute: typeof ApiPublicWebhooksStripeRoute
 }
@@ -659,11 +808,53 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/invoice-software-for-small-business': {
+      id: '/invoice-software-for-small-business'
+      path: '/invoice-software-for-small-business'
+      fullPath: '/invoice-software-for-small-business'
+      preLoaderRoute: typeof InvoiceSoftwareForSmallBusinessRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/invoice-software-for-freelancers': {
+      id: '/invoice-software-for-freelancers'
+      path: '/invoice-software-for-freelancers'
+      fullPath: '/invoice-software-for-freelancers'
+      preLoaderRoute: typeof InvoiceSoftwareForFreelancersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/invoice-software-for-contractors': {
+      id: '/invoice-software-for-contractors'
+      path: '/invoice-software-for-contractors'
+      fullPath: '/invoice-software-for-contractors'
+      preLoaderRoute: typeof InvoiceSoftwareForContractorsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/investors': {
       id: '/investors'
       path: '/investors'
       fullPath: '/investors'
       preLoaderRoute: typeof InvestorsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/free-invoice-generator': {
+      id: '/free-invoice-generator'
+      path: '/free-invoice-generator'
+      fullPath: '/free-invoice-generator'
+      preLoaderRoute: typeof FreeInvoiceGeneratorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/free-estimate-generator': {
+      id: '/free-estimate-generator'
+      path: '/free-estimate-generator'
+      fullPath: '/free-estimate-generator'
+      preLoaderRoute: typeof FreeEstimateGeneratorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/contractor-invoice-generator': {
+      id: '/contractor-invoice-generator'
+      path: '/contractor-invoice-generator'
+      fullPath: '/contractor-invoice-generator'
+      preLoaderRoute: typeof ContractorInvoiceGeneratorRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -692,6 +883,41 @@ declare module '@tanstack/react-router' {
       path: '/blog'
       fullPath: '/blog/'
       preLoaderRoute: typeof BlogIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/invoice-software/plumbers': {
+      id: '/invoice-software/plumbers'
+      path: '/invoice-software/plumbers'
+      fullPath: '/invoice-software/plumbers'
+      preLoaderRoute: typeof InvoiceSoftwarePlumbersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/invoice-software/landscapers': {
+      id: '/invoice-software/landscapers'
+      path: '/invoice-software/landscapers'
+      fullPath: '/invoice-software/landscapers'
+      preLoaderRoute: typeof InvoiceSoftwareLandscapersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/invoice-software/hvac': {
+      id: '/invoice-software/hvac'
+      path: '/invoice-software/hvac'
+      fullPath: '/invoice-software/hvac'
+      preLoaderRoute: typeof InvoiceSoftwareHvacRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/invoice-software/electricians': {
+      id: '/invoice-software/electricians'
+      path: '/invoice-software/electricians'
+      fullPath: '/invoice-software/electricians'
+      preLoaderRoute: typeof InvoiceSoftwareElectriciansRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/invoice-software/cleaners': {
+      id: '/invoice-software/cleaners'
+      path: '/invoice-software/cleaners'
+      fullPath: '/invoice-software/cleaners'
+      preLoaderRoute: typeof InvoiceSoftwareCleanersRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/blog/$slug': {
@@ -1050,7 +1276,13 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRouteWithChildren,
+  ContractorInvoiceGeneratorRoute: ContractorInvoiceGeneratorRoute,
+  FreeEstimateGeneratorRoute: FreeEstimateGeneratorRoute,
+  FreeInvoiceGeneratorRoute: FreeInvoiceGeneratorRoute,
   InvestorsRoute: InvestorsRoute,
+  InvoiceSoftwareForContractorsRoute: InvoiceSoftwareForContractorsRoute,
+  InvoiceSoftwareForFreelancersRoute: InvoiceSoftwareForFreelancersRoute,
+  InvoiceSoftwareForSmallBusinessRoute: InvoiceSoftwareForSmallBusinessRoute,
   LoginRoute: LoginRoute,
   McpRoute: McpRoute,
   PayInvoiceRoute: PayInvoiceRoute,
@@ -1062,6 +1294,11 @@ const rootRouteChildren: RootRouteChildren = {
   TermsRoute: TermsRoute,
   ApiMcpRoute: ApiMcpRouteWithChildren,
   BlogSlugRoute: BlogSlugRoute,
+  InvoiceSoftwareCleanersRoute: InvoiceSoftwareCleanersRoute,
+  InvoiceSoftwareElectriciansRoute: InvoiceSoftwareElectriciansRoute,
+  InvoiceSoftwareHvacRoute: InvoiceSoftwareHvacRoute,
+  InvoiceSoftwareLandscapersRoute: InvoiceSoftwareLandscapersRoute,
+  InvoiceSoftwarePlumbersRoute: InvoiceSoftwarePlumbersRoute,
   BlogIndexRoute: BlogIndexRoute,
   ApiPublicWebhooksStripeRoute: ApiPublicWebhooksStripeRoute,
 }

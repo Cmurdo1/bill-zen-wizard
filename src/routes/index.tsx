@@ -18,8 +18,24 @@ import {
 
 export const Route = createFileRoute("/")({
   head: () => ({
-    meta: [{ property: "og:url", content: "https://honestinvoice.com/" }],
+    meta: [
+      { title: "AI Invoice Software for Contractors & Freelancers | Honest Invoice" },
+      { name: "description", content: "Create estimates and professional invoices faster. Describe the job, let AI draft labor and material line items, then send and get paid online." },
+      { name: "robots", content: "index, follow, max-image-preview:large" },
+      { property: "og:site_name", content: "Honest Invoice" },
+      { property: "og:title", content: "AI Invoice Software for Contractors & Freelancers | Honest Invoice" },
+      { property: "og:description", content: "Describe the job. Review AI-generated line items. Send the invoice and get paid." },
+      { property: "og:type", content: "website" },
+      { property: "og:url", content: "https://honestinvoice.com/" },
+      { property: "og:locale", content: "en_US" },
+      { name: "twitter:card", content: "summary" },
+      { name: "twitter:title", content: "AI Invoice Software for Contractors & Freelancers" },
+      { name: "twitter:description", content: "AI-assisted estimates and invoicing for contractors, freelancers, and service businesses." },
+    ],
     links: [{ rel: "canonical", href: "https://honestinvoice.com/" }],
+    scripts: [{ type: "application/ld+json", children: JSON.stringify({
+      "@context": "https://schema.org", "@type": "FAQPage", mainEntity: FAQS.map((f) => ({ "@type": "Question", name: f.q, acceptedAnswer: { "@type": "Answer", text: f.a } })),
+    }) }],
   }),
   component: HomePage,
 });
@@ -81,16 +97,16 @@ const STEPS = [
 ];
 
 const AUDIENCES = [
-  "Freelancers",
-  "Consultants",
-  "HVAC contractors",
-  "Electricians",
-  "Plumbers",
-  "Landscapers",
-  "Cleaners",
-  "Photographers",
-  "Agencies",
-  "Bookkeepers",
+  { label: "Contractors", to: "/invoice-software-for-contractors" },
+  { label: "Freelancers", to: "/invoice-software-for-freelancers" },
+  { label: "Small businesses", to: "/invoice-software-for-small-business" },
+  { label: "HVAC contractors", to: "/invoice-software/hvac" },
+  { label: "Electricians", to: "/invoice-software/electricians" },
+  { label: "Plumbers", to: "/invoice-software/plumbers" },
+  { label: "Landscapers", to: "/invoice-software/landscapers" },
+  { label: "Cleaners", to: "/invoice-software/cleaners" },
+  { label: "Photographers", to: "/invoice-software-for-freelancers" },
+  { label: "Consultants", to: "/invoice-software-for-freelancers" },
 ];
 
 const FAQS = [
@@ -128,14 +144,12 @@ function HomePage() {
               work
             </span>
             <h1 className="mt-5 text-balance font-display text-5xl leading-[1.05] tracking-tight text-foreground sm:text-6xl lg:text-7xl">
-              Get paid faster.
+              Describe the job.
               <br />
-              <span className="italic text-primary">Honestly.</span>
+              <span className="italic text-primary">Send the invoice.</span>
             </h1>
             <p className="mt-5 max-w-xl text-pretty text-lg text-muted-foreground">
-              Honest Invoice is the modern invoicing platform for contractors, freelancers, and
-              service businesses. Create professional invoices, send estimates, and get paid online,
-              while AI handles the busywork.
+              AI-powered invoicing for contractors, freelancers, and service businesses. Describe the job in plain English, let AI draft the labor and material line items, review the estimate or invoice, and send it to your client.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link
@@ -202,6 +216,24 @@ function HomePage() {
             <div className="absolute -right-4 -top-4 hidden rotate-3 rounded-xl border border-border bg-accent px-3 py-2 text-xs font-semibold text-accent-foreground shadow-soft md:block">
               AI generated in 6s
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* POSITIONING */}
+      <section className="border-y border-border bg-surface-muted/60 py-16">
+        <div className="container-page">
+          <div className="max-w-3xl">
+            <p className="text-sm font-semibold uppercase tracking-widest text-accent-foreground/80">Why Honest Invoice</p>
+            <h2 className="mt-2 font-display text-4xl tracking-tight text-foreground sm:text-5xl">A billing tool, not an accounting maze.</h2>
+            <p className="mt-4 text-lg leading-8 text-muted-foreground">QuickBooks is powerful accounting software. Wave is a broad small-business finance platform. Jobber is a field-service management suite. Honest Invoice takes a narrower approach: make estimates and invoices dramatically faster for people who do the work.</p>
+          </div>
+          <div className="mt-10 grid gap-4 md:grid-cols-3">
+            {[
+              ["vs. QuickBooks", "Choose Honest Invoice when your priority is fast estimates and invoices rather than full accounting."],
+              ["vs. Wave", "Choose Honest Invoice when AI-assisted job-to-line-item drafting is central to your workflow."],
+              ["vs. Jobber", "Choose Honest Invoice when you want focused billing without adopting an entire field-service suite."],
+            ].map(([title, body]) => <div key={title} className="rounded-2xl border border-border bg-surface p-6 shadow-soft"><h3 className="font-semibold text-foreground">{title}</h3><p className="mt-2 text-sm leading-6 text-muted-foreground">{body}</p></div>)}
           </div>
         </div>
       </section>
@@ -344,14 +376,26 @@ function HomePage() {
           </h2>
           <div className="mx-auto mt-10 flex max-w-3xl flex-wrap justify-center gap-2">
             {AUDIENCES.map((a) => (
-              <span
-                key={a}
-                className="rounded-full border border-border bg-surface px-4 py-2 text-sm font-medium text-foreground shadow-soft"
+              <Link
+                key={a.label}
+                to={a.to}
+                className="rounded-full border border-border bg-surface px-4 py-2 text-sm font-medium text-foreground shadow-soft transition-colors hover:border-primary/40 hover:text-primary"
               >
-                {a}
-              </span>
+                {a.label}
+              </Link>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* TRUST */}
+      <section className="py-16">
+        <div className="container-page grid gap-6 md:grid-cols-3">
+          {[
+            ["Stripe payments", "Online payments are processed through Stripe so Honest Invoice does not need to store your card number."],
+            ["Your data stays yours", "Account data and billing information are scoped to your account and protected by authenticated access."],
+            ["Transparent pricing", "Start on the Free plan, with no credit card required, and upgrade when you need more capacity."],
+          ].map(([title, body]) => <div key={title} className="rounded-2xl border border-border bg-surface p-6 shadow-soft"><ShieldCheck className="h-5 w-5 text-success"/><h3 className="mt-3 font-semibold text-foreground">{title}</h3><p className="mt-2 text-sm leading-6 text-muted-foreground">{body}</p></div>)}
         </div>
       </section>
 

@@ -1,6 +1,26 @@
+# Explicitly welcome AI and Search bots to scrape public pages
+User-agent: GPTBot
+Allow: /
+User-agent: Claude-Web
+Allow: /
+User-agent: PerplexityBot
+Allow: /
+User-agent: Googlebot
+Allow: /
+
+# General rules for all other bots
 User-agent: *
 Allow: /
-Disallow: /auth
-Disallow: /dashboard
+Disallow: /auth/
+Disallow: /login/
+Disallow: /signup/
+Disallow: /dashboard/
+Disallow: /clients/
+Disallow: /documents/
+Disallow: /settings/
+Disallow: /onboarding/
+Disallow: /magic-create/
+Disallow: /import-data/
+Disallow: /api/
 
 Sitemap: https://honestinvoice.com/sitemap.xml

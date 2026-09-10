@@ -1,33 +1,21 @@
 import { Link } from "@tanstack/react-router";
-import { useState } from "react";
 import { Menu, X } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from "@/components/ui/sheet";
 
+// Brand mark: circular ring with bold "HI" (H in the current text color, I in
+// the brand lime). Rendered inline so it never depends on a static image file
+// that could 404 on the deployed site.
 function LogoIcon() {
-  const [failed, setFailed] = useState(false);
-
-  if (failed) {
-    return (
-      <span className="grid h-9 w-9 place-items-center rounded-lg bg-primary text-primary-foreground">
-        <span className="font-display text-sm font-bold">HI</span>
-      </span>
-    );
-  }
-
   return (
-    <>
-      <img
-        src="/favicon.ico"
-        alt="Honest Invoice"
-        className="h-9 w-9 rounded-full object-contain dark:hidden"
-        width={36}
-        height={36}
-        onError={() => setFailed(true)}
-      />
-      <span className="hidden h-9 w-9 place-items-center rounded-lg bg-primary text-primary-foreground dark:grid">
-        <span className="font-display text-sm font-bold">HI</span>
-      </span>
-    </>
+    <svg viewBox="0 0 100 100" className="h-9 w-9" aria-hidden="true" focusable="false">
+      <circle cx="50" cy="50" r="45" fill="none" stroke="currentColor" strokeWidth="3" />
+      <g fill="currentColor">
+        <rect x="26" y="31" width="8" height="38" />
+        <rect x="51" y="31" width="8" height="38" />
+        <rect x="26" y="46" width="33" height="7" />
+      </g>
+      <rect x="67" y="31" width="7" height="38" fill="#68a838" />
+    </svg>
   );
 }
 

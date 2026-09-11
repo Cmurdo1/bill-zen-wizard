@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { MarketingShell } from "@/components/marketing/shell";
 import { Check, Sparkles } from "lucide-react";
+import { publicEnv } from "@/lib/public-env";
 
 export const Route = createFileRoute("/pricing")({
   head: () => ({
@@ -24,8 +25,8 @@ export const Route = createFileRoute("/pricing")({
   component: PricingPage,
 });
 
-const PRO_LINK = import.meta.env.VITE_STRIPE_PAYMENT_LINK_PRO ?? "";
-const BUSINESS_LINK = import.meta.env.VITE_STRIPE_PAYMENT_LINK_BUSINESS ?? "";
+const PRO_LINK = publicEnv("VITE_STRIPE_PAYMENT_LINK_PRO") ?? "";
+const BUSINESS_LINK = publicEnv("VITE_STRIPE_PAYMENT_LINK_BUSINESS") ?? "";
 
 type Plan = {
   name: string;

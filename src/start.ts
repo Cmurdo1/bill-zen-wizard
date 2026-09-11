@@ -57,11 +57,11 @@ function applySecurityHeaders(response: Response, request: Request): Response {
         "default-src 'self'",
         // Inline styles come from Tailwind v4 + component-level inline styles.
         "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-        "script-src 'self' 'unsafe-inline' https://js.stripe.com",
+        "script-src 'self' 'unsafe-inline' https://js.stripe.com https://static.cloudflareinsights.com",
         "img-src 'self' data: blob: https:",
         "font-src 'self' data: https://fonts.gstatic.com",
         // Supabase + Stripe + Google OAuth + MCP webhook URLs must remain reachable.
-        "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.stripe.com https://buy.stripe.com https://accounts.google.com https://*.googleusercontent.com",
+        "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.stripe.com https://buy.stripe.com https://accounts.google.com https://*.googleusercontent.com https://cloudflareinsights.com",
         "frame-src 'self' https://js.stripe.com https://hooks.stripe.com https://accounts.google.com",
         "frame-ancestors 'self'",
         "base-uri 'self'",

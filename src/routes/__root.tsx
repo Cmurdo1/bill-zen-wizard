@@ -11,6 +11,7 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { supabase } from "@/integrations/supabase/client";
+import { publicEnvScript } from "@/lib/public-env";
 
 const SITE_URL = "https://honestinvoice.com";
 const SITE_TITLE = "AI Invoice Software for Contractors & Freelancers | Honest Invoice";
@@ -73,7 +74,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   head: () => ({
     meta: [
       { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1" },
+      { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
+      { name: "theme-color", content: "#0b2654" },
+      { name: "mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-title", content: "Honest Invoice" },
+      { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
       { title: SITE_TITLE },
       { name: "description", content: SITE_DESCRIPTION },
       { name: "author", content: "Honest Invoice" },
@@ -93,7 +99,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     links: [
       { rel: "stylesheet", href: appCss },
       { rel: "icon", href: "/favicon.ico" },
-      { rel: "apple-touch-icon", href: "/favicon.ico" },
+      { rel: "icon", type: "image/png", sizes: "192x192", href: "/icon-192.png" },
+      { rel: "apple-touch-icon", sizes: "180x180", href: "/apple-touch-icon.png" },
+      { rel: "manifest", href: "/manifest.webmanifest" },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {
@@ -148,6 +156,7 @@ function RootShell({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
       <head>
+        <script dangerouslySetInnerHTML={{ __html: publicEnvScript() }} />
         <HeadContent />
       </head>
       <body>
@@ -162,12 +171,20 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const router = useRouter();
   useEffect(() => {
-    const { data: sub } = supabase.auth.onAuthStateChange((event) => {
-      if (event !== "SIGNED_IN" && event !== "SIGNED_OUT" && event !== "USER_UPDATED") return;
-      router.invalidate();
-      if (event !== "SIGNED_OUT") queryClient.invalidateQueries();
-    });
-    return () => sub.subscription.unsubscribe();
+    // Auth is optional for the marketing pages: a misconfigured Supabase client
+    // must not take down the whole app through the root error boundary.
+    let unsubscribe: (() => void) | undefined;
+    try {
+      const { data: sub } = supabase.auth.onAuthStateChange((event) => {
+        if (event !== "SIGNED_IN" && event !== "SIGNED_OUT" && event !== "USER_UPDATED") return;
+        router.invalidate();
+        if (event !== "SIGNED_OUT") queryClient.invalidateQueries();
+      });
+      unsubscribe = () => sub.subscription.unsubscribe();
+    } catch (error) {
+      console.error(error);
+    }
+    return () => unsubscribe?.();
   }, [queryClient, router]);
   return (
     <QueryClientProvider client={queryClient}>

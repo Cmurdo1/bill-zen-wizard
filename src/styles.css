@@ -140,6 +140,11 @@
   h3 {
     letter-spacing: -0.02em;
   }
+  /* Code samples scroll inside their card instead of widening the grid or
+     flex column that holds them (which overflows narrow viewports). */
+  div:has(pre) {
+    min-width: 0;
+  }
 }
 
 @utility container-page {

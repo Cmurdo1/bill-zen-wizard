@@ -17,7 +17,7 @@ function LogoIcon() {
   return (
     <>
       <img
-        src="/favicon.ico"
+        src="/logo.png"
         alt="Honest Invoice"
         className="h-9 w-9 rounded-full object-contain dark:hidden"
         width={36}

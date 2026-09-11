@@ -1,3 +1,4 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 import {
@@ -99,7 +100,8 @@ export const Route = createFileRoute("/api/mcp/documents")({
           // Use separate, account-scoped queries because invoices and estimates
           // are separate tables on the current schema and share one table on
           // older deployments.
-          const db = supabase as any; // eslint-disable-line @typescript-eslint/no-explicit-any
+          // Dynamic table names below (schema-adaptive) are untyped by design.
+          const db = supabase as unknown as SupabaseClient;
           const queryDocuments = async (table: string, itemsTable: string, typeFilter?: string) => {
             let query = db
               .from(table)
@@ -135,7 +137,7 @@ export const Route = createFileRoute("/api/mcp/documents")({
           const firstError = settled.find((result) => result.error)?.error;
           if (firstError) throw firstError;
           const documents = settled
-            .flatMap((result) => result.data ?? [])
+            .flatMap((result) => (result.data ?? []) as unknown as Array<Record<string, unknown>>)
             .sort(
               (a, b) =>
                 new Date(String(b.created_at ?? 0)).getTime() -
@@ -238,13 +240,19 @@ export const Route = createFileRoute("/api/mcp/documents")({
             nextNum = Number(counters[nextField]) || 1001;
             countersAvailable = true;
           } else {
-            let docsQuery = supabase
+            const docsQuery = supabase
               .from(tableName)
               .select(numberField)
               .eq("user_id", userId)
               .order("created_at", { ascending: false })
               .limit(100);
-            if (legacy) (docsQuery as any).eq("type", parsed.type);
+            if (legacy)
+              // Legacy deployments store estimates in the invoices table, so
+              // the type filter is only valid for the invoices-shaped builder.
+              (docsQuery as unknown as { eq: (column: string, value: string) => unknown }).eq(
+                "type",
+                parsed.type,
+              );
             const { data: docs } = await docsQuery;
             let maxNum = 0;
             for (const doc of docs ?? []) {
@@ -267,8 +275,7 @@ export const Route = createFileRoute("/api/mcp/documents")({
 
           // Schema-adaptive inserts intentionally bypass the generated types so
           // the route works on both the repo (cents) and legacy (dollars) schemas.
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const db = supabase as any;
+          const db = supabase as unknown as SupabaseClient;
 
           const common = {
             user_id: userId,
@@ -411,7 +418,9 @@ export const Route = createFileRoute("/api/mcp/documents")({
             : parsed.document_type === "estimate"
               ? "estimate_id"
               : "invoice_id";
-          const db = supabase as any; // eslint-disable-line @typescript-eslint/no-explicit-any
+          // Items are read/written on invoice_items or estimate_items depending
+          // on the deployment, so the client is intentionally untyped here.
+          const db = supabase as unknown as SupabaseClient;
 
           if (parsed.client_id) {
             const { data: client, error: clientError } = await supabase
@@ -424,12 +433,18 @@ export const Route = createFileRoute("/api/mcp/documents")({
             if (!client) throw new McpHttpError(403, "Client does not belong to this account.");
           }
 
-          let documentQuery = supabase
+          const documentQuery = supabase
             .from(tableName)
             .select("*")
             .eq("id", parsed.document_id)
             .eq("user_id", userId);
-          if (legacy) (documentQuery as any).eq("type", parsed.document_type);
+          if (legacy)
+            // Legacy deployments store estimates in the invoices table, so
+            // the type filter is only valid for the invoices-shaped builder.
+            (documentQuery as unknown as { eq: (column: string, value: string) => unknown }).eq(
+              "type",
+              parsed.document_type,
+            );
           const { data: current, error: currentError } = await documentQuery.maybeSingle();
           if (currentError) throw currentError;
           if (!current) throw new McpHttpError(404, "Document not found");

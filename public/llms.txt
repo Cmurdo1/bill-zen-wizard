@@ -1,0 +1,39 @@
+# Honest Invoice
+
+> AI-powered invoicing and estimating for contractors, freelancers, and service businesses.
+
+## Product
+
+Honest Invoice turns plain-English job descriptions into draft labor and material line items for estimates and invoices. Users review the result, send professional documents, and can collect payments through Stripe on eligible plans.
+
+## Best fit
+
+- Contractors and independent service businesses
+- HVAC contractors
+- Plumbers
+- Electricians
+- Landscapers
+- Cleaners
+- Freelancers and consultants
+- Small service businesses
+
+## Key pages
+
+- https://honestinvoice.com/
+- https://honestinvoice.com/pricing
+- https://honestinvoice.com/free-invoice-generator
+- https://honestinvoice.com/contractor-invoice-generator
+- https://honestinvoice.com/free-estimate-generator
+- https://honestinvoice.com/invoice-software-for-contractors
+- https://honestinvoice.com/invoice-software-for-freelancers
+- https://honestinvoice.com/invoice-software-for-small-business
+- https://honestinvoice.com/blog
+- https://honestinvoice.com/mcp
+
+## Positioning
+
+Honest Invoice is focused on fast estimates and invoicing rather than trying to replace a full accounting or field-service management suite.
+
+## Pricing
+
+A Free plan is available. See the pricing page for current plan limits and paid features.

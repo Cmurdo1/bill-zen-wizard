@@ -1,5 +1,9 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+// This page reads schema-adaptive tables (legacy + new schema) that aren't
+// fully covered by the generated Database type, so untyped row access is
+// intentional here.
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { useCallback, useEffect, useState } from "react";
 import { AppShell } from "@/components/app/shell";
 import { supabase } from "@/integrations/supabase/client";
 import { formatCurrency } from "@/lib/format";
@@ -63,11 +67,7 @@ function LeadDetailPage() {
   const [legacyEstimate, setLegacyEstimate] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
 
-  useEffect(() => {
-    void load();
-  }, [id]);
-
-  async function load() {
+  const load = useCallback(async () => {
     setLoading(true);
     try {
       const { data: userData } = await supabase.auth.getUser();
@@ -164,7 +164,11 @@ function LeadDetailPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [id]);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
 
   // ── Actions ──────────────────────────────────────────────────
 

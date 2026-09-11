@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { analyzeEstimatePhotos } from "@/lib/estimates.functions";
@@ -33,7 +33,7 @@ export function EstimateAiPanel({
     assumptions: string[];
   } | null>(null);
 
-  async function loadPhotos() {
+  const loadPhotos = useCallback(async () => {
     const { data } = await supabase
       .from("estimate_photos")
       .select("id,storage_path,caption")
@@ -49,10 +49,10 @@ export function EstimateAiPanel({
       }),
     );
     setPhotos(withUrls);
-  }
+  }, [estimateId]);
   useEffect(() => {
     void loadPhotos();
-  }, [estimateId]);
+  }, [loadPhotos]);
 
   async function upload(files: FileList | null) {
     if (!files?.length) return;

@@ -1,7 +1,8 @@
 import { ESTIMATOR_SYSTEM_PROMPT, formatRateBook, type PricingRule } from "@/lib/estimate-ai";
 
 const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
-const NIM_URL = process.env.NVIDIA_BASE_URL?.replace(/\/$/, "") || "https://integrate.api.nvidia.com/v1";
+const NIM_URL =
+  process.env.NVIDIA_BASE_URL?.replace(/\/$/, "") || "https://integrate.api.nvidia.com/v1";
 
 type ImageBlock = { type: "image_url"; image_url: { url: string } };
 
@@ -30,7 +31,10 @@ export const ExtractSchema = {
           description: { type: "string" },
           quantity: { type: "number" },
           unit: { type: "string", description: "sq ft, linear ft, hour, each, gallon, etc." },
-          rate_cents: { type: "integer", description: "Unit price in the smallest currency unit (cents)" },
+          rate_cents: {
+            type: "integer",
+            description: "Unit price in the smallest currency unit (cents)",
+          },
           basis: { type: "string", description: "How the quantity and price were derived" },
         },
         required: ["description", "quantity", "unit", "rate_cents", "basis"],
@@ -56,10 +60,7 @@ export const ExtractSchema = {
   additionalProperties: false,
 } as const;
 
-function buildRequestBody(args: {
-  userText: string;
-  imageBlocks: ImageBlock[];
-}) {
+function buildRequestBody(args: { userText: string; imageBlocks: ImageBlock[] }) {
   return {
     temperature: 0,
     top_p: 0.1,
@@ -83,7 +84,12 @@ function buildRequestBody(args: {
   };
 }
 
-async function callProvider(url: string, apiKey: string, model: string, body: unknown): Promise<ExtractResult> {
+async function callProvider(
+  url: string,
+  apiKey: string,
+  model: string,
+  body: unknown,
+): Promise<ExtractResult> {
   const res = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
@@ -184,13 +190,9 @@ export async function extractLineItemsWithAI(input: {
       return await callProvider(attempt.url, attempt.key, attempt.model, body);
     } catch (err) {
       lastError = err;
-      console.error(
-        `[ai-extract] provider failed (${attempt.model}): ${(err as Error).message}`,
-      );
+      console.error(`[ai-extract] provider failed (${attempt.model}): ${(err as Error).message}`);
     }
   }
 
-  throw lastError instanceof Error
-    ? lastError
-    : new Error("All AI providers failed");
+  throw lastError instanceof Error ? lastError : new Error("All AI providers failed");
 }

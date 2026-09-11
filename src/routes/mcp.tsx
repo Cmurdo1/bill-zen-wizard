@@ -29,9 +29,16 @@ export const Route = createFileRoute("/mcp")({
         content:
           "Connect your AI agents to Honest Invoice via Model Context Protocol on Pro or Business. Create and send estimates from your associated account.",
       },
-      { property: "og:url", content: "/mcp" },
+      { property: "og:url", content: "https://honestinvoice.com/mcp" },
+      { name: "robots", content: "index, follow, max-image-preview:large" },
+      { name: "twitter:card", content: "summary" },
+      { name: "twitter:title", content: "MCP — AI Agent Access — Honest Invoice" },
+      {
+        name: "twitter:description",
+        content: "Honest Invoice — simple, transparent invoicing for service businesses.",
+      },
     ],
-    links: [{ rel: "canonical", href: "/mcp" }],
+    links: [{ rel: "canonical", href: "https://honestinvoice.com/mcp" }],
   }),
   component: McpPage,
 });

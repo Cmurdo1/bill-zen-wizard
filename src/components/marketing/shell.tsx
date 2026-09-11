@@ -7,6 +7,7 @@ import { Sheet, SheetContent, SheetTrigger, SheetClose } from "@/components/ui/s
 // that could 404 on the deployed site.
 function LogoIcon() {
   return (
+<<<<<<< HEAD
     <svg viewBox="0 0 100 100" className="h-9 w-9" aria-hidden="true" focusable="false">
       <circle cx="50" cy="50" r="45" fill="none" stroke="currentColor" strokeWidth="3" />
       <g fill="currentColor">
@@ -16,6 +17,21 @@ function LogoIcon() {
       </g>
       <rect x="67" y="31" width="7" height="38" fill="#68a838" />
     </svg>
+=======
+    <>
+      <img
+        src="/logo.png"
+        alt="Honest Invoice"
+        className="h-9 w-9 rounded-full object-contain dark:hidden"
+        width={36}
+        height={36}
+        onError={() => setFailed(true)}
+      />
+      <span className="hidden h-9 w-9 place-items-center rounded-lg bg-primary text-primary-foreground dark:grid">
+        <span className="font-display text-sm font-bold">HI</span>
+      </span>
+    </>
+>>>>>>> 76767d4d284a36cbffb99da4bbc02c4665ef4e8d
   );
 }
 
@@ -161,6 +177,31 @@ export function MarketingFooter() {
             <li>
               <Link to="/pay-invoice" className="hover:text-foreground">
                 Pay an invoice
+              </Link>
+            </li>
+            <li>
+              <Link to="/invoice-software-for-contractors" className="hover:text-foreground">
+                Contractor invoice software
+              </Link>
+            </li>
+            <li>
+              <Link to="/invoice-software-for-freelancers" className="hover:text-foreground">
+                Freelancer invoice software
+              </Link>
+            </li>
+            <li>
+              <Link to="/invoice-software-for-small-business" className="hover:text-foreground">
+                Small business invoicing
+              </Link>
+            </li>
+            <li>
+              <Link to="/free-invoice-generator" className="hover:text-foreground">
+                Free invoice generator
+              </Link>
+            </li>
+            <li>
+              <Link to="/free-estimate-generator" className="hover:text-foreground">
+                Free estimate generator
               </Link>
             </li>
           </ul>

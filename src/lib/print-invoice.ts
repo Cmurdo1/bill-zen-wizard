@@ -70,8 +70,18 @@ export function printInvoice(inv: PrintInvoiceInput) {
   const template = normalizeInvoiceTemplate(inv.invoice_template);
   const templateStyles = {
     clean: { headerBorder: "none", tableHead: "#f6f3ee", tableHeadText: "#575e69", radius: "8px" },
-    classic: { headerBorder: `3px solid ${brandColor}`, tableHead: brandColor, tableHeadText: "#fff", radius: "0" },
-    modern: { headerBorder: `8px solid ${brandColor}`, tableHead: brandColor, tableHeadText: "#fff", radius: "14px" },
+    classic: {
+      headerBorder: `3px solid ${brandColor}`,
+      tableHead: brandColor,
+      tableHeadText: "#fff",
+      radius: "0",
+    },
+    modern: {
+      headerBorder: `8px solid ${brandColor}`,
+      tableHead: brandColor,
+      tableHeadText: "#fff",
+      radius: "14px",
+    },
   }[template];
   const logo = inv.business?.logo_url
     ? `<img src="${esc(inv.business.logo_url)}" alt="${esc(bizName)} logo" style="max-width:180px;max-height:64px;object-fit:contain;margin-bottom:10px" />`

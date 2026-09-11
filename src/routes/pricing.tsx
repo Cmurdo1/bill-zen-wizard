@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { MarketingShell } from "@/components/marketing/shell";
 import { Check, Sparkles } from "lucide-react";
+import { publicEnv } from "@/lib/public-env";
 
 export const Route = createFileRoute("/pricing")({
   head: () => ({
@@ -17,15 +18,15 @@ export const Route = createFileRoute("/pricing")({
         content:
           "Free plan forever. Pro unlocks unlimited invoices and AI estimating. Business unlocks the Lead Gen Engine.",
       },
-      { property: "og:url", content: "/pricing" },
+      { property: "og:url", content: "https://honestinvoice.com/pricing" },
     ],
-    links: [{ rel: "canonical", href: "/pricing" }],
+    links: [{ rel: "canonical", href: "https://honestinvoice.com/pricing" }],
   }),
   component: PricingPage,
 });
 
-const PRO_LINK = import.meta.env.VITE_STRIPE_PAYMENT_LINK_PRO ?? "";
-const BUSINESS_LINK = import.meta.env.VITE_STRIPE_PAYMENT_LINK_BUSINESS ?? "";
+const PRO_LINK = publicEnv("VITE_STRIPE_PAYMENT_LINK_PRO") ?? "";
+const BUSINESS_LINK = publicEnv("VITE_STRIPE_PAYMENT_LINK_BUSINESS") ?? "";
 
 type Plan = {
   name: string;

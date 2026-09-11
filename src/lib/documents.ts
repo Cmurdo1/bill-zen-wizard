@@ -40,13 +40,3 @@ export function statusClass(status: string): string {
   };
   return map[status] ?? map.draft;
 }
-
-export function StatusPill({ status }: { status: string }) {
-  return (
-    <span
-      className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold capitalize ${statusClass(status)}`}
-    >
-      {status}
-    </span>
-  );
-}

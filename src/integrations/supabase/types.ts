@@ -8,6 +8,74 @@ export type Database = {
   };
   public: {
     Tables: {
+      branding_presets: {
+        Row: {
+          address: string | null;
+          brand_color: string | null;
+          business_name: string;
+          city: string | null;
+          country: string | null;
+          created_at: string;
+          email: string | null;
+          estimate_color: string | null;
+          id: string;
+          is_default: boolean;
+          logo_url: string | null;
+          name: string;
+          phone: string | null;
+          state: string | null;
+          updated_at: string;
+          user_id: string;
+          zip_code: string | null;
+        };
+        Insert: {
+          address?: string | null;
+          brand_color?: string | null;
+          business_name?: string;
+          city?: string | null;
+          country?: string | null;
+          created_at?: string;
+          email?: string | null;
+          estimate_color?: string | null;
+          id?: string;
+          is_default?: boolean;
+          logo_url?: string | null;
+          name: string;
+          phone?: string | null;
+          state?: string | null;
+          updated_at?: string;
+          user_id: string;
+          zip_code?: string | null;
+        };
+        Update: {
+          address?: string | null;
+          brand_color?: string | null;
+          business_name?: string;
+          city?: string | null;
+          country?: string | null;
+          created_at?: string;
+          email?: string | null;
+          estimate_color?: string | null;
+          id?: string;
+          is_default?: boolean;
+          logo_url?: string | null;
+          name?: string;
+          phone?: string | null;
+          state?: string | null;
+          updated_at?: string;
+          user_id?: string;
+          zip_code?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "branding_presets_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       clients: {
         Row: {
           address_line1: string | null;
@@ -92,6 +160,47 @@ export type Database = {
         };
         Relationships: [];
       };
+      email_tracking: {
+        Row: {
+          created_at: string;
+          event_type: string;
+          id: string;
+          ip_address: string | null;
+          lead_response_id: string | null;
+          tracking_id: string;
+          url: string | null;
+          user_agent: string | null;
+        };
+        Insert: {
+          created_at?: string;
+          event_type: string;
+          id?: string;
+          ip_address?: string | null;
+          lead_response_id?: string | null;
+          tracking_id: string;
+          url?: string | null;
+          user_agent?: string | null;
+        };
+        Update: {
+          created_at?: string;
+          event_type?: string;
+          id?: string;
+          ip_address?: string | null;
+          lead_response_id?: string | null;
+          tracking_id?: string;
+          url?: string | null;
+          user_agent?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "email_tracking_lead_response_id_fkey";
+            columns: ["lead_response_id"];
+            isOneToOne: false;
+            referencedRelation: "lead_responses";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       estimate_items: {
         Row: {
           amount_cents: number;
@@ -169,6 +278,7 @@ export type Database = {
         Row: {
           ai_generated: boolean;
           approved_at: string | null;
+          branding_preset_id: string | null;
           client_id: string | null;
           converted_at: string | null;
           converted_invoice_id: string | null;
@@ -177,6 +287,7 @@ export type Database = {
           estimate_number: string;
           expiry_date: string | null;
           id: string;
+          invoice_template: string;
           issue_date: string;
           job_description: string | null;
           notes: string | null;
@@ -193,6 +304,7 @@ export type Database = {
         Insert: {
           ai_generated?: boolean;
           approved_at?: string | null;
+          branding_preset_id?: string | null;
           client_id?: string | null;
           converted_at?: string | null;
           converted_invoice_id?: string | null;
@@ -201,6 +313,7 @@ export type Database = {
           estimate_number: string;
           expiry_date?: string | null;
           id?: string;
+          invoice_template?: string;
           issue_date?: string;
           job_description?: string | null;
           notes?: string | null;
@@ -217,6 +330,7 @@ export type Database = {
         Update: {
           ai_generated?: boolean;
           approved_at?: string | null;
+          branding_preset_id?: string | null;
           client_id?: string | null;
           converted_at?: string | null;
           converted_invoice_id?: string | null;
@@ -225,6 +339,7 @@ export type Database = {
           estimate_number?: string;
           expiry_date?: string | null;
           id?: string;
+          invoice_template?: string;
           issue_date?: string;
           job_description?: string | null;
           notes?: string | null;
@@ -323,6 +438,7 @@ export type Database = {
       };
       invoices: {
         Row: {
+          branding_preset_id: string | null;
           client_id: string | null;
           created_at: string;
           currency: string;
@@ -330,6 +446,7 @@ export type Database = {
           feedback_token: string | null;
           id: string;
           invoice_number: string;
+          invoice_template: string;
           issue_date: string;
           notes: string | null;
           paid_at: string | null;
@@ -347,6 +464,7 @@ export type Database = {
           user_id: string;
         };
         Insert: {
+          branding_preset_id?: string | null;
           client_id?: string | null;
           created_at?: string;
           currency?: string;
@@ -354,6 +472,7 @@ export type Database = {
           feedback_token?: string | null;
           id?: string;
           invoice_number: string;
+          invoice_template?: string;
           issue_date?: string;
           notes?: string | null;
           paid_at?: string | null;
@@ -371,6 +490,7 @@ export type Database = {
           user_id: string;
         };
         Update: {
+          branding_preset_id?: string | null;
           client_id?: string | null;
           created_at?: string;
           currency?: string;
@@ -378,6 +498,7 @@ export type Database = {
           feedback_token?: string | null;
           id?: string;
           invoice_number?: string;
+          invoice_template?: string;
           issue_date?: string;
           notes?: string | null;
           paid_at?: string | null;
@@ -449,6 +570,59 @@ export type Database = {
         };
         Relationships: [];
       };
+      lead_responses: {
+        Row: {
+          clicked_at: string | null;
+          client_email: string | null;
+          created_at: string;
+          error_message: string | null;
+          estimate_id: string | null;
+          estimate_number: string | null;
+          id: string;
+          lead_id: string;
+          opened_at: string | null;
+          status: string;
+          tracking_id: string | null;
+          user_id: string;
+        };
+        Insert: {
+          clicked_at?: string | null;
+          client_email?: string | null;
+          created_at?: string;
+          error_message?: string | null;
+          estimate_id?: string | null;
+          estimate_number?: string | null;
+          id?: string;
+          lead_id: string;
+          opened_at?: string | null;
+          status?: string;
+          tracking_id?: string | null;
+          user_id: string;
+        };
+        Update: {
+          clicked_at?: string | null;
+          client_email?: string | null;
+          created_at?: string;
+          error_message?: string | null;
+          estimate_id?: string | null;
+          estimate_number?: string | null;
+          id?: string;
+          lead_id?: string;
+          opened_at?: string | null;
+          status?: string;
+          tracking_id?: string | null;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "lead_responses_lead_id_fkey";
+            columns: ["lead_id"];
+            isOneToOne: false;
+            referencedRelation: "job_leads";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       leads: {
         Row: {
           contact_email: string | null;
@@ -491,6 +665,157 @@ export type Database = {
           status?: string;
           updated_at?: string;
           user_id?: string;
+        };
+        Relationships: [];
+      };
+      mcp_api_keys: {
+        Row: {
+          created_at: string;
+          expires_at: string | null;
+          id: string;
+          key_hash: string;
+          key_prefix: string;
+          last_used_at: string | null;
+          name: string;
+          revoked_at: string | null;
+          scopes: string[];
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          expires_at?: string | null;
+          id?: string;
+          key_hash: string;
+          key_prefix: string;
+          last_used_at?: string | null;
+          name: string;
+          revoked_at?: string | null;
+          scopes?: string[];
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          expires_at?: string | null;
+          id?: string;
+          key_hash?: string;
+          key_prefix?: string;
+          last_used_at?: string | null;
+          name?: string;
+          revoked_at?: string | null;
+          scopes?: string[];
+          user_id?: string;
+        };
+        Relationships: [];
+      };
+      mcp_audit_logs: {
+        Row: {
+          action: string;
+          api_key_id: string | null;
+          created_at: string;
+          id: string;
+          metadata: Json;
+          request_id: string;
+          resource_id: string | null;
+          resource_type: string;
+          user_id: string;
+        };
+        Insert: {
+          action: string;
+          api_key_id?: string | null;
+          created_at?: string;
+          id?: string;
+          metadata?: Json;
+          request_id: string;
+          resource_id?: string | null;
+          resource_type: string;
+          user_id: string;
+        };
+        Update: {
+          action?: string;
+          api_key_id?: string | null;
+          created_at?: string;
+          id?: string;
+          metadata?: Json;
+          request_id?: string;
+          resource_id?: string | null;
+          resource_type?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "mcp_audit_logs_api_key_id_fkey";
+            columns: ["api_key_id"];
+            isOneToOne: false;
+            referencedRelation: "mcp_api_keys";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      mcp_idempotency_keys: {
+        Row: {
+          api_key_id: string | null;
+          created_at: string;
+          endpoint: string;
+          expires_at: string;
+          id: string;
+          idempotency_key: string;
+          payload_hash: string;
+          response_body: Json | null;
+          response_status: number | null;
+          status: string;
+          user_id: string;
+        };
+        Insert: {
+          api_key_id?: string | null;
+          created_at?: string;
+          endpoint: string;
+          expires_at: string;
+          id?: string;
+          idempotency_key: string;
+          payload_hash: string;
+          response_body?: Json | null;
+          response_status?: number | null;
+          status: string;
+          user_id: string;
+        };
+        Update: {
+          api_key_id?: string | null;
+          created_at?: string;
+          endpoint?: string;
+          expires_at?: string;
+          id?: string;
+          idempotency_key?: string;
+          payload_hash?: string;
+          response_body?: Json | null;
+          response_status?: number | null;
+          status?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "mcp_idempotency_keys_api_key_id_fkey";
+            columns: ["api_key_id"];
+            isOneToOne: false;
+            referencedRelation: "mcp_api_keys";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      mcp_rate_limits: {
+        Row: {
+          bucket_key: string;
+          request_count: number;
+          window_started_at: string;
+        };
+        Insert: {
+          bucket_key: string;
+          request_count?: number;
+          window_started_at?: string;
+        };
+        Update: {
+          bucket_key?: string;
+          request_count?: number;
+          window_started_at?: string;
         };
         Relationships: [];
       };
@@ -726,6 +1051,45 @@ export type Database = {
           granted_until?: string;
           id?: string;
           promo_code_id?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
+      scrape_runs: {
+        Row: {
+          config: Json;
+          created_at: string;
+          emails_sent: number;
+          errors: string[];
+          estimates_created: number;
+          id: string;
+          leads_found: number;
+          sources: string[];
+          status: string;
+          user_id: string;
+        };
+        Insert: {
+          config?: Json;
+          created_at?: string;
+          emails_sent?: number;
+          errors?: string[];
+          estimates_created?: number;
+          id?: string;
+          leads_found?: number;
+          sources?: string[];
+          status?: string;
+          user_id: string;
+        };
+        Update: {
+          config?: Json;
+          created_at?: string;
+          emails_sent?: number;
+          errors?: string[];
+          estimates_created?: number;
+          id?: string;
+          leads_found?: number;
+          sources?: string[];
+          status?: string;
           user_id?: string;
         };
         Relationships: [];

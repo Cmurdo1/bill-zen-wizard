@@ -3,6 +3,7 @@ import { createMiddleware } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "./types";
+import { publicEnv } from "@/lib/public-env";
 
 function isNewSupabaseApiKey(value: string): boolean {
   return value.startsWith("sb_publishable_") || value.startsWith("sb_secret_");
@@ -31,10 +32,25 @@ function createSupabaseFetch(supabaseKey: string): typeof fetch {
   };
 }
 
+/** Host used for verification, for logs and error messages (never a secret). */
+function hostOf(url: string | undefined): string {
+  try {
+    return url ? new URL(url).host : "(unset)";
+  } catch {
+    return String(url);
+  }
+}
+
 export const requireSupabaseAuth = createMiddleware({ type: "function" }).server(
   async ({ next }) => {
-    const SUPABASE_URL = process.env.SUPABASE_URL;
-    const SUPABASE_PUBLISHABLE_KEY = process.env.SUPABASE_PUBLISHABLE_KEY;
+    // Resolve the project through the SAME helper the browser client uses, so the
+    // verifier is always the project that issued the token. Reading the server-only
+    // SUPABASE_URL here instead let the two drift apart, and every authenticated
+    // server function then failed with "Invalid token" while the client stayed
+    // logged in fine. publicEnv() prefers the build-time VITE_SUPABASE_URL and only
+    // falls back to the non-prefixed server variables.
+    const SUPABASE_URL = publicEnv("VITE_SUPABASE_URL");
+    const SUPABASE_PUBLISHABLE_KEY = publicEnv("VITE_SUPABASE_PUBLISHABLE_KEY");
 
     if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
       const missing = [
@@ -68,7 +84,7 @@ export const requireSupabaseAuth = createMiddleware({ type: "function" }).server
     }
 
     if (token.split(".").length !== 3) {
-      throw new Error("Unauthorized: Invalid token");
+      throw new Error("Unauthorized: Invalid token (not a JWT)");
     }
 
     const supabase = createClient<Database>(SUPABASE_URL!, SUPABASE_PUBLISHABLE_KEY!, {
@@ -87,7 +103,12 @@ export const requireSupabaseAuth = createMiddleware({ type: "function" }).server
 
     const { data, error } = await supabase.auth.getClaims(token);
     if (error || !data?.claims) {
-      throw new Error("Unauthorized: Invalid token");
+      // Callers get a deliberately terse message, but the cause has to be visible:
+      // a verifier pointed at a different project than the token's issuer looks
+      // exactly like an expired session, and the underlying error is often empty.
+      const verifier = hostOf(SUPABASE_URL);
+      console.error(`[Supabase] token verification failed against ${verifier}:`, error);
+      throw new Error(`Unauthorized: Invalid token (verified against ${verifier})`);
     }
 
     if (!data.claims.sub) {

@@ -1,5 +1,15 @@
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
+import { publicEnv } from "@/lib/public-env";
+
+// Resolve the project the same way the browser client does, so an MCP session
+// token is always validated against the project that issued it.
+function supabaseProjectConfig(): { url: string | undefined; key: string | undefined } {
+  return {
+    url: publicEnv("VITE_SUPABASE_URL"),
+    key: publicEnv("VITE_SUPABASE_PUBLISHABLE_KEY"),
+  };
+}
 
 export class McpHttpError extends Error {
   readonly status: number;
@@ -313,9 +323,7 @@ export async function createMcpUserContext(request: Request): Promise<{
   const token = authHeader.slice("Bearer ".length).trim();
   if (!token || isMcpApiKey(token)) throw new McpHttpError(401, "A Supabase session is required.");
 
-  const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-  const supabaseKey =
-    process.env.SUPABASE_PUBLISHABLE_KEY || process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+  const { url: supabaseUrl, key: supabaseKey } = supabaseProjectConfig();
   if (!supabaseUrl || !supabaseKey) throw new McpHttpError(500, "Supabase not configured");
 
   const response = await fetch(`${supabaseUrl}/auth/v1/user`, {
@@ -362,9 +370,7 @@ export async function createMcpContext(request: Request): Promise<McpContext> {
   if (!token) throw new McpHttpError(401, "Unauthorized");
 
   const requestId = getRequestId(request);
-  const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-  const supabaseKey =
-    process.env.SUPABASE_PUBLISHABLE_KEY || process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+  const { url: supabaseUrl, key: supabaseKey } = supabaseProjectConfig();
   if (!supabaseUrl || !supabaseKey) throw new McpHttpError(500, "Supabase not configured");
 
   let userId: string;

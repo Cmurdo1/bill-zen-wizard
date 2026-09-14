@@ -4,6 +4,7 @@
 // For user-authenticated queries (with RLS), use the auth middleware instead.
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "./types";
+import { publicEnv } from "@/lib/public-env";
 
 function isNewSupabaseApiKey(value: string): boolean {
   return value.startsWith("sb_publishable_") || value.startsWith("sb_secret_");
@@ -33,7 +34,9 @@ function createSupabaseFetch(supabaseKey: string): typeof fetch {
 }
 
 function createSupabaseAdminClient() {
-  const SUPABASE_URL = process.env.SUPABASE_URL;
+  // Same project as the browser client, so admin writes can never land in a
+  // different database than the one the UI reads from. Only the key is secret.
+  const SUPABASE_URL = publicEnv("VITE_SUPABASE_URL");
   // Supabase renamed the service-role key env var in newer projects
   // (sb_secret_… keys ship as SUPABASE_SECRET_API_KEY). Accept both so the
   // server-side admin client works on projects that only set the new name.

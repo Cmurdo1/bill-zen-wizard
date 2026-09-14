@@ -19,10 +19,20 @@ React 19 · TypeScript · TanStack Start · Tailwind CSS v4 · Supabase (auth + 
 
 ```sh
 npm install
-npm run dev      # start the dev server
-npm run build    # production build
-npm run preview  # preview the production build
-npm run lint     # run ESLint
+npm run dev        # start the dev server
+npm run build      # production build
+npm run preview    # preview the production build
+npm run lint       # run ESLint
+npm run env:check  # fail if an .env file is ever tracked
+npm run test:auth  # smoke-test the auth routes in a real browser
+```
+
+`npm run test:auth` drives the login, Google and account-recovery routes in a real
+browser so they cannot silently regress. It starts the dev server itself, uses no
+credentials, and accepts `BASE_URL` to test a deployment instead:
+
+```sh
+BASE_URL=https://honestinvoice.com npm run test:auth
 ```
 
 ## Environment variables

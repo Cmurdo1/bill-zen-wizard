@@ -10,7 +10,8 @@
     "deploy": "npm run build",
     "preview": "vite preview",
     "lint": "eslint .",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "env:check": "node scripts/check-env-safety.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

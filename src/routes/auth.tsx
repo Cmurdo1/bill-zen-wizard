@@ -3,6 +3,7 @@ import { useState } from "react";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { Logo } from "@/components/marketing/shell";
+import { safeRedirectPath } from "@/lib/safe-redirect";
 
 const AuthSearch = z.object({
   mode: z.enum(["login", "signup"]).optional(),
@@ -31,9 +32,10 @@ function AuthPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
+  const [needsConfirmation, setNeedsConfirmation] = useState(false);
   const navigate = useNavigate();
 
-  const dest = redirect && redirect.startsWith("/") ? redirect : "/dashboard";
+  const dest = safeRedirectPath(redirect);
 
   const passwordHint =
     mode === "signup" ? "At least 8 characters, mixing letters, numbers, and symbols." : "";
@@ -43,22 +45,33 @@ function AuthPage() {
   const submitDisabled = loading || (mode === "signup" && (passwordMismatch || passwordTooShort));
 
   async function handleGoogle() {
+    if (loading) return;
     setError(null);
+    setInfo(null);
     setLoading(true);
-    const callbackUrl = new URL("/auth/callback", window.location.origin);
-    callbackUrl.searchParams.set("next", dest);
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: callbackUrl.toString(),
-      },
-    });
-    if (error) {
-      setError(error.message ?? "Google sign-in failed");
+    try {
+      const callbackUrl = new URL("/auth/callback", window.location.origin);
+      callbackUrl.searchParams.set("next", dest);
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: callbackUrl.toString(),
+        },
+      });
+      // On success the browser navigates to Google, so anything that lands here
+      // without navigating is a failure that has to be surfaced and unblocked.
+      if (error) {
+        setError(
+          error.message
+            ? `Google sign-in failed: ${error.message}`
+            : "Google sign-in failed. Please try again.",
+        );
+        setLoading(false);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Google sign-in failed. Please try again.");
       setLoading(false);
-      return;
     }
-    // OAuth redirects - we won't reach here
   }
 
   async function handleForgotPassword(e: React.MouseEvent) {
@@ -71,8 +84,12 @@ function AuthPage() {
     setInfo(null);
     setLoading(true);
     try {
+      // The recovery link lands on the callback, which signs the user in and then
+      // forwards them to the screen where they choose a new password.
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent("/auth")}`,
+        redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(
+          "/auth/reset-password",
+        )}`,
       });
       if (error) throw error;
       setInfo("Password reset link sent. Check your inbox.");
@@ -84,14 +101,40 @@ function AuthPage() {
     }
   }
 
+  async function handleResendConfirmation() {
+    if (!email) {
+      setError('Enter your email above first, then click "Resend confirmation email".');
+      return;
+    }
+    setError(null);
+    setInfo(null);
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.resend({
+        type: "signup",
+        email,
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(dest)}`,
+        },
+      });
+      if (error) throw error;
+      setInfo(`Confirmation email sent to ${email}.`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not resend the confirmation email.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (loading) return;
     setError(null);
     setInfo(null);
     setLoading(true);
     try {
       if (mode === "signup") {
-        const { data, error } = await supabase.auth.signUp({
+        const { data, error: signUpError } = await supabase.auth.signUp({
           email,
           password,
           options: {
@@ -99,27 +142,34 @@ function AuthPage() {
             data: { full_name: name },
           },
         });
-        if (error) throw error;
+        if (signUpError) throw signUpError;
+
+        // A session only comes back when email confirmation is switched off.
+        // Otherwise the user has to follow the link we just emailed them.
         if (data.session) {
-          navigate({ to: dest });
+          await navigate({ to: dest });
           return;
         }
-        // No session returned — try to sign in immediately (auto-confirm on)
-        const { error: signInErr } = await supabase.auth.signInWithPassword({ email, password });
-        if (signInErr) {
-          setInfo("Account created. Check your email to confirm, then log in.");
-          setMode("login");
-          return;
-        }
-        navigate({ to: dest });
-      } else {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) throw error;
-        navigate({ to: dest });
+
+        // Supabase deliberately returns an obfuscated user with no identities
+        // when the address is already registered, so this message is identical
+        // either way and can't be used to enumerate accounts.
+        setMode("login");
+        setNeedsConfirmation(true);
+        setInfo(`Check ${email} for a confirmation link to finish creating your account.`);
+        return;
       }
+
+      const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+      if (signInError) throw signInError;
+      setNeedsConfirmation(false);
+      await navigate({ to: dest });
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Something went wrong";
-      if (/weak.?password|pwned/i.test(msg)) {
+      if (/email.?not.?confirmed|not.?confirmed/i.test(msg)) {
+        setNeedsConfirmation(true);
+        setError("Your email address hasn't been confirmed yet. Use the link we emailed you.");
+      } else if (/weak.?password|pwned/i.test(msg)) {
         setError(
           "That password appears in a known breach list. Please pick a stronger one (mix of letters, numbers, symbols; 12+ chars).",
         );
@@ -127,6 +177,8 @@ function AuthPage() {
         setError("Email or password is incorrect.");
       } else if (/already.?registered|already.?exists|user.?already/i.test(msg)) {
         setError("An account with that email already exists. Try logging in.");
+      } else if (/rate.?limit|too.?many/i.test(msg)) {
+        setError("Too many attempts. Please wait a moment and try again.");
       } else {
         setError(msg);
       }
@@ -254,17 +306,38 @@ function AuthPage() {
             )}
 
             {info && (
-              <p className="rounded-lg bg-success/10 px-3 py-2 text-sm text-success">{info}</p>
+              <p
+                role="status"
+                aria-live="polite"
+                className="rounded-lg bg-success/10 px-3 py-2 text-sm text-success"
+              >
+                {info}
+              </p>
             )}
             {error && (
-              <p className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">
+              <p
+                role="alert"
+                aria-live="polite"
+                className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive"
+              >
                 {error}
               </p>
+            )}
+            {needsConfirmation && (
+              <button
+                type="button"
+                onClick={handleResendConfirmation}
+                disabled={loading}
+                className="w-full text-center text-sm font-medium text-primary hover:underline disabled:opacity-60"
+              >
+                Resend confirmation email
+              </button>
             )}
 
             <button
               type="submit"
               disabled={submitDisabled}
+              aria-busy={loading}
               className="inline-flex h-11 w-full items-center justify-center rounded-xl bg-primary text-sm font-semibold text-primary-foreground shadow-soft hover:opacity-90 disabled:opacity-60"
             >
               {loading ? "Just a moment…" : mode === "signup" ? "Create account" : "Log in"}

@@ -35,7 +35,8 @@ import { Route as InvoiceSoftwareHvacRouteImport } from './routes/invoice-softwa
 import { Route as InvoiceSoftwareElectriciansRouteImport } from './routes/invoice-software/electricians'
 import { Route as InvoiceSoftwareCleanersRouteImport } from './routes/invoice-software/cleaners'
 import { Route as BlogSlugRouteImport } from './routes/blog.$slug'
-import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
+import { Route as AuthResetPasswordRouteImport } from './routes/auth_.reset-password'
+import { Route as AuthCallbackRouteImport } from './routes/auth_.callback'
 import { Route as ApiMcpRouteImport } from './routes/api/mcp'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
@@ -202,10 +203,15 @@ const BlogSlugRoute = BlogSlugRouteImport.update({
   path: '/blog/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthResetPasswordRoute = AuthResetPasswordRouteImport.update({
+  id: '/auth_/reset-password',
+  path: '/auth/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthCallbackRoute = AuthCallbackRouteImport.update({
-  id: '/callback',
-  path: '/callback',
-  getParentRoute: () => AuthRoute,
+  id: '/auth_/callback',
+  path: '/auth/callback',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const ApiMcpRoute = ApiMcpRouteImport.update({
   id: '/api/mcp',
@@ -364,7 +370,7 @@ const ApiMcpDocumentsActivityRoute = ApiMcpDocumentsActivityRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/auth': typeof AuthRouteWithChildren
+  '/auth': typeof AuthRoute
   '/contractor-invoice-generator': typeof ContractorInvoiceGeneratorRoute
   '/free-estimate-generator': typeof FreeEstimateGeneratorRoute
   '/free-invoice-generator': typeof FreeInvoiceGeneratorRoute
@@ -390,6 +396,7 @@ export interface FileRoutesByFullPath {
   '/settings': typeof AuthenticatedSettingsRoute
   '/api/mcp': typeof ApiMcpRouteWithChildren
   '/auth/callback': typeof AuthCallbackRoute
+  '/auth/reset-password': typeof AuthResetPasswordRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/invoice-software/cleaners': typeof InvoiceSoftwareCleanersRoute
   '/invoice-software/electricians': typeof InvoiceSoftwareElectriciansRoute
@@ -421,7 +428,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/auth': typeof AuthRouteWithChildren
+  '/auth': typeof AuthRoute
   '/contractor-invoice-generator': typeof ContractorInvoiceGeneratorRoute
   '/free-estimate-generator': typeof FreeEstimateGeneratorRoute
   '/free-invoice-generator': typeof FreeInvoiceGeneratorRoute
@@ -447,6 +454,7 @@ export interface FileRoutesByTo {
   '/settings': typeof AuthenticatedSettingsRoute
   '/api/mcp': typeof ApiMcpRouteWithChildren
   '/auth/callback': typeof AuthCallbackRoute
+  '/auth/reset-password': typeof AuthResetPasswordRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/invoice-software/cleaners': typeof InvoiceSoftwareCleanersRoute
   '/invoice-software/electricians': typeof InvoiceSoftwareElectriciansRoute
@@ -480,7 +488,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
-  '/auth': typeof AuthRouteWithChildren
+  '/auth': typeof AuthRoute
   '/contractor-invoice-generator': typeof ContractorInvoiceGeneratorRoute
   '/free-estimate-generator': typeof FreeEstimateGeneratorRoute
   '/free-invoice-generator': typeof FreeInvoiceGeneratorRoute
@@ -506,7 +514,8 @@ export interface FileRoutesById {
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/api/mcp': typeof ApiMcpRouteWithChildren
-  '/auth/callback': typeof AuthCallbackRoute
+  '/auth_/callback': typeof AuthCallbackRoute
+  '/auth_/reset-password': typeof AuthResetPasswordRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/invoice-software/cleaners': typeof InvoiceSoftwareCleanersRoute
   '/invoice-software/electricians': typeof InvoiceSoftwareElectriciansRoute
@@ -566,6 +575,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/api/mcp'
     | '/auth/callback'
+    | '/auth/reset-password'
     | '/blog/$slug'
     | '/invoice-software/cleaners'
     | '/invoice-software/electricians'
@@ -623,6 +633,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/api/mcp'
     | '/auth/callback'
+    | '/auth/reset-password'
     | '/blog/$slug'
     | '/invoice-software/cleaners'
     | '/invoice-software/electricians'
@@ -681,7 +692,8 @@ export interface FileRouteTypes {
     | '/_authenticated/onboarding'
     | '/_authenticated/settings'
     | '/api/mcp'
-    | '/auth/callback'
+    | '/auth_/callback'
+    | '/auth_/reset-password'
     | '/blog/$slug'
     | '/invoice-software/cleaners'
     | '/invoice-software/electricians'
@@ -715,7 +727,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
-  AuthRoute: typeof AuthRouteWithChildren
+  AuthRoute: typeof AuthRoute
   ContractorInvoiceGeneratorRoute: typeof ContractorInvoiceGeneratorRoute
   FreeEstimateGeneratorRoute: typeof FreeEstimateGeneratorRoute
   FreeInvoiceGeneratorRoute: typeof FreeInvoiceGeneratorRoute
@@ -733,6 +745,8 @@ export interface RootRouteChildren {
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   TermsRoute: typeof TermsRoute
   ApiMcpRoute: typeof ApiMcpRouteWithChildren
+  AuthCallbackRoute: typeof AuthCallbackRoute
+  AuthResetPasswordRoute: typeof AuthResetPasswordRoute
   BlogSlugRoute: typeof BlogSlugRoute
   InvoiceSoftwareCleanersRoute: typeof InvoiceSoftwareCleanersRoute
   InvoiceSoftwareElectriciansRoute: typeof InvoiceSoftwareElectriciansRoute
@@ -927,12 +941,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BlogSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/auth/callback': {
-      id: '/auth/callback'
-      path: '/callback'
+    '/auth_/reset-password': {
+      id: '/auth_/reset-password'
+      path: '/auth/reset-password'
+      fullPath: '/auth/reset-password'
+      preLoaderRoute: typeof AuthResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth_/callback': {
+      id: '/auth_/callback'
+      path: '/auth/callback'
       fullPath: '/auth/callback'
       preLoaderRoute: typeof AuthCallbackRouteImport
-      parentRoute: typeof AuthRoute
+      parentRoute: typeof rootRouteImport
     }
     '/api/mcp': {
       id: '/api/mcp'
@@ -1209,16 +1230,6 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
 const AuthenticatedRouteRouteWithChildren =
   AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
-interface AuthRouteChildren {
-  AuthCallbackRoute: typeof AuthCallbackRoute
-}
-
-const AuthRouteChildren: AuthRouteChildren = {
-  AuthCallbackRoute: AuthCallbackRoute,
-}
-
-const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
-
 interface ApiMcpDocumentsRouteChildren {
   ApiMcpDocumentsActivityRoute: typeof ApiMcpDocumentsActivityRoute
   ApiMcpDocumentsExtractRoute: typeof ApiMcpDocumentsExtractRoute
@@ -1275,7 +1286,7 @@ const ApiMcpRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
-  AuthRoute: AuthRouteWithChildren,
+  AuthRoute: AuthRoute,
   ContractorInvoiceGeneratorRoute: ContractorInvoiceGeneratorRoute,
   FreeEstimateGeneratorRoute: FreeEstimateGeneratorRoute,
   FreeInvoiceGeneratorRoute: FreeInvoiceGeneratorRoute,
@@ -1293,6 +1304,8 @@ const rootRouteChildren: RootRouteChildren = {
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   TermsRoute: TermsRoute,
   ApiMcpRoute: ApiMcpRouteWithChildren,
+  AuthCallbackRoute: AuthCallbackRoute,
+  AuthResetPasswordRoute: AuthResetPasswordRoute,
   BlogSlugRoute: BlogSlugRoute,
   InvoiceSoftwareCleanersRoute: InvoiceSoftwareCleanersRoute,
   InvoiceSoftwareElectriciansRoute: InvoiceSoftwareElectriciansRoute,

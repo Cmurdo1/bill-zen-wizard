@@ -47,7 +47,45 @@ Set the required variables in `.env` (or your deployment platform):
 
 Copy [`.env.example`](./.env.example) to `.env` and fill in the values.
 
+`.env` and every `.env.*` variant are gitignored (only `.env.example`, which holds
+no values, is committed). To confirm your secrets will not be pushed before you commit:
+
+```bash
+npm run env:check
+```
+
 > **Auth emails** (signup confirmation, password reset, magic link) are sent by Supabase itself — configure SMTP in the Supabase dashboard (e.g. Resend: `smtp.resend.com`) so those emails get delivered.
+
+## Auth setup (Supabase dashboard)
+
+The auth UI is not self-contained — it relies on project settings that must be
+configured in the Supabase dashboard, otherwise sign-in and OAuth fail at the
+redirect rather than in our code.
+
+**Authentication → URL Configuration**
+
+| Setting | Value |
+| --- | --- |
+| Site URL | `https://honestinvoice.com` |
+| Redirect URLs | `https://honestinvoice.com/**` and `http://localhost:5173/**` (dev) |
+
+The app sends users back to `/auth/callback` (with a `?next=` destination) after
+email confirmation, magic links, password recovery, and Google OAuth. If that URL
+is not allowlisted, Supabase ignores it and drops the user on the Site URL
+without a session, which looks like a silent sign-in failure.
+
+**Authentication → Providers → Google**
+
+1. Enable the provider and paste the Client ID / Secret (`GOOGLE_CLIENT_ID`,
+   `GOOGLE_CLIENT_SECRET` in `.env.example`).
+2. In Google Cloud Console, add an **Authorized redirect URI** pointing at
+   Supabase, not this app: `https://<project-ref>.supabase.co/auth/v1/callback`.
+3. Ensure the OAuth consent screen is published, otherwise only test users can
+   sign in and everyone else gets `access_denied`.
+
+First-time OAuth users get a `profiles` row from the `handle_new_user` trigger
+(which reads the Google `name` claim) and are sent to onboarding like any other
+new account.
 
 ## MCP / AI agent access
 

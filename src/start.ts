@@ -2,6 +2,7 @@ import { createStart, createMiddleware } from "@tanstack/react-start";
 
 import { renderErrorPage } from "./lib/error-page";
 import { attachSupabaseAuth } from "@/integrations/supabase/auth-attacher";
+import { publicEnv } from "./lib/public-env";
 
 const errorMiddleware = createMiddleware().server(async ({ next }) => {
   try {
@@ -17,6 +18,22 @@ const errorMiddleware = createMiddleware().server(async ({ next }) => {
     });
   }
 });
+
+// CSP `connect-src` entries for the configured Supabase project. Deployments can
+// point VITE_SUPABASE_URL at a Supabase-compatible proxy that does not live on
+// *.supabase.co, so the concrete origin must be allowlisted or the browser
+// blocks every auth request before it is sent (surfacing as a NetworkError).
+function supabaseConnectSources(): string[] {
+  const url = publicEnv("VITE_SUPABASE_URL");
+  if (!url) return [];
+  try {
+    const { protocol, host } = new URL(url);
+    if (protocol !== "https:" || !host) return [];
+    return [`https://${host}`, `wss://${host}`];
+  } catch {
+    return [];
+  }
+}
 
 function getMcpAllowedOrigin(request: Request): string | null {
   const origin = request.headers.get("Origin");
@@ -61,7 +78,17 @@ function applySecurityHeaders(response: Response, request: Request): Response {
         "img-src 'self' data: blob: https:",
         "font-src 'self' data: https://fonts.gstatic.com",
         // Supabase + Stripe + Google OAuth + MCP webhook URLs must remain reachable.
-        "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.stripe.com https://buy.stripe.com https://accounts.google.com https://*.googleusercontent.com https://cloudflareinsights.com",
+        "connect-src 'self' " +
+          [
+            "https://*.supabase.co",
+            "wss://*.supabase.co",
+            ...supabaseConnectSources(),
+            "https://api.stripe.com",
+            "https://buy.stripe.com",
+            "https://accounts.google.com",
+            "https://*.googleusercontent.com",
+            "https://cloudflareinsights.com",
+          ].join(" "),
         "frame-src 'self' https://js.stripe.com https://hooks.stripe.com https://accounts.google.com",
         "frame-ancestors 'self'",
         "base-uri 'self'",

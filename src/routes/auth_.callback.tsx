@@ -35,6 +35,12 @@ export const Route = createFileRoute("/auth_/callback")({
 /** Where the password-recovery flow lands so the user can choose a new password. */
 export const RESET_PASSWORD_PATH = "/auth/reset-password";
 
+/**
+ * Marks a message we wrote ourselves, so the catch block can show it as-is.
+ * Anything else came from supabase-js and must not reach the user verbatim.
+ */
+class UserFacingAuthError extends Error {}
+
 // Supabase/Google return short machine codes; translate the common ones so the
 // user sees an actionable sentence instead of a raw provider error.
 function describeAuthError(code: string | undefined, description: string | undefined): string {
@@ -47,8 +53,35 @@ function describeAuthError(code: string | undefined, description: string | undef
     case "token_expired":
       return "That link has expired. Request a new one and try again.";
     default:
-      return description || code || "Authentication failed. Please try again.";
+      // `description` arrives in the query string, so it is attacker-controllable
+      // text — log it rather than reflecting it into the page.
+      console.error("[auth/callback] unmapped auth error:", { code, description });
+      return "Authentication failed. Please try again.";
   }
+}
+
+// supabase-js errors are written for developers ("both auth code and code
+// verifier should be non-empty"), so translate them into plain sentences and
+// keep the original in the console for debugging.
+function describeThrownError(e: unknown): string {
+  if (e instanceof UserFacingAuthError) return e.message;
+
+  const raw = e instanceof Error ? e.message : String(e);
+  console.error("[auth/callback] sign-in failed:", e);
+
+  if (/code verifier|both auth code|invalid (request|grant)/i.test(raw)) {
+    return "That sign-in link is no longer valid. Please sign in again to get a fresh one.";
+  }
+  if (/expired/i.test(raw)) {
+    return "That link has expired. Request a new one and try again.";
+  }
+  if (/rate.?limit|too.?many/i.test(raw)) {
+    return "Too many attempts. Please wait a moment and try again.";
+  }
+  if (/network|failed to fetch|load failed|offline|timeout/i.test(raw)) {
+    return "We couldn't reach the sign-in service. Check your connection and try again.";
+  }
+  return "Something went wrong while completing sign in. Please try again.";
 }
 
 function CallbackPage() {
@@ -77,7 +110,9 @@ function CallbackPage() {
       setLoading(true);
       try {
         if (error) {
-          throw new Error(describeAuthError(error_code ?? error, error_description ?? undefined));
+          throw new UserFacingAuthError(
+            describeAuthError(error_code ?? error, error_description ?? undefined),
+          );
         }
 
         // Tokens can arrive in the fragment (`#access_token=…`) while the PKCE
@@ -113,7 +148,7 @@ function CallbackPage() {
           session = (await supabase.auth.getSession()).data.session;
         }
 
-        if (!session) throw new Error("No session was created. Please try again.");
+        if (!session) throw new UserFacingAuthError("No session was created. Please try again.");
 
         // Drop tokens and the one-time code from the address bar and history
         // before moving on.
@@ -122,7 +157,7 @@ function CallbackPage() {
         const recovery = isRecovery || hash.get("type") === "recovery";
         await navigate({ to: recovery ? RESET_PASSWORD_PATH : dest, replace: true });
       } catch (e) {
-        setErr(e instanceof Error ? e.message : "Authentication failed. Please try again.");
+        setErr(describeThrownError(e));
       } finally {
         setLoading(false);
       }
